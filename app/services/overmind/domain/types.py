@@ -16,6 +16,7 @@ type MissionContext = dict[str, JsonValue]
 
 class ProviderReadinessDetails(TypedDict):
     """Details returned by provider readiness checks."""
+
     status: Literal["ready", "degraded", "failed"]
     reason: NotRequired[str]
     details: NotRequired[str]
@@ -23,6 +24,7 @@ class ProviderReadinessDetails(TypedDict):
 
 class EgressCheckDetails(TypedDict):
     """Details returned by egress connectivity checks."""
+
     status: Literal["OK", "PARTIAL", "NO_EGRESS"]
     success_count: int
     failed_probes: list[str]
@@ -30,6 +32,7 @@ class EgressCheckDetails(TypedDict):
 
 class MissionReadinessStatus(TypedDict):
     """Overall mission readiness status."""
+
     ready: bool
     mode: NotRequired[Literal["ready", "degraded", "failed"]]
     error: NotRequired[str]
