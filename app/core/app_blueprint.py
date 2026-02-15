@@ -9,7 +9,6 @@ Config -> AppState -> WeavedApp
 import os
 from dataclasses import dataclass
 
-from fastapi import APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -131,21 +130,18 @@ def build_kernel_config(
 
 def build_kernel_spec(
     config: KernelConfig,
-    *,
-    gateway_router: APIRouter | None,
 ) -> KernelSpec:
     """
     يبني مواصفات النواة التشغيلية وفق مسار AppState.
 
     Args:
         config: حاوية إعدادات النواة.
-        gateway_router: موجه البوابة (اختياري).
 
     Returns:
         KernelSpec: مواصفات التشغيل.
     """
     middleware_stack = build_middleware_stack(config.settings_obj)
-    router_registry = build_router_registry(gateway_router)
+    router_registry = build_router_registry()
     return KernelSpec(
         config=config,
         middleware_stack=middleware_stack,
@@ -197,20 +193,14 @@ def build_cors_options(origins: list[str]) -> dict[str, object]:
     return options
 
 
-def build_router_registry(gateway_router: APIRouter | None = None) -> list[RouterSpec]:
+def build_router_registry() -> list[RouterSpec]:
     """
     سجل الموجهات (Router Registry) كبيانات.
-
-    Args:
-        gateway_router: موجه البوابة (اختياري).
 
     Returns:
         list[RouterSpec]: قائمة (الموجه، البادئة).
     """
     routers = base_router_registry()
-
-    if gateway_router:
-        routers.append((gateway_router, ""))
 
     return routers
 

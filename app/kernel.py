@@ -22,7 +22,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Final
 
-from fastapi import APIRouter, FastAPI
+from fastapi import FastAPI
 
 from app.core.agents.system_principles import (
     validate_architecture_system_principles,
@@ -77,13 +77,6 @@ def _mount_routers(app: FastAPI, registry: list[RouterSpec]) -> FastAPI:
     for router, prefix in registry:
         app.include_router(router, prefix=prefix)
     return app
-
-
-def _get_gateway_router(app: FastAPI) -> APIRouter | None:
-    """يعيد موجه البوابة إن كان متاحاً في حالة التطبيق."""
-
-    gateway = getattr(app.state, "api_gateway", None)
-    return gateway.router if gateway else None
 
 
 def _configure_static_files(app: FastAPI, spec: StaticFilesSpec) -> None:
@@ -158,7 +151,6 @@ class RealityKernel:
         # 2. Data Acquisition (Pure)
         kernel_spec: KernelSpec = build_kernel_spec(
             self.kernel_config,
-            gateway_router=_get_gateway_router(app),
         )
 
         # 3. Transformations - API Core (100% API-First)

@@ -1,6 +1,32 @@
 # ملاحظة: حذفنا رقم الإصدار version لأنه لم يعد مطلوباً
 
 services:
+  # API Gateway - Central Microservice Gateway
+  api-gateway:
+    build:
+      context: ./microservices/api_gateway
+      dockerfile: Dockerfile
+    container_name: cogniforge-api-gateway
+    restart: unless-stopped
+    ports:
+      - "8008:8000"
+    networks:
+      - appnet
+    environment:
+      CORE_KERNEL_URL: http://core-kernel:8000
+      PLANNING_AGENT_URL: http://planning-agent:8000
+      MEMORY_AGENT_URL: http://memory-agent:8000
+      USER_SERVICE_URL: http://user-service:8000
+      OBSERVABILITY_SERVICE_URL: http://observability-service:8000
+      RESEARCH_AGENT_URL: http://research-agent:8000
+      REASONING_AGENT_URL: http://reasoning-agent:8000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
   # Core Kernel - The Monolith Core (Reality Kernel)
   core-kernel:
     build:
@@ -41,9 +67,9 @@ services:
       - appnet
     environment:
       # API_URL tells the Next.js server side proxy where to find the backend
-      API_URL: http://core-kernel:8000
+      API_URL: http://api-gateway:8000
     depends_on:
-      - core-kernel
+      - api-gateway
 
   # Observability Service - AIOps and Monitoring
   observability-service:
