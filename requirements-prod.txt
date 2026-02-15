@@ -26,6 +26,7 @@ typer==0.20.0
 tenacity==8.2.3
 langgraph==0.2.39
 langchain-core>=0.2.39
+redis>=5.0.0
 
 # Supporting Libraries
 click==8.3.1
