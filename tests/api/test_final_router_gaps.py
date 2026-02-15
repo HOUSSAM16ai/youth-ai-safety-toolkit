@@ -8,7 +8,6 @@ from fastapi.testclient import TestClient
 
 from app.api.routers.customer_chat import get_db
 from app.api.routers.customer_chat import router as customer_router
-from app.api.routers.overmind import get_orchestrator
 from app.api.routers.overmind import router as overmind_router
 from app.api.routers.ws_auth import (
     _extract_token_from_protocols,
@@ -35,24 +34,21 @@ def customer_app():
 # --- Overmind Tests ---
 def test_create_mission_error(overmind_app):
     client = TestClient(overmind_app)
-    mock_orchestrator = AsyncMock()
-    mock_orchestrator.state.create_mission.side_effect = Exception("DB error")
-    overmind_app.dependency_overrides[get_orchestrator] = lambda: mock_orchestrator
-
-    response = client.post(
-        "/api/v1/overmind/missions", json={"objective": "valid objective length"}
-    )
-    assert response.status_code == 500
+    # Patch start_mission directly as it is used in the router
+    with patch("app.api.routers.overmind.start_mission", side_effect=Exception("DB error")):
+        response = client.post(
+            "/api/v1/overmind/missions", json={"objective": "valid objective length"}
+        )
+        assert response.status_code == 500
 
 
 def test_get_mission_not_found(overmind_app):
     client = TestClient(overmind_app)
-    mock_orchestrator = AsyncMock()
-    mock_orchestrator.state.get_mission.return_value = None
-    overmind_app.dependency_overrides[get_orchestrator] = lambda: mock_orchestrator
-
-    response = client.get("/api/v1/overmind/missions/999")
-    assert response.status_code == 404
+    # Patch MissionStateManager.get_mission used in the router
+    with patch("app.api.routers.overmind.MissionStateManager.get_mission", new_callable=AsyncMock) as mock_get:
+        mock_get.return_value = None
+        response = client.get("/api/v1/overmind/missions/999")
+        assert response.status_code == 404
 
 
 def test_stream_mission_not_found(overmind_app):

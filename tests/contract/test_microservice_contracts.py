@@ -12,7 +12,6 @@ from app.core.openapi_contracts import compare_contract_to_runtime, detect_runti
 from app.main import create_app as create_core_app
 from microservices.memory_agent.main import create_app as create_memory_app
 from microservices.observability_service.main import app as observability_app
-from microservices.orchestrator_service.main import create_app as create_orchestrator_app
 from microservices.planning_agent.main import create_app as create_planning_app
 from microservices.user_service.main import create_app as create_user_app
 
@@ -26,7 +25,6 @@ def _contract_path(filename: str) -> Path:
 def _build_cases() -> list[tuple[str, Callable[[], FastAPI] | FastAPI, str]]:
     return [
         ("core", lambda: create_core_app(enable_static_files=False), "core-api-v1.yaml"),
-        ("orchestrator", create_orchestrator_app, "orchestrator_service-openapi.json"),
         ("planning", create_planning_app, "planning_agent-openapi.json"),
         ("memory", create_memory_app, "memory_agent-openapi.json"),
         ("user", create_user_app, "user_service-openapi.json"),

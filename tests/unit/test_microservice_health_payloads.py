@@ -3,8 +3,6 @@
 from microservices.memory_agent.health import build_health_payload as memory_health
 from microservices.memory_agent.settings import MemoryAgentSettings
 from microservices.observability_service.health import build_health_payload as observability_health
-from microservices.orchestrator_service.health import build_health_payload as orchestrator_health
-from microservices.orchestrator_service.settings import OrchestratorSettings
 from microservices.planning_agent.health import build_health_payload as planning_health
 from microservices.planning_agent.settings import PlanningAgentSettings
 from microservices.user_service.health import build_health_payload as user_health
@@ -23,15 +21,6 @@ def test_planning_agent_health_payload() -> None:
 def test_memory_agent_health_payload() -> None:
     settings = MemoryAgentSettings()
     payload = memory_health(settings)
-
-    assert payload.service == settings.SERVICE_NAME
-    assert payload.status == "ok"
-    assert payload.database == settings.DATABASE_URL
-
-
-def test_orchestrator_health_payload() -> None:
-    settings = OrchestratorSettings()
-    payload = orchestrator_health(settings)
 
     assert payload.service == settings.SERVICE_NAME
     assert payload.status == "ok"
