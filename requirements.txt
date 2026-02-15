@@ -64,7 +64,7 @@ pypdf
 python-docx==1.2.0
 openpyxl==3.1.5
 pandas==2.3.3
-pillow==12.1.0
+pillow==12.1.1
 pytesseract==0.3.13
 pyyaml==6.0.1
 
@@ -76,7 +76,7 @@ sentence-transformers
 dspy-ai==2.5.43
 openai==1.55.0
 # llama-index meta-package removed to reduce bloat/conflicts
-llama-index-core==0.14.13
+llama-index-core==0.13.0
 llama-index-readers-file
 llama-index-vector-stores-supabase
 llama-index-embeddings-huggingface
@@ -86,8 +86,8 @@ passlib
 argon2-cffi
 vecs==0.4.5
 flupy==1.2.3
-litellm==1.50.0
-dspy==2.5.7
+litellm==1.61.15
+dspy==3.0.4b1
 llama-index-workflows==2.14.0
 langchain-openai>=0.1.0
 langchain-community>=0.2.0
