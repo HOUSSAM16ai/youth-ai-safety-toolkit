@@ -45,7 +45,9 @@ def test_create_mission_error(overmind_app):
 def test_get_mission_not_found(overmind_app):
     client = TestClient(overmind_app)
     # Patch MissionStateManager.get_mission used in the router
-    with patch("app.api.routers.overmind.MissionStateManager.get_mission", new_callable=AsyncMock) as mock_get:
+    with patch(
+        "app.api.routers.overmind.MissionStateManager.get_mission", new_callable=AsyncMock
+    ) as mock_get:
         mock_get.return_value = None
         response = client.get("/api/v1/overmind/missions/999")
         assert response.status_code == 404
