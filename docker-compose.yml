@@ -13,8 +13,8 @@ services:
     networks:
       - appnet
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://user:pass@db:5432/cogniforge}
-      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DATABASE_URL: ${DATABASE_URL}
+      ENVIRONMENT: ${ENVIRONMENT:-production}
       # Point to microservices
       # External API Keys (Passed from Host/Secrets)
       TAVILY_API_KEY: ${TAVILY_API_KEY:-}
@@ -67,6 +67,8 @@ services:
       timeout: 5s
       retries: 5
       start_period: 15s
+    environment:
+      DATABASE_URL: ${DATABASE_URL}?options=-c%20search_path%3Dobservability
 
 
   # Planning Agent - Generates plans
@@ -86,7 +88,8 @@ services:
       - appnet
 
     environment:
-      PLANNING_DATABASE_URL: ${PLANNING_DATABASE_URL:-sqlite+aiosqlite:///./planning_agent.db}
+      PLANNING_DATABASE_URL: ${DATABASE_URL}?options=-c%20search_path%3Dplanning
+      DATABASE_URL: ${DATABASE_URL}?options=-c%20search_path%3Dplanning
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
 
@@ -115,7 +118,8 @@ services:
       - appnet
 
     environment:
-      MEMORY_DATABASE_URL: ${MEMORY_DATABASE_URL:-sqlite+aiosqlite:///./memory_agent.db}
+      MEMORY_DATABASE_URL: ${DATABASE_URL}?options=-c%20search_path%3Dmemory
+      DATABASE_URL: ${DATABASE_URL}?options=-c%20search_path%3Dmemory
 
     healthcheck:
       test: ["CMD", "bash", "-c", "curl -f http://localhost:8000/health || exit 1"]
@@ -142,7 +146,8 @@ services:
       - appnet
 
     environment:
-      USER_DATABASE_URL: ${USER_DATABASE_URL:-sqlite+aiosqlite:///./user_service.db}
+      USER_DATABASE_URL: ${DATABASE_URL}?options=-c%20search_path%3Duser_service
+      DATABASE_URL: ${DATABASE_URL}?options=-c%20search_path%3Duser_service
 
     healthcheck:
       test: ["CMD", "bash", "-c", "curl -f http://localhost:8000/health || exit 1"]
@@ -169,7 +174,8 @@ services:
       - appnet
 
     environment:
-      RESEARCH_DATABASE_URL: ${RESEARCH_DATABASE_URL:-sqlite+aiosqlite:///./research_agent.db}
+      RESEARCH_DATABASE_URL: ${DATABASE_URL}?options=-c%20search_path%3Dresearch
+      DATABASE_URL: ${DATABASE_URL}?options=-c%20search_path%3Dresearch
       TAVILY_API_KEY: ${TAVILY_API_KEY:-}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       FIRECRAWL_API_KEY: ${FIRECRAWL_API_KEY:-}
@@ -200,7 +206,8 @@ services:
       - appnet
 
     environment:
-      REASONING_DATABASE_URL: ${REASONING_DATABASE_URL:-sqlite+aiosqlite:///./reasoning_agent.db}
+      REASONING_DATABASE_URL: ${DATABASE_URL}?options=-c%20search_path%3Dreasoning
+      DATABASE_URL: ${DATABASE_URL}?options=-c%20search_path%3Dreasoning
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
 

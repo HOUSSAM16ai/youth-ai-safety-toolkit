@@ -1,0 +1,12 @@
+fastapi==0.109.2
+uvicorn==0.27.1
+pydantic>=2.8.0,<3.0.0
+pydantic-settings==2.2.1
+sqlalchemy>=2.0.25
+asyncpg>=0.29.0
+psycopg2-binary>=2.9.9
+aiosqlite>=0.17.0
+openai==1.55.0
+langgraph
+dspy-ai==2.5.43
+litellm==1.50.0
