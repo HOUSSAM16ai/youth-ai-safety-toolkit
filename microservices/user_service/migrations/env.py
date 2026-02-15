@@ -5,16 +5,24 @@ import sys
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import pool
+from sqlalchemy import pool, text
 from sqlalchemy.ext.asyncio import create_async_engine
+from sqlmodel import SQLModel
 
 # --- 1. ENVIRONMENT BOOTSTRAP ---
 # Ensure we can import the app modules
-sys.path.append(os.getcwd())
+current_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = os.path.abspath(os.path.join(current_dir, "../../.."))
+sys.path.append(root_dir)
 
-from app.core.config import get_settings
-# REMOVED: from app.core.engine_factory import FatalEngineError, create_unified_async_engine
-from sqlmodel import SQLModel
+# Import Service Specific Models and Settings
+# adjustments may be needed depending on service structure
+try:
+    from microservices.user_service.models import *  # noqa
+    from microservices.user_service.settings import get_settings
+except ImportError as e:
+    print(f"Error importing service modules: {e}")
+    sys.exit(1)
 
 settings = get_settings()
 
@@ -29,7 +37,17 @@ logger = logging.getLogger("alembic.env")
 # --- 3. METADATA CONFIGURATION ---
 target_metadata = SQLModel.metadata
 
-# --- 4. MIGRATION MODES ---
+# --- 4. SCHEMA CONFIGURATION ---
+target_schema = "user_service"
+
+# --- 5. MIGRATION MODES ---
+
+def include_object(object, name, type_, reflected, compare_to):
+    if type_ == "table":
+        # Only include tables in the target schema
+        if object.schema != target_schema:
+            return False
+    return True
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
@@ -49,6 +67,9 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
+        version_table_schema=target_schema,
+        include_schemas=True,
+        include_object=include_object,
     )
 
     with context.begin_transaction():
@@ -56,14 +77,13 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection):
-    """
-    Run migrations using a synchronous connection.
-    This is called by both synchronous and asynchronous wrappers.
-    """
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
         compare_type=True,
+        version_table_schema=target_schema,
+        include_schemas=True,
+        include_object=include_object,
     )
 
     with context.begin_transaction():
@@ -76,13 +96,8 @@ async def run_async_migrations() -> None:
     In this scenario we need to create an Engine
     and associate a connection with the context.
     """
-    # Create engine directly using sqlalchemy.ext.asyncio
-    # We apply the same critical settings as the app (e.g. statement_cache_size=0 for Supabase)
 
     connect_args = {}
-    # Apply Supabase/PgBouncer compatibility fix if using PostgreSQL
-    # Note: asyncpg requires prepared_statement_cache_size=0 alongside statement_cache_size=0
-    # to fully disable prepared statements for transaction poolers.
     if "postgresql" in settings.DATABASE_URL or "asyncpg" in settings.DATABASE_URL:
         connect_args["statement_cache_size"] = 0
         connect_args["prepared_statement_cache_size"] = 0
@@ -91,11 +106,14 @@ async def run_async_migrations() -> None:
         settings.DATABASE_URL,
         echo=True,
         future=True,
-        poolclass=pool.NullPool,  # NullPool is used for migrations to avoid locking
+        poolclass=pool.NullPool,
         connect_args=connect_args,
     )
 
     async with connectable.connect() as connection:
+        # Set search path to target schema
+        if "postgresql" in settings.DATABASE_URL or "asyncpg" in settings.DATABASE_URL:
+            await connection.execute(text(f"SET search_path TO {target_schema}"))
         await connection.run_sync(do_run_migrations)
 
     await connectable.dispose()
@@ -104,7 +122,6 @@ async def run_async_migrations() -> None:
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
 
-    # Check if we are running in an async loop (unlikely for standard alembic CLI, but possible)
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:
@@ -112,7 +129,6 @@ def run_migrations_online() -> None:
 
     if loop and loop.is_running():
         logger.warning("Alembic is running inside an existing event loop.")
-        # If already in a loop, we must await the task
         asyncio.ensure_future(run_async_migrations())
     else:
         asyncio.run(run_async_migrations())

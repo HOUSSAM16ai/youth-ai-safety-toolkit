@@ -5,10 +5,9 @@ Revises: 20260215_customer_chat_tables
 Create Date: 2026-01-16 02:25:00.800777
 
 """
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
-from sqlmodel import SQLModel
 
 # revision identifiers, used by Alembic.
 revision = 'dcc60af077c4'

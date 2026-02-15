@@ -151,9 +151,8 @@ def upgrade():
                 ).bindparams(limit=LENGTH_LIMIT)
             )
             print(f"[event_type migration] Added CHECK {CHECK_NAME} (<= {LENGTH_LIMIT}).")
-    else:
-        if ADD_LENGTH_CHECK:
-            print("[event_type migration] Length CHECK skipped (non-PostgreSQL dialect).")
+    elif ADD_LENGTH_CHECK:
+        print("[event_type migration] Length CHECK skipped (non-PostgreSQL dialect).")
 
     # 3) إسقاط الفهرس القديم (إن وجد)
     with suppress(Exception):

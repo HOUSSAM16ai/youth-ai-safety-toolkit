@@ -30,6 +30,7 @@ EXCLUDED_DIRS = {
     ".pytest_cache",
     "node_modules",
     "migrations",
+    "migrations_archive",
 }
 
 
