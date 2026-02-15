@@ -1,7 +1,8 @@
 import uvicorn
 from fastapi import FastAPI
-from app.gateway import APIGateway
+
 from app.config import DEFAULT_GATEWAY_CONFIG
+from app.gateway import APIGateway
 
 app = FastAPI(title="CogniForge API Gateway", version="1.0.0")
 

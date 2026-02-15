@@ -200,9 +200,7 @@ def build_router_registry() -> list[RouterSpec]:
     Returns:
         list[RouterSpec]: قائمة (الموجه، البادئة).
     """
-    routers = base_router_registry()
-
-    return routers
+    return base_router_registry()
 
 
 def build_static_files_spec(config: KernelConfig) -> StaticFilesSpec:

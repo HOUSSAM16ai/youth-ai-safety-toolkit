@@ -5,6 +5,7 @@ Implements the routing and proxying logic for the microservices architecture.
 """
 
 import logging
+
 import httpx
 from fastapi import APIRouter, HTTPException, Request, Response, status
 
@@ -167,13 +168,12 @@ class APIGateway:
 
         if route.strip_prefix:
             final_path = path
-        else:
+        elif route.path_prefix == "/":
             # If we don't strip, we append the original prefix
             # Note: path captures only the suffix.
-            if route.path_prefix == "/":
-                final_path = path
-            else:
-                final_path = f"{route.path_prefix.lstrip('/')}/{path}"
+            final_path = path
+        else:
+            final_path = f"{route.path_prefix.lstrip('/')}/{path}"
 
         # Clean up double slashes just in case
         final_path = final_path.lstrip("/")
