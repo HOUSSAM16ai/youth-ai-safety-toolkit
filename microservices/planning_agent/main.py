@@ -6,7 +6,7 @@
 """
 
 import asyncio
-import importlib
+import contextlib
 import importlib.util
 from contextlib import asynccontextmanager
 from uuid import UUID
@@ -255,10 +255,8 @@ async def lifespan(app: FastAPI):
 
     # Graceful Shutdown
     worker_task.cancel()
-    try:
+    with contextlib.suppress(asyncio.CancelledError):
         await worker_task
-    except asyncio.CancelledError:
-        pass
 
     logger.info("Planning Agent Stopped")
 

@@ -7,7 +7,7 @@ This ensures that database changes and event publishing happen atomically.
 
 import asyncio
 import logging
-from collections.abc import AsyncGenerator, Callable
+from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager
 from datetime import datetime
 from typing import Any

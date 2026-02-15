@@ -10,6 +10,7 @@
 """
 
 import asyncio
+import contextlib
 
 from fastapi import FastAPI
 
@@ -44,13 +45,13 @@ async def start_background_workers():
 @app.on_event("shutdown")
 async def stop_background_workers():
     """Stop background workers gracefully."""
-    global _worker_task
+    # We only read the global here, so 'global _worker_task' declaration is technically redundant for reading,
+    # but good for clarity. However, Ruff PLW0602 complains if we declare global but don't assign.
+    # Since we only read it, we can remove the global declaration here.
     if _worker_task:
         _worker_task.cancel()
-        try:
+        with contextlib.suppress(asyncio.CancelledError):
             await _worker_task
-        except asyncio.CancelledError:
-            pass
 
 def create_app(
     *,

@@ -7,8 +7,7 @@ This is critical for preventing duplicate missions or side-effects in a distribu
 
 import json
 import logging
-import typing
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 from fastapi import Request, Response
 from redis.asyncio import Redis
