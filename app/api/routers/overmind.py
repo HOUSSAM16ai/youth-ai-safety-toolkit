@@ -7,6 +7,7 @@ Refactored to remove Split-Brain Orchestration.
 
 import logging
 import uuid
+from collections.abc import Callable
 
 from fastapi import (
     APIRouter,
@@ -21,7 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.routers.ws_auth import extract_websocket_auth
 from app.core.config import get_settings
-from app.core.database import get_db
+from app.core.database import async_session_factory, get_db
 from app.core.domain.mission import Mission
 from app.core.event_bus import get_event_bus
 from app.services.auth.token_decoder import decode_user_id
@@ -38,6 +39,14 @@ router = APIRouter(
     prefix="/api/v1/overmind",
     tags=["Overmind (Super Agent)"],
 )
+
+
+def get_session_factory() -> Callable[[], AsyncSession]:
+    """
+    تبعية لاسترجاع مصنع الجلسات العالمي.
+    ضروري للعمليات الخلفية التي تتطلب جلسات مستقلة.
+    """
+    return async_session_factory
 
 
 def _get_mission_status_payload(status: str) -> dict[str, str | None]:
