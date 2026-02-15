@@ -95,10 +95,7 @@ async def process_outbox(session: AsyncSession, batch_size: int = 10):
         await redis_client.close()
 
 
-async def run_outbox_worker(
-    session_factory: SessionFactory,
-    interval: float = 5.0
-):
+async def run_outbox_worker(session_factory: SessionFactory, interval: float = 5.0):
     """
     Background task that continuously processes the outbox using the provided session factory.
     This allows the worker to be used by any microservice with its own DB connection.
