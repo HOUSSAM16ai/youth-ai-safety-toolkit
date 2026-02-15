@@ -21,10 +21,8 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "CogniForge API Gateway"
 
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=True,
-        extra="ignore"
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=True, extra="ignore"
     )
+
 
 settings = Settings()
