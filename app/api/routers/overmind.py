@@ -68,7 +68,7 @@ def _serialize_mission(mission: Mission) -> MissionResponse:
         created_at=mission.created_at,
         updated_at=mission.updated_at,
         result={"summary": mission.result_summary} if mission.result_summary else None,
-        steps=[] # Assuming tasks are mapped separately or not needed for basic response
+        steps=[],  # Assuming tasks are mapped separately or not needed for basic response
     )
 
 

@@ -28,6 +28,7 @@ SCHEMAS = [
     "observability",
 ]
 
+
 def init_schemas():
     print(f"Connecting to database: {SYNC_DATABASE_URL.split('@')[-1]}")  # Mask password
     engine = create_engine(SYNC_DATABASE_URL)
@@ -39,6 +40,7 @@ def init_schemas():
         connection.commit()
 
     print("Schema initialization complete.")
+
 
 if __name__ == "__main__":
     try:
