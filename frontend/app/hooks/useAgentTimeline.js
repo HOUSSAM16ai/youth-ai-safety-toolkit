@@ -153,7 +153,19 @@ export function useAgentTimeline() {
   const allPhases = {};
 
   // Sort runs to ensure later runs overwrite earlier ones if needed (chronological order)
-  Object.keys(state.runs).sort().forEach(runId => {
+  Object.keys(state.runs).sort((a, b) => {
+    // Attempt to extract numerical suffix (iteration)
+    const aParts = a.split(':');
+    const bParts = b.split(':');
+    const aIter = parseInt(aParts[aParts.length - 1], 10);
+    const bIter = parseInt(bParts[bParts.length - 1], 10);
+
+    if (!isNaN(aIter) && !isNaN(bIter)) {
+      return aIter - bIter;
+    }
+    // Fallback to string comparison
+    return a.localeCompare(b);
+  }).forEach(runId => {
     const runPhases = state.runs[runId].phases;
     Object.assign(allPhases, runPhases);
   });

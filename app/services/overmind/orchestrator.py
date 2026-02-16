@@ -220,6 +220,20 @@ class OvermindOrchestrator:
         # Extract signals for the Policy
         exec_status = execution.get("status") if isinstance(execution, dict) else None
 
+        # 1. Check for Explicit Task Failures (TaskExecutor)
+        # If any task failed, we must not return pure SUCCESS.
+        has_task_failures = False
+        if isinstance(execution, dict) and "results" in execution:
+            results_list = execution.get("results", [])
+            for task_res in results_list:
+                if isinstance(task_res, dict) and task_res.get("status") == "failed":
+                    has_task_failures = True
+                    break
+
+        if has_task_failures:
+            logger.warning(f"Mission {mission_id} outcome arbitration: Found failed tasks.")
+            return MissionStatus.PARTIAL_SUCCESS
+
         # Check for empty search results
         has_empty_search = False
         if isinstance(execution, dict) and "results" in execution:

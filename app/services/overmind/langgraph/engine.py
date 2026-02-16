@@ -289,12 +289,8 @@ class LangGraphOvermindEngine:
         """
         عقدة إثراء السياق بإسناد DSPy و LlamaIndex قبل التخطيط.
         """
-        if self._observer:
-            await self._observer(
-                "phase_start", {"phase": "CONTEXT_ENRICHMENT", "agent": "Contextualizer"}
-            )
-
         # ✅ Make "RESEARCH" a real phase for the UI (wrap enrichment as research activity)
+        # Note: We removed the duplicate "CONTEXT_ENRICHMENT" emission to prevent UI flickering.
         if self._observer:
             await self._observer("phase_start", {"phase": "RESEARCH", "agent": "Contextualizer"})
 
@@ -313,11 +309,6 @@ class LangGraphOvermindEngine:
             "context_enriched": True,
             "research_performed": True,
         }
-
-        if self._observer:
-            await self._observer(
-                "phase_completed", {"phase": "CONTEXT_ENRICHMENT", "agent": "Contextualizer"}
-            )
 
         return {
             "shared_memory": shared_memory,

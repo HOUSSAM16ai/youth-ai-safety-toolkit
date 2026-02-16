@@ -162,6 +162,21 @@ async def search_content(
     # Exceptions propagate to TaskExecutor -> Mission Status FAILED
     report = await research_client.deep_research(full_query)
 
+    # 🛑 Strict Validation: Detect "Soft Failures" (Error-as-Data Anti-Pattern)
+    # If the tool returns a JSON error object instead of raising an exception, catch it here.
+    if report and isinstance(report, str) and '"type": "error"' in report:
+        # Check if it's a JSON string representing an error
+        import json
+        try:
+            # Try to parse only if it looks like JSON
+            if report.strip().startswith("{"):
+                data = json.loads(report)
+                if data.get("type") == "error":
+                    error_msg = data.get("content") or data.get("error") or "Research tool returned an error object."
+                    raise ValueError(f"Research Tool Error: {error_msg}")
+        except json.JSONDecodeError:
+            pass  # Not JSON, proceed normally
+
     return [
         {
             "id": "research_report",
