@@ -45,12 +45,23 @@ async def test_search_content_uses_research_client(mock_research_client):
 
 @pytest.mark.asyncio
 async def test_search_content_error_handling(mock_research_client):
-    """Verify search_content handles client failures gracefully."""
-    # Updated expectation: The code now catches exceptions and returns []
+    """Verify search_content propagates client failures (Fail-Fast)."""
+    # Updated expectation: The code propagates exceptions to the TaskExecutor
     mock_research_client.deep_research.side_effect = Exception("Network error")
 
-    results = await content_module.search_content(q="Error Query")
-    assert results == []
+    with pytest.raises(Exception, match="Network error"):
+        await content_module.search_content(q="Error Query")
+
+
+@pytest.mark.asyncio
+async def test_search_content_soft_failure(mock_research_client):
+    """Verify search_content detects JSON error strings (Soft Failures)."""
+    # Simulate a "soft failure" where the tool returns an error as a JSON string
+    mock_research_client.deep_research.return_value = '{"type": "error", "content": "Soft failure occurred"}'
+
+    # Expect ValueError due to strict validation
+    with pytest.raises(ValueError, match="Research Tool Error: Soft failure occurred"):
+        await content_module.search_content(q="Soft Fail Query")
 
 
 @pytest.mark.asyncio
