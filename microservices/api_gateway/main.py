@@ -62,7 +62,7 @@ async def health_check():
             status = "UP" if resp.status_code == 200 else f"DOWN ({resp.status_code})"
             return name, status
         except Exception as e:
-            return name, f"DOWN ({str(e)})"
+            return name, f"DOWN ({e!s})"
 
     # Run checks concurrently
     results = await asyncio.gather(*(check_service(name, url) for name, url in services.items()))

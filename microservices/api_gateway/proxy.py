@@ -1,8 +1,9 @@
 import asyncio
 import logging
 import time
-from enum import Enum
-from typing import Any, Callable, Dict
+from collections.abc import Callable
+from enum import StrEnum
+from typing import Any
 
 import httpx
 from fastapi import HTTPException, Request, status
@@ -13,7 +14,7 @@ from microservices.api_gateway.config import settings
 logger = logging.getLogger("api_gateway")
 
 
-class CircuitState(str, Enum):
+class CircuitState(StrEnum):
     CLOSED = "CLOSED"
     OPEN = "OPEN"
     HALF_OPEN = "HALF_OPEN"
@@ -74,7 +75,7 @@ class CircuitBreaker:
             self.failures += 1
             self.last_failure_time = time.time()
             logger.error(
-                f"Circuit '{self.name}' recorded failure #{self.failures}: {str(e)}"
+                f"Circuit '{self.name}' recorded failure #{self.failures}: {e!s}"
             )
 
             if (
@@ -109,7 +110,7 @@ class GatewayProxy:
         self.client = httpx.AsyncClient(timeout=timeouts, limits=limits)
 
         # Store circuit breakers for each target host
-        self.breakers: Dict[str, CircuitBreaker] = {}
+        self.breakers: dict[str, CircuitBreaker] = {}
 
     async def close(self):
         await self.client.aclose()
@@ -163,8 +164,7 @@ class GatewayProxy:
                     )
 
                     # Send request with stream=True to get headers back immediately
-                    response = await self.client.send(req, stream=True)
-                    return response
+                    return await self.client.send(req, stream=True)
 
                 except (httpx.ConnectError, httpx.ConnectTimeout, httpx.ReadTimeout) as exc:
                     if can_retry and attempt < retries:
@@ -180,6 +180,13 @@ class GatewayProxy:
                     # Other errors (e.g. WriteError) - do not retry blindly
                     logger.error(f"Proxy request error to {url}: {exc}")
                     raise exc
+
+            # This point is logically unreachable due to the loop structure (attempt > retries -> else -> raise)
+            # But to satisfy static analysis (RET503)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Proxy retry loop exhausted without result."
+            )
 
         try:
             # Execute the request logic wrapped in Circuit Breaker

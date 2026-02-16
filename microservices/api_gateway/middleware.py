@@ -1,7 +1,7 @@
 import logging
 import time
 import uuid
-from typing import Callable
+from collections.abc import Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -67,6 +67,6 @@ class StructuredLoggingMiddleware(BaseHTTPMiddleware):
             logger.error(
                 f"request_failed method={method} path={path} "
                 f"duration={process_time:.4f}s request_id={request_id} "
-                f"error={str(e)}"
+                f"error={e!s}"
             )
             raise e
