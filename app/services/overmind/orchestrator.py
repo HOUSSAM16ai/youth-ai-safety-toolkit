@@ -233,11 +233,27 @@ class OvermindOrchestrator:
                         "deep_research",
                     ):
                         tool_output = task_res.get("result", {})
-                        if isinstance(tool_output, dict):
+
+                        # Fix for Root Cause C (Success Masking)
+                        # Handle both List (Standard) and Dict (Legacy) outputs
+                        is_failure = False
+
+                        if isinstance(tool_output, list):
+                            # Empty list or list containing error item
+                            if len(tool_output) == 0:
+                                is_failure = True
+                            elif isinstance(tool_output[0], dict) and tool_output[0].get("type") == "error":
+                                is_failure = True
+
+                        elif isinstance(tool_output, dict):
+                            # Legacy format check
                             raw_data = tool_output.get("result_data")
                             if not raw_data or (isinstance(raw_data, list) and len(raw_data) == 0):
-                                has_empty_search = True
-                                break
+                                is_failure = True
+
+                        if is_failure:
+                            has_empty_search = True
+                            break
 
         # Construct Context
         context = MissionContext(

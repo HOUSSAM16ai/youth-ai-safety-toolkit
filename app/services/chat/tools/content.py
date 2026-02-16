@@ -158,11 +158,9 @@ async def search_content(
     if context_parts:
         full_query += f" ({', '.join(context_parts)})"
 
-    try:
-        report = await research_client.deep_research(full_query)
-    except Exception as e:
-        logger.error(f"Research client failed: {e}")
-        return []
+    # Direct execution to enforce Fail-Fast (Fixes Root Cause D)
+    # Exceptions propagate to TaskExecutor -> Mission Status FAILED
+    report = await research_client.deep_research(full_query)
 
     return [
         {
