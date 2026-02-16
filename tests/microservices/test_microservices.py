@@ -5,6 +5,7 @@
 وفق مبدأ "خدمة واحدة، وظيفة واحدة".
 """
 
+import os
 from datetime import UTC, datetime, timedelta
 
 import jwt
@@ -15,7 +16,7 @@ from microservices.planning_agent.main import create_app as create_planning_app
 from microservices.user_service.main import create_app as create_user_app
 
 # نستخدم نفس المفتاح الافتراضي المحدد في الإعدادات للاختبار
-TEST_SECRET_KEY = "super_secret_key_change_in_production"
+TEST_SECRET_KEY = os.environ.get("SECRET_KEY", "super_secret_key_change_in_production")
 
 
 def get_auth_headers() -> dict[str, str]:

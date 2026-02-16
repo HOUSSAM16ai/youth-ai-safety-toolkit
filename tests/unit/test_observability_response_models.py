@@ -1,12 +1,27 @@
 """اختبارات نماذج الاستجابة لخدمة المراقبة عبر HTTP."""
 
+import os
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
+import jwt
 from fastapi.testclient import TestClient
 
 from microservices.observability_service import main as observability_main
 from microservices.observability_service.models import CapacityPlan, MetricType
+
+TEST_SECRET_KEY = os.environ.get("SECRET_KEY", "super_secret_key_change_in_production")
+
+
+def get_auth_headers() -> dict[str, str]:
+    """توليد ترويسة مصادقة صالحة للخدمات."""
+    payload = {
+        "sub": "api-gateway",
+        "exp": datetime.now(UTC) + timedelta(minutes=5),
+        "iat": datetime.now(UTC),
+    }
+    token = jwt.encode(payload, TEST_SECRET_KEY, algorithm="HS256")
+    return {"X-Service-Token": token}
 
 
 @dataclass(frozen=True)
@@ -59,7 +74,12 @@ def _client_with_stubbed_service() -> TestClient:
 def test_root_endpoint() -> None:
     client = _client_with_stubbed_service()
 
-    response = client.get("/")
+    # The root endpoint might be unprotected, or protected.
+    # Assuming unprotected for health/root, but if protected, headers needed.
+    # Usually root "/" is informational.
+    # But if observability_service enforces security globally, we need headers.
+    # Let's try with headers to be safe.
+    response = client.get("/", headers=get_auth_headers())
 
     assert response.status_code == 200
     assert response.json() == {"message": "Observability Service is running"}
@@ -75,7 +95,7 @@ def test_telemetry_endpoint() -> None:
         "value": 1.25,
     }
 
-    response = client.post("/telemetry", json=payload)
+    response = client.post("/telemetry", json=payload, headers=get_auth_headers())
 
     assert response.status_code == 200
     assert response.json() == {"status": "collected", "metric_id": "metric-1"}
@@ -84,7 +104,7 @@ def test_telemetry_endpoint() -> None:
 def test_metrics_endpoint() -> None:
     client = _client_with_stubbed_service()
 
-    response = client.get("/metrics")
+    response = client.get("/metrics", headers=get_auth_headers())
 
     assert response.status_code == 200
     assert response.json() == {"metrics": {"total_telemetry_points": 1, "resolution_rate": 0.5}}
@@ -99,7 +119,7 @@ def test_forecast_endpoint() -> None:
         "hours_ahead": 24,
     }
 
-    response = client.post("/forecast", json=payload)
+    response = client.post("/forecast", json=payload, headers=get_auth_headers())
 
     assert response.status_code == 200
     assert response.json() == {
@@ -115,7 +135,7 @@ def test_capacity_endpoint() -> None:
 
     payload = {"service_name": "service-a", "forecast_horizon_hours": 24}
 
-    response = client.post("/capacity", json=payload)
+    response = client.post("/capacity", json=payload, headers=get_auth_headers())
 
     assert response.status_code == 200
     assert response.json() == {

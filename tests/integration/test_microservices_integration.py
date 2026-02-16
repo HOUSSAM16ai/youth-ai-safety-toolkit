@@ -9,6 +9,10 @@
 - Event Bus
 """
 
+import os
+from datetime import UTC, datetime, timedelta
+
+import jwt
 import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
@@ -17,6 +21,19 @@ from app.core.event_bus_impl import Event, EventBus
 from microservices.memory_agent.main import create_app as create_memory_app
 from microservices.planning_agent.main import create_app as create_planning_app
 from microservices.user_service.main import create_app as create_user_app
+
+TEST_SECRET_KEY = os.environ.get("SECRET_KEY", "super_secret_key_change_in_production")
+
+
+def get_auth_headers() -> dict[str, str]:
+    """توليد ترويسة مصادقة صالحة للخدمات."""
+    payload = {
+        "sub": "api-gateway",
+        "exp": datetime.now(UTC) + timedelta(minutes=5),
+        "iat": datetime.now(UTC),
+    }
+    token = jwt.encode(payload, TEST_SECRET_KEY, algorithm="HS256")
+    return {"X-Service-Token": token}
 
 
 @pytest.fixture
@@ -55,7 +72,7 @@ class TestMicroservicesHealth:
     async def test_planning_agent_health(self, planning_app: FastAPI) -> None:
         """يختبر صحة Planning Agent."""
         async with _build_client(planning_app) as client:
-            response = await client.get("/health")
+            response = await client.get("/health", headers=get_auth_headers())
             assert response.status_code == 200
             data = response.json()
             assert data["service"] == "planning-agent"
@@ -65,7 +82,7 @@ class TestMicroservicesHealth:
     async def test_memory_agent_health(self, memory_app: FastAPI) -> None:
         """يختبر صحة Memory Agent."""
         async with _build_client(memory_app) as client:
-            response = await client.get("/health")
+            response = await client.get("/health", headers=get_auth_headers())
             assert response.status_code == 200
             data = response.json()
             assert data["service"] == "memory-agent"
@@ -75,7 +92,7 @@ class TestMicroservicesHealth:
     async def test_user_service_health(self, user_app: FastAPI) -> None:
         """يختبر صحة User Service."""
         async with _build_client(user_app) as client:
-            response = await client.get("/health")
+            response = await client.get("/health", headers=get_auth_headers())
             assert response.status_code == 200
             data = response.json()
             assert data["service"] == "user-service"
@@ -95,6 +112,7 @@ class TestPlanningAgentAPI:
                     "goal": "تعلم البرمجة",
                     "context": ["مبتدئ", "Python"],
                 },
+                headers=get_auth_headers(),
             )
             assert response.status_code == 200
             data = response.json()
@@ -106,14 +124,16 @@ class TestPlanningAgentAPI:
     async def test_list_plans(self, planning_app: FastAPI) -> None:
         """يختبر عرض الخطط."""
         async with _build_client(planning_app) as client:
+            headers = get_auth_headers()
             # إنشاء خطة أولاً
             await client.post(
                 "/plans",
                 json={"goal": "تعلم Python", "context": []},
+                headers=headers,
             )
 
             # عرض الخطط
-            response = await client.get("/plans")
+            response = await client.get("/plans", headers=headers)
             assert response.status_code == 200
             data = response.json()
             assert isinstance(data, list)
@@ -133,6 +153,7 @@ class TestMemoryAgentAPI:
                     "content": "تعلمت اليوم عن FastAPI",
                     "tags": ["learning", "fastapi"],
                 },
+                headers=get_auth_headers(),
             )
             assert response.status_code == 200
             data = response.json()
@@ -144,6 +165,7 @@ class TestMemoryAgentAPI:
     async def test_search_memories(self, memory_app: FastAPI) -> None:
         """يختبر البحث في الذاكرة."""
         async with _build_client(memory_app) as client:
+            headers = get_auth_headers()
             # إنشاء ذاكرة أولاً
             await client.post(
                 "/memories",
@@ -151,10 +173,11 @@ class TestMemoryAgentAPI:
                     "content": "FastAPI is awesome",
                     "tags": ["fastapi"],
                 },
+                headers=headers,
             )
 
             # البحث
-            response = await client.get("/memories/search?query=fastapi")
+            response = await client.get("/memories/search?query=fastapi", headers=headers)
             assert response.status_code == 200
             data = response.json()
             assert isinstance(data, list)
@@ -174,6 +197,7 @@ class TestUserServiceAPI:
                     "name": "أحمد محمد",
                     "email": "ahmed@example.com",
                 },
+                headers=get_auth_headers(),
             )
             assert response.status_code == 200
             data = response.json()
@@ -185,6 +209,7 @@ class TestUserServiceAPI:
     async def test_list_users(self, user_app: FastAPI) -> None:
         """يختبر عرض المستخدمين."""
         async with _build_client(user_app) as client:
+            headers = get_auth_headers()
             # إنشاء مستخدم أولاً
             await client.post(
                 "/users",
@@ -192,10 +217,11 @@ class TestUserServiceAPI:
                     "name": "فاطمة علي",
                     "email": "fatima@example.com",
                 },
+                headers=headers,
             )
 
             # عرض المستخدمين
-            response = await client.get("/users")
+            response = await client.get("/users", headers=headers)
             assert response.status_code == 200
             data = response.json()
             assert isinstance(data, list)
@@ -276,6 +302,7 @@ class TestEndToEndScenarios:
                     "name": "محمد أحمد",
                     "email": "mohamed@example.com",
                 },
+                headers=get_auth_headers(),
             )
             assert user_response.status_code == 200
             user_data = user_response.json()
@@ -289,6 +316,7 @@ class TestEndToEndScenarios:
                     "goal": "إتقان FastAPI",
                     "context": ["متوسط", "Python"],
                 },
+                headers=get_auth_headers(),
             )
             assert plan_response.status_code == 200
             plan_data = plan_response.json()
@@ -302,6 +330,7 @@ class TestEndToEndScenarios:
                     "content": f"المستخدم {user_id} بدأ الخطة {plan_id}",
                     "tags": ["progress", "learning"],
                 },
+                headers=get_auth_headers(),
             )
             assert memory_response.status_code == 200
 
