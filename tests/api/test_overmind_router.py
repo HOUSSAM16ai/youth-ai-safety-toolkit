@@ -1,8 +1,9 @@
 # tests/api/test_overmind_router.py
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 from httpx import AsyncClient
-from unittest.mock import AsyncMock, patch, MagicMock
 
 
 @pytest.mark.asyncio
@@ -25,7 +26,7 @@ async def test_create_mission_endpoint(async_client: AsyncClient, db_session):
 
         # The lock object itself
         mock_lock = AsyncMock()
-        mock_lock.acquire.return_value = True # acquire is awaitable, returns True
+        mock_lock.acquire.return_value = True  # acquire is awaitable, returns True
         mock_lock.release.return_value = None
 
         # client.lock() is synchronous in redis-py (even asyncio version returns a Lock object, it doesn't await creation)
@@ -38,7 +39,9 @@ async def test_create_mission_endpoint(async_client: AsyncClient, db_session):
         mock_redis_cls.return_value = mock_redis_client
 
         # Also patch factory.create_overmind to avoid deep execution that needs dependencies
-        with patch("app.services.overmind.entrypoint.create_overmind", new_callable=AsyncMock) as mock_create_overmind:
+        with patch(
+            "app.services.overmind.entrypoint.create_overmind", new_callable=AsyncMock
+        ) as mock_create_overmind:
             mock_orchestrator = AsyncMock()
             mock_create_overmind.return_value = mock_orchestrator
 
