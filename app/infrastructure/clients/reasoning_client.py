@@ -6,7 +6,7 @@ Decouples the Monolith from Deep Reasoning Logic.
 
 from __future__ import annotations
 
-from typing import Final, Any
+from typing import Any, Final
 
 import httpx
 
@@ -44,13 +44,7 @@ class ReasoningClient:
         """
         url = f"{self.base_url}/execute"
 
-        payload = {
-            "caller_id": "app-backend",
-            "action": "reason",
-            "payload": {
-                "query": query
-            }
-        }
+        payload = {"caller_id": "app-backend", "action": "reason", "payload": {"query": query}}
 
         client = await self._get_client()
         try:

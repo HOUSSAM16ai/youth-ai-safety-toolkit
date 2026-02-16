@@ -52,8 +52,7 @@ class StrategistAgent(AgentPlanner):
         try:
             # استخدام خدمة التخطيط المستقلة (Decoupled Microservice Call)
             plan_data = await planning_client.create_plan(
-                objective=objective,
-                context=context.shared_memory
+                objective=objective, context=context.shared_memory
             )
 
             # تحديث الذاكرة المشتركة

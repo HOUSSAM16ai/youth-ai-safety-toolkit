@@ -6,8 +6,8 @@
 
 import importlib
 import importlib.util
-from types import SimpleNamespace
 import json
+from types import SimpleNamespace
 
 
 def _dspy_dependencies_available() -> bool:
@@ -77,7 +77,9 @@ class GeneratePlan(dspy.Signature):
 
     strategy_name = dspy.OutputField(desc="A creative and descriptive name for the strategy.")
     reasoning = dspy.OutputField(desc="Explanation of why this strategy was chosen.")
-    plan_steps = dspy.OutputField(desc="A list of steps, where each step is a dictionary with keys: 'name', 'description', 'tool_hint'.")
+    plan_steps = dspy.OutputField(
+        desc="A list of steps, where each step is a dictionary with keys: 'name', 'description', 'tool_hint'."
+    )
 
 
 class CritiquePlan(dspy.Signature):

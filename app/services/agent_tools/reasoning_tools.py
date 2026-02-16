@@ -22,7 +22,10 @@ logger = logging.getLogger("agent_tools")
     parameters={
         "type": "object",
         "properties": {
-            "query": {"type": "string", "description": "The complex problem or question to analyze."},
+            "query": {
+                "type": "string",
+                "description": "The complex problem or question to analyze.",
+            },
         },
         "required": ["query"],
     },

@@ -5,8 +5,8 @@
 باستخدام استراتيجيات شجرة الأفكار (Tree of Thought) وغيرها.
 """
 
-from contextlib import asynccontextmanager
 import time
+from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI
 from pydantic import BaseModel, Field
@@ -75,9 +75,7 @@ def _build_router() -> APIRouter:
                 # Extract parameters
                 query = request.payload.get("query", "")
                 if not query:
-                     return AgentResponse(
-                        status="error", error="Query is required for reasoning."
-                    )
+                    return AgentResponse(status="error", error="Query is required for reasoning.")
 
                 # Initialize Components
                 ai_client = SimpleAIClient()
@@ -96,7 +94,9 @@ def _build_router() -> APIRouter:
 
                 result_data = {
                     "answer": str(result),
-                    "logic_trace": ["Executed R-MCTS Workflow"], # Full trace requires capturing events
+                    "logic_trace": [
+                        "Executed R-MCTS Workflow"
+                    ],  # Full trace requires capturing events
                 }
 
                 return AgentResponse(

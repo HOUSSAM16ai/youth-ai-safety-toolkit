@@ -1,17 +1,17 @@
 from uuid import UUID, uuid4
-from typing import Optional
 
-from sqlmodel import JSON, Field, SQLModel
 from pydantic import BaseModel
+from sqlmodel import JSON, Field, SQLModel
 
 
 class PlanStep(BaseModel):
     """
     خطوة واحدة في الخطة الاستراتيجية.
     """
+
     name: str
     description: str
-    tool_hint: Optional[str] = None
+    tool_hint: str | None = None
 
 
 class Plan(SQLModel, table=True):

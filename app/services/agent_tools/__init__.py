@@ -17,8 +17,6 @@ from .cognitive_tools import (
     refine_text,
     summarize_text,
 )
-from .reasoning_tools import reason_deeply
-
 from .core import (
     canonicalize_tool_name,
     get_tool,
@@ -59,6 +57,7 @@ from .memory_tools import (
     memory_get,
     memory_put,
 )
+from .reasoning_tools import reason_deeply
 from .search_tools import (
     code_index_project,
     code_search_lexical,
@@ -142,6 +141,7 @@ def summarize_text_tool(**kwargs) -> None:
 
 def refine_text_tool(**kwargs) -> None:
     return refine_text(**kwargs)
+
 
 def reason_deeply_tool(**kwargs) -> None:
     return reason_deeply(**kwargs)
@@ -260,8 +260,8 @@ __all__ = [
     "memory_put_tool",
     "read_bulk_files_tool",
     "read_file_tool",
-    "refine_text_tool",
     "reason_deeply_tool",
+    "refine_text_tool",
     "reload_deep_struct_map_tool",
     "resolve_tool_name",
     "summarize_text_tool",

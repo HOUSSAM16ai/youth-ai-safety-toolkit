@@ -7,7 +7,7 @@
 import ast
 import json
 import logging
-from typing import TypedDict, Any
+from typing import TypedDict
 
 from langgraph.graph import END, StateGraph
 
@@ -56,7 +56,7 @@ def generate_node(state: PlanningState) -> dict:
     gen_context = current_context
     if feedback:
         if isinstance(gen_context, list):
-            gen_context = gen_context[:] + [f"Critique Feedback: {feedback}"]
+            gen_context = [*gen_context, f"Critique Feedback: {feedback}"]
         elif isinstance(gen_context, dict):
             gen_context = {**gen_context, "critique_feedback": feedback}
 
@@ -86,8 +86,11 @@ def generate_node(state: PlanningState) -> dict:
                     steps = ast.literal_eval(clean)
                 except Exception:
                     # Fallback to simple string parsing if JSON fails
-                    steps = [{"name": "Step", "description": line, "tool_hint": None}
-                             for line in clean.split("\n") if line.strip()]
+                    steps = [
+                        {"name": "Step", "description": line, "tool_hint": None}
+                        for line in clean.split("\n")
+                        if line.strip()
+                    ]
 
         if not isinstance(steps, list):
             steps = [{"name": "Plan Execution", "description": str(steps), "tool_hint": None}]
@@ -102,7 +105,7 @@ def generate_node(state: PlanningState) -> dict:
         "plan": steps,
         "strategy_name": strategy_name,
         "reasoning": reasoning,
-        "iterations": state.get("iterations", 0) + 1
+        "iterations": state.get("iterations", 0) + 1,
     }
 
 

@@ -6,7 +6,7 @@ Decouples the Monolith from the Planning Logic.
 
 from __future__ import annotations
 
-from typing import Final, Any
+from typing import Any, Final
 
 import httpx
 
@@ -49,10 +49,7 @@ class PlanningClient:
         # If context is a list of strings, pass it as is (API supports both but prefers dict for future)
         # If context is CollaborationContext.shared_memory (dict), pass it.
 
-        payload = {
-            "objective": objective,
-            "context": context
-        }
+        payload = {"objective": objective, "context": context}
 
         client = await self._get_client()
         try:
@@ -60,9 +57,8 @@ class PlanningClient:
             response = await client.post(url, json=payload)
             response.raise_for_status()
 
-            data = response.json()
             # PlanResponse structure: {plan_id, goal, strategy_name, reasoning, steps: [...]}
-            return data
+            return response.json()
 
         except Exception as e:
             logger.error(f"Planning failed: {e}", exc_info=True)
