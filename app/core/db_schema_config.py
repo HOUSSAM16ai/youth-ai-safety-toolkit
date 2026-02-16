@@ -349,6 +349,7 @@ REQUIRED_SCHEMA: Final[dict[str, TableSchemaConfig]] = {
             "status",
             "initiator_id",
             "active_plan_id",
+            "idempotency_key",
             "locked",
             "result_summary",
             "total_cost_usd",
@@ -357,15 +358,20 @@ REQUIRED_SCHEMA: Final[dict[str, TableSchemaConfig]] = {
             "updated_at",
         ],
         "auto_fix": {
+            "idempotency_key": 'ALTER TABLE "missions" ADD COLUMN "idempotency_key" VARCHAR(128)',
             "locked": 'ALTER TABLE "missions" ADD COLUMN "locked" BOOLEAN DEFAULT FALSE',
             "result_summary": 'ALTER TABLE "missions" ADD COLUMN "result_summary" TEXT',
             "total_cost_usd": 'ALTER TABLE "missions" ADD COLUMN "total_cost_usd" FLOAT',
             "adaptive_cycles": 'ALTER TABLE "missions" ADD COLUMN "adaptive_cycles" INTEGER DEFAULT 0',
         },
         "indexes": {
-            "initiator_id": 'CREATE INDEX IF NOT EXISTS "ix_missions_initiator_id" ON "missions"("initiator_id")'
+            "initiator_id": 'CREATE INDEX IF NOT EXISTS "ix_missions_initiator_id" ON "missions"("initiator_id")',
+            "idempotency_key": 'CREATE UNIQUE INDEX IF NOT EXISTS "ix_missions_idempotency_key" ON "missions"("idempotency_key")',
         },
-        "index_names": {"initiator_id": "ix_missions_initiator_id"},
+        "index_names": {
+            "initiator_id": "ix_missions_initiator_id",
+            "idempotency_key": "ix_missions_idempotency_key",
+        },
         "create_table": (
             'CREATE TABLE IF NOT EXISTS "missions"('
             '"id" SERIAL PRIMARY KEY,'
@@ -373,6 +379,7 @@ REQUIRED_SCHEMA: Final[dict[str, TableSchemaConfig]] = {
             "\"status\" VARCHAR(50) DEFAULT 'pending',"
             '"initiator_id" INTEGER NOT NULL REFERENCES "users"("id"),'
             '"active_plan_id" INTEGER,'
+            '"idempotency_key" VARCHAR(128) UNIQUE,'
             '"locked" BOOLEAN DEFAULT FALSE,'
             '"result_summary" TEXT,'
             '"total_cost_usd" FLOAT,'
