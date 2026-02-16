@@ -74,18 +74,11 @@ class CircuitBreaker:
             # Count failure for network/system errors
             self.failures += 1
             self.last_failure_time = time.time()
-            logger.error(
-                f"Circuit '{self.name}' recorded failure #{self.failures}: {e!s}"
-            )
+            logger.error(f"Circuit '{self.name}' recorded failure #{self.failures}: {e!s}")
 
-            if (
-                self.state == CircuitState.HALF_OPEN
-                or self.failures >= self.failure_threshold
-            ):
+            if self.state == CircuitState.HALF_OPEN or self.failures >= self.failure_threshold:
                 self.state = CircuitState.OPEN
-                logger.error(
-                    f"Circuit '{self.name}' threshold reached. State changed to OPEN."
-                )
+                logger.error(f"Circuit '{self.name}' threshold reached. State changed to OPEN.")
 
             raise e
 
@@ -170,11 +163,13 @@ class GatewayProxy:
                     if can_retry and attempt < retries:
                         sleep_time = settings.RETRY_BACKOFF_FACTOR * (2**attempt)
                         logger.warning(
-                            f"Retry {attempt+1}/{retries} for {url} ({request.method}) due to {exc}. Sleeping {sleep_time}s"
+                            f"Retry {attempt + 1}/{retries} for {url} ({request.method}) due to {exc}. Sleeping {sleep_time}s"
                         )
                         await asyncio.sleep(sleep_time)
                     else:
-                        logger.error(f"Request failed for {url}: {exc} (Retries exhausted or unsafe)")
+                        logger.error(
+                            f"Request failed for {url}: {exc} (Retries exhausted or unsafe)"
+                        )
                         raise exc
                 except Exception as exc:
                     # Other errors (e.g. WriteError) - do not retry blindly
@@ -185,7 +180,7 @@ class GatewayProxy:
             # But to satisfy static analysis (RET503)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Proxy retry loop exhausted without result."
+                detail="Proxy retry loop exhausted without result.",
             )
 
         try:

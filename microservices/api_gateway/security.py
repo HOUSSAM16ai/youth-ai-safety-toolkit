@@ -24,9 +24,7 @@ async def verify_gateway_request(
         raise HTTPException(status_code=401, detail="Missing authentication credentials")
 
     try:
-        return jwt.decode(
-            credentials.credentials, settings.SECRET_KEY, algorithms=["HS256"]
-        )
+        return jwt.decode(credentials.credentials, settings.SECRET_KEY, algorithms=["HS256"])
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired") from None
     except jwt.InvalidTokenError:

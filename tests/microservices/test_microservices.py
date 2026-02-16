@@ -64,11 +64,7 @@ def test_memory_agent_stores_and_searches_entries() -> None:
     assert create_response.status_code == 200
     entry_id = create_response.json()["entry_id"]
 
-    search_response = client.get(
-        "/memories/search",
-        params={"query": "نواة"},
-        headers=headers
-    )
+    search_response = client.get("/memories/search", params={"query": "نواة"}, headers=headers)
     assert search_response.status_code == 200
     results = search_response.json()
 

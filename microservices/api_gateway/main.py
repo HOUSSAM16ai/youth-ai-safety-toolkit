@@ -154,14 +154,10 @@ async def reasoning_proxy(path: str, request: Request) -> StreamingResponse:
 
 # Catch-all for Core Kernel (Legacy Monolith)
 # This must be defined last to act as a fallback
-@app.api_route(
-    "/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"]
-)
+@app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
 async def core_kernel_proxy(path: str, request: Request) -> StreamingResponse:
     return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, path)
 
 
 if __name__ == "__main__":
-    uvicorn.run(
-        "microservices.api_gateway.main:app", host="0.0.0.0", port=8000, reload=True
-    )
+    uvicorn.run("microservices.api_gateway.main:app", host="0.0.0.0", port=8000, reload=True)

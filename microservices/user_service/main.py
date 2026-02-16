@@ -163,8 +163,7 @@ def create_app(settings: UserServiceSettings | None = None) -> FastAPI:
 
     # تطبيق Zero Trust: التحقق من الهوية عند البوابة
     app.include_router(
-        _build_router(effective_settings),
-        dependencies=[Depends(verify_service_token)]
+        _build_router(effective_settings), dependencies=[Depends(verify_service_token)]
     )
 
     return app

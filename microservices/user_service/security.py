@@ -4,7 +4,9 @@ from fastapi import Header, HTTPException
 from microservices.user_service.settings import get_settings
 
 
-def verify_service_token(x_service_token: str | None = Header(None, alias="X-Service-Token")) -> dict:
+def verify_service_token(
+    x_service_token: str | None = Header(None, alias="X-Service-Token"),
+) -> dict:
     """
     التحقق من صحة الرمز المميز للخدمة (Service Token).
     يضمن هذا أن الطلب قادم من بوابة API Gateway الموثوقة.

@@ -127,7 +127,9 @@ def create_app(settings: MemoryAgentSettings | None = None) -> FastAPI:
     setup_exception_handlers(app)
 
     # تطبيق Zero Trust: التحقق من الهوية عند البوابة
-    app.include_router(_build_router(effective_settings), dependencies=[Depends(verify_service_token)])
+    app.include_router(
+        _build_router(effective_settings), dependencies=[Depends(verify_service_token)]
+    )
 
     return app
 
