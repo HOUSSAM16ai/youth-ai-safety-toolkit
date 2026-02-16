@@ -240,9 +240,9 @@ class OvermindOrchestrator:
 
                         if isinstance(tool_output, list):
                             # Empty list or list containing error item
-                            if len(tool_output) == 0:
-                                is_failure = True
-                            elif isinstance(tool_output[0], dict) and tool_output[0].get("type") == "error":
+                            if len(tool_output) == 0 or (
+                                isinstance(tool_output[0], dict) and tool_output[0].get("type") == "error"
+                            ):
                                 is_failure = True
 
                         elif isinstance(tool_output, dict):
