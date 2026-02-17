@@ -5,6 +5,7 @@ import pytest
 from app.core.domain.models import Mission, MissionStatus
 from app.services.overmind.domain.cognitive import SuperBrain
 from app.services.overmind.executor import TaskExecutor
+import app.services.overmind.factory as factory_module
 from app.services.overmind.factory import create_overmind
 from app.services.overmind.orchestrator import OvermindOrchestrator
 from app.services.overmind.state import MissionStateManager
@@ -114,22 +115,22 @@ async def test_overmind_factory_assembly(mock_db_session):
     """
     registry: dict[str, object] = {}
     with (
-        patch("app.services.overmind.factory.get_ai_client"),
-        patch("app.services.overmind.factory.get_registry", return_value=registry),
-        patch("app.services.overmind.factory.MissionStateManager"),
-        patch("app.services.overmind.factory.TaskExecutor"),
-        patch("app.services.overmind.factory.StrategistAgent") as mock_strat,
-        patch("app.services.overmind.factory.ArchitectAgent"),
-        patch("app.services.overmind.factory.OperatorAgent"),
-        patch("app.services.overmind.factory.AuditorClient"),
-        # Use string path for patching if the direct import in the test file might mismatch
-        patch("app.services.overmind.factory.LangGraphOvermindEngine") as mock_brain_cls,
+        patch.object(factory_module, "get_ai_client"),
+        patch.object(factory_module, "get_registry", return_value=registry),
+        patch.object(factory_module, "MissionStateManager"),
+        patch.object(factory_module, "TaskExecutor"),
+        patch.object(factory_module, "StrategistAgent") as mock_strat,
+        patch.object(factory_module, "ArchitectAgent"),
+        patch.object(factory_module, "OperatorAgent"),
+        patch.object(factory_module, "AuditorClient"),
+        # Use patch.object to ensure we mock the class in the module where create_overmind is defined
+        patch.object(factory_module, "LangGraphOvermindEngine") as mock_brain_cls,
         patch("app.services.chat.tools.content.register_content_tools"),
     ):
         mock_db = AsyncMock()
 
         # Execute
-        result = create_overmind(mock_db)
+        result = await create_overmind(mock_db)
         if hasattr(result, "__await__"):
             orchestrator = await result
         else:
