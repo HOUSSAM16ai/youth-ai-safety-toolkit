@@ -73,8 +73,8 @@ pyyaml==6.0.1
 # Note: Do not use [inference] extra as it is missing in 1.x versions and causes backtracking
 huggingface-hub>=0.23.0
 sentence-transformers
-dspy-ai==2.5.43
-openai==1.108.1
+dspy-ai
+openai
 # llama-index meta-package removed to reduce bloat/conflicts
 llama-index-core==0.14.13
 llama-index-instrumentation==0.4.2
@@ -89,8 +89,8 @@ passlib
 argon2-cffi
 vecs==0.4.5
 flupy==1.2.3
-litellm==1.50.0
-dspy==2.5.7
+litellm
+dspy
 llama-index-workflows==2.14.0
 langchain-openai>=0.1.0
 langchain-community>=0.2.0
