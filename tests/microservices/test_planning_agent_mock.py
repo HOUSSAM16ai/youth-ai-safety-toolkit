@@ -16,15 +16,24 @@ async def test_generate_plan_success():
         AI_BASE_URL="http://test/api",
     )
 
-    mock_result = {"plan": ["Step 1", "Step 2"]}
+    # Mock result matching the new structure in graph.py
+    mock_result = {
+        "plan": ["Step 1", "Step 2"],
+        "strategy_name": "Test Strategy",
+        "reasoning": "Test Reasoning",
+        "iterations": 1,
+    }
 
     # Patch the graph object imported in main.py
     with patch("microservices.planning_agent.main.graph") as mock_graph:
         mock_graph.invoke.return_value = mock_result
 
-        steps = await _generate_plan("Learn Python", [], mock_settings)
+        result = await _generate_plan("Learn Python", [], mock_settings)
 
-        assert steps == ["Step 1", "Step 2"]
+        # Expected result is now a dict
+        assert result["steps"] == ["Step 1", "Step 2"]
+        assert result["strategy_name"] == "Test Strategy"
+        assert result["reasoning"] == "Test Reasoning"
         mock_graph.invoke.assert_called_once()
 
 
@@ -36,11 +45,15 @@ async def test_generate_plan_fallback_on_error():
     with patch("microservices.planning_agent.main.graph") as mock_graph:
         mock_graph.invoke.side_effect = Exception("Graph Error")
 
-        steps = await _generate_plan("Learn Python", [], mock_settings)
+        result = await _generate_plan("Learn Python", [], mock_settings)
 
-        # Verify fallback steps are returned
+        # Verify fallback structure
+        assert isinstance(result, dict)
+        assert result["strategy_name"] == "Fallback Strategy"
+        steps = result["steps"]
         assert len(steps) >= 3
-        assert "تحليل هدف" in steps[0]
+        # Check description in first step
+        assert "Analyze Goal" in steps[0]["name"]
 
 
 @pytest.mark.asyncio
@@ -48,7 +61,11 @@ async def test_generate_plan_fallback_no_key():
     """Test fallback when no API key is present."""
     mock_settings = PlanningAgentSettings(OPENROUTER_API_KEY=None)
 
-    steps = await _generate_plan("Learn Python", [], mock_settings)
+    result = await _generate_plan("Learn Python", [], mock_settings)
 
+    # Verify fallback structure
+    assert isinstance(result, dict)
+    assert result["strategy_name"] == "Fallback Strategy"
+    steps = result["steps"]
     assert len(steps) >= 3
-    assert "تحليل هدف" in steps[0]
+    assert "Analyze Goal" in steps[0]["name"]

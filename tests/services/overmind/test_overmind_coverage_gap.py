@@ -124,6 +124,7 @@ async def test_overmind_factory_assembly(mock_db_session):
         patch("app.services.overmind.factory.AuditorClient"),
         patch("app.services.overmind.factory.LangGraphOvermindEngine") as mock_brain_cls,
         patch("app.services.chat.tools.content.register_content_tools"),
+        # Important: StrategistAgent now uses PlanningClient, we need to ensure it initializes safely
     ):
         mock_db = AsyncMock()
 
