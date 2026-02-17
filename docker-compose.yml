@@ -71,7 +71,6 @@ services:
     networks:
       - appnet
     environment:
-      CORE_KERNEL_URL: http://core-kernel:8000
       PLANNING_AGENT_URL: http://planning-agent:8000
       MEMORY_AGENT_URL: http://memory-agent:8000
       USER_SERVICE_URL: http://user-service:8000
@@ -84,7 +83,6 @@ services:
       - user-service
       - research-agent
       - reasoning-agent
-      - core-kernel
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
