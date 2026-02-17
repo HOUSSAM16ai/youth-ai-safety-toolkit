@@ -8,7 +8,6 @@ class Settings(BaseSettings):
     """
 
     # Service URLs (Defaults for local development/Docker Compose)
-    CORE_KERNEL_URL: str = "http://core-kernel:8000"
     PLANNING_AGENT_URL: str = "http://planning-agent:8000"
     MEMORY_AGENT_URL: str = "http://memory-agent:8000"
     USER_SERVICE_URL: str = "http://user-service:8000"

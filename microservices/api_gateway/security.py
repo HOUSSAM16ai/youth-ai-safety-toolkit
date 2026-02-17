@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import jwt
 from fastapi import HTTPException, Request, Security
@@ -38,7 +38,7 @@ def create_service_token() -> str:
     """
     payload = {
         "sub": "api-gateway",
-        "exp": datetime.now(datetime.UTC) + timedelta(minutes=5),
-        "iat": datetime.now(datetime.UTC),
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=5),
+        "iat": datetime.now(timezone.utc),
     }
     return jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")

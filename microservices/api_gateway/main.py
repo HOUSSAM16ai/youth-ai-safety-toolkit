@@ -46,7 +46,6 @@ async def health_check():
     Returns a detailed status report.
     """
     services = {
-        "core_kernel": settings.CORE_KERNEL_URL,
         "planning_agent": settings.PLANNING_AGENT_URL,
         "memory_agent": settings.MEMORY_AGENT_URL,
         "user_service": settings.USER_SERVICE_URL,
@@ -152,11 +151,6 @@ async def reasoning_proxy(path: str, request: Request) -> StreamingResponse:
     )
 
 
-# Catch-all for Core Kernel (Legacy Monolith)
-# This must be defined last to act as a fallback
-@app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
-async def core_kernel_proxy(path: str, request: Request) -> StreamingResponse:
-    return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, path)
 
 
 if __name__ == "__main__":
