@@ -376,13 +376,37 @@ class MissionStateManager:
             while True:
                 event = await queue.get()
 
+                # Handle dict events from Redis Bridge (which lack .id attribute)
+                if isinstance(event, dict):
+                    try:
+                        # Attempt to reconstruct MissionEvent from dict
+                        # This ensures downstream consumers receive the expected type
+                        evt_type = event.get("event_type")
+                        payload = event.get("payload_json") or event.get("data") or {}
+
+                        # Create transient MissionEvent (not attached to session)
+                        event = MissionEvent(
+                            mission_id=mission_id,
+                            event_type=evt_type,
+                            payload_json=payload,
+                            created_at=utc_now(),
+                        )
+                    except Exception as e:
+                        logger.warning(f"Failed to convert Redis event dict to MissionEvent: {e}")
+                        # Fallback: skip this malformed event to avoid crashing the stream
+                        continue
+
                 # Deduplicate: Skip if we already saw this ID from DB
-                if event.id and event.id <= last_event_id:
+                # Safety check: ensure event has .id attribute
+                event_id = getattr(event, "id", None)
+
+                if event_id and event_id <= last_event_id:
                     continue
 
                 yield event
-                if event.id:
-                    last_event_id = max(last_event_id, event.id)
+
+                if event_id:
+                    last_event_id = max(last_event_id, event_id)
 
                 if self._is_terminal_event(event):
                     return
