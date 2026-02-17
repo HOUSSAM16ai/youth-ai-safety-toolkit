@@ -28,8 +28,8 @@ python-multipart==0.0.22
 Jinja2==3.1.6
 typer==0.20.0
 tenacity==8.2.3
-langgraph>=1.0.0
-langchain-core>=0.2.39
+langgraph==1.0.8
+langchain-core>=0.3.0
 
 # Supporting Libraries
 click>=8.0.0
@@ -98,4 +98,4 @@ duckduckgo-search>=6.0.0
 tavily-python
 firecrawl-py
 redis>=5.0.0
-langgraph-sdk>=0.3.0
+langgraph-sdk==0.3.6
