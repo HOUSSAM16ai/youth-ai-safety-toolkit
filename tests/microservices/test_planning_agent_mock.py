@@ -51,6 +51,7 @@ async def test_generate_plan_fallback_on_error():
         assert isinstance(result, dict)
         assert result["strategy_name"] == "Fallback Strategy"
         steps = result["steps"]
+        assert isinstance(steps, list)
         assert len(steps) >= 3
         # Check description in first step
         assert "Analyze Goal" in steps[0]["name"]
@@ -67,5 +68,6 @@ async def test_generate_plan_fallback_no_key():
     assert isinstance(result, dict)
     assert result["strategy_name"] == "Fallback Strategy"
     steps = result["steps"]
+    assert isinstance(steps, list)
     assert len(steps) >= 3
     assert "Analyze Goal" in steps[0]["name"]
