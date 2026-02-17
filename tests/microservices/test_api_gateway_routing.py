@@ -1,4 +1,3 @@
-
 import os
 from unittest.mock import AsyncMock, patch
 
@@ -6,14 +5,17 @@ from unittest.mock import AsyncMock, patch
 os.environ["SECRET_KEY"] = "test_secret_key"
 
 from fastapi.testclient import TestClient
+
 from microservices.api_gateway.main import app, proxy_handler
 from microservices.api_gateway.security import verify_gateway_request
 
 client = TestClient(app)
 
+
 # Override security dependency
 async def override_verify_gateway_request():
     return {"sub": "test-user"}
+
 
 app.dependency_overrides[verify_gateway_request] = override_verify_gateway_request
 
@@ -28,6 +30,7 @@ def test_planning_route_proxies_correctly(mock_forward):
     # But the view just returns whatever forward returns.
     # Let's mock a simple response.
     from fastapi.responses import JSONResponse
+
     mock_forward.return_value = JSONResponse(content={"status": "ok"})
 
     response = client.get("/api/v1/planning/test")
@@ -55,6 +58,7 @@ def test_unknown_route_returns_404(mock_forward):
 
     # Mock response for the catch-all case (if it runs)
     from fastapi.responses import JSONResponse
+
     mock_forward.return_value = JSONResponse(content={"status": "fallback"})
 
     response = client.get("/unknown/route")

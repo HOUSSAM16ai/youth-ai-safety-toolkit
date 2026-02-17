@@ -151,7 +151,5 @@ async def reasoning_proxy(path: str, request: Request) -> StreamingResponse:
     )
 
 
-
-
 if __name__ == "__main__":
     uvicorn.run("microservices.api_gateway.main:app", host="0.0.0.0", port=8000, reload=True)
