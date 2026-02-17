@@ -24,8 +24,8 @@ python-multipart==0.0.22
 Jinja2==3.1.6
 typer==0.20.0
 tenacity==8.2.3
-langgraph==0.2.39
-langchain-core>=0.2.39
+langgraph==1.0.8
+langchain-core>=0.3.0
 redis>=5.0.0
 
 # Supporting Libraries
@@ -63,9 +63,9 @@ openai
 # llama-index meta-package removed to reduce bloat/conflicts
 llama-index-core==0.14.13
 llama-index-instrumentation==0.4.2
-llama-index-workflows==2.14.0
+llama-index-workflows
 llama-index-readers-file
 llama-index-vector-stores-supabase
 llama-index-embeddings-huggingface
-langgraph-sdk==0.1.39
+langgraph-sdk==0.3.6
 dspy
