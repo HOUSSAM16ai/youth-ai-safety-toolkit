@@ -13,14 +13,17 @@ from dataclasses import dataclass
 import httpx
 
 from microservices.orchestrator_service.src.core.ai_config import get_ai_config
-from microservices.orchestrator_service.src.core.cognitive_cache import CognitiveResonanceEngine, get_cognitive_engine
-from microservices.orchestrator_service.src.core.interfaces.llm import LLMClient
-from microservices.orchestrator_service.src.core.types import JSONDict
-from microservices.orchestrator_service.src.services.llm.safety_net import SafetyNetService
+from microservices.orchestrator_service.src.core.cognitive_cache import (
+    CognitiveResonanceEngine,
+    get_cognitive_engine,
+)
 from microservices.orchestrator_service.src.core.gateway.connection import (
     BASE_TIMEOUT,
     ConnectionManager,
 )
+from microservices.orchestrator_service.src.core.interfaces.llm import LLMClient
+from microservices.orchestrator_service.src.core.types import JSONDict
+from microservices.orchestrator_service.src.services.llm.safety_net import SafetyNetService
 
 logger = logging.getLogger(__name__)
 

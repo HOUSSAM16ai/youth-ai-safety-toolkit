@@ -8,6 +8,7 @@ from pathlib import Path
 import yaml
 
 from microservices.orchestrator_service.src.core.logging import get_logger
+
 from . import parsing
 
 _SUBJECT_VARIANTS = {

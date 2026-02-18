@@ -20,8 +20,6 @@ from microservices.orchestrator_service.src.infrastructure.clients.auditor_clien
     AuditorClient,
 )
 from microservices.orchestrator_service.src.services.overmind.agents.architect import ArchitectAgent
-
-# from microservices.orchestrator_service.src.services.overmind.agents.auditor import AuditorAgent  # Removed: Now using Microservice
 from microservices.orchestrator_service.src.services.overmind.agents.operator import OperatorAgent
 from microservices.orchestrator_service.src.services.overmind.agents.strategist import (
     StrategistAgent,
@@ -43,8 +41,11 @@ from microservices.orchestrator_service.src.services.overmind.orchestrator impor
     OvermindOrchestrator,
 )
 from microservices.orchestrator_service.src.services.overmind.state import MissionStateManager
-# استيراد الأدوات (يجب ضمان وجود هذا المسار أو استخدام واجهة بديلة)
+from microservices.orchestrator_service.src.services.tools.content import register_content_tools
 from microservices.orchestrator_service.src.services.tools.registry import get_registry
+from microservices.orchestrator_service.src.services.tools.retrieval import (
+    search_educational_content,
+)
 
 __all__ = ["create_langgraph_service", "create_overmind"]
 
@@ -58,10 +59,6 @@ def _build_engine_with_components(
     """
     # 1. Execution Layer
     registry = get_registry()
-
-    # Register Content tools dynamically to avoid circular dependency
-    from microservices.orchestrator_service.src.services.tools.content import register_content_tools
-    from microservices.orchestrator_service.src.services.tools.retrieval import search_educational_content
 
     register_content_tools(registry)
     registry["search_educational_content"] = search_educational_content
