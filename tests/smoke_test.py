@@ -8,7 +8,6 @@ from unittest.mock import AsyncMock
 import pytest
 
 from app.kernel import RealityKernel
-from app.services.overmind.factory import create_overmind
 
 
 @pytest.mark.asyncio
@@ -27,17 +26,12 @@ async def test_kernel_initialization():
 
 
 @pytest.mark.asyncio
-async def test_overmind_assembly():
-    """Verify Overmind factory assembles components correctly."""
-    # Mock DB Session
-    mock_db = AsyncMock()
-
-    # We might need to mock get_registry or other internal deps if they do IO
-    # For now, let's see if it works with just the DB mock
+async def test_overmind_client_access():
+    """Verify Overmind client can be imported (Factory test removed as deprecated)."""
+    # Previously tested create_overmind factory which is now removed.
+    # Instead, we verify we can import the client entrypoint.
     try:
-        orchestrator = await create_overmind(mock_db)
-        assert orchestrator is not None
-        assert orchestrator.brain is not None
-        assert orchestrator.executor is not None
-    except Exception as e:
-        pytest.fail(f"Overmind assembly failed: {e}")
+        from app.services.overmind.entrypoint import start_mission
+        assert start_mission is not None
+    except ImportError as e:
+        pytest.fail(f"Overmind entrypoint import failed: {e}")

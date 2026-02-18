@@ -19,7 +19,7 @@ class LangGraphDriver(WorkflowEngine):
         try:
             # Lazy import to avoid circular dependencies and ensure isolation
             from app.services.overmind.domain.api_schemas import LangGraphRunRequest
-            from app.services.overmind.factory import create_langgraph_service
+            from app.services.overmind.langgraph.service import create_langgraph_service
 
             service = create_langgraph_service()
             request = LangGraphRunRequest(

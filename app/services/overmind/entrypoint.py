@@ -1,26 +1,23 @@
 """
 Unified Entrypoint for Overmind Missions.
 Implements the Command Pattern to standardize mission execution.
-Ensures Single Control Plane and Source of Truth.
+Ensures Single Control Plane and Source of Truth via Orchestrator Service.
 """
 
-import asyncio
 import logging
+from typing import Any
 
-import redis.asyncio as redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import get_settings
-from app.core.domain.mission import Mission, MissionEventType, MissionStatus
+from app.core.domain.mission import Mission, MissionStatus
+from app.infrastructure.clients.orchestrator_client import orchestrator_client
 from app.services.overmind.domain.types import MissionContext
-from app.services.overmind.factory import create_overmind
-from app.services.overmind.state import MissionStateManager
 
 logger = logging.getLogger(__name__)
 
 
 async def start_mission(
-    session: AsyncSession,
+    session: AsyncSession,  # Kept for compatibility, but unused for local DB creation
     objective: str,
     initiator_id: int,
     context: MissionContext | None = None,
@@ -28,11 +25,11 @@ async def start_mission(
     idempotency_key: str | None = None,
 ) -> Mission:
     """
-    Unified Entrypoint to Start a Mission.
-    Handles Idempotency, Locking, Persistence, and Execution Trigger.
+    Unified Entrypoint to Start a Mission via Orchestrator Service.
+    Handles Idempotency and Execution Trigger remotely.
 
     Args:
-        session: The active database session (request-scoped).
+        session: The active database session (unused in decoupled mode).
         objective: The mission objective.
         initiator_id: The ID of the user initiating the mission.
         context: Optional context dictionary.
@@ -40,101 +37,43 @@ async def start_mission(
         idempotency_key: Optional key to ensure idempotency.
 
     Returns:
-        The created Mission object.
+        The created Mission object (Transient/Proxy).
     """
-    settings = get_settings()
-    # Fallback to localhost if not set (dev env)
-    redis_url = getattr(settings, "REDIS_URL", "redis://redis:6379")
+    try:
+        # Delegate to Orchestrator Service
+        # We wrap the context to match API expected schema
+        api_context = {}
+        if context:
+            # Flatten context if needed or pass as dict
+            if hasattr(context, "dict"):
+                api_context = context.dict()
+            elif isinstance(context, dict):
+                api_context = context
 
-    # 1. Create Mission Record (Pending) in the Single Source of Truth (DB)
-    state_manager = MissionStateManager(session)
-    # Check if mission already exists (Idempotency) happens inside create_mission
-    mission = await state_manager.create_mission(
-        objective, initiator_id, context, idempotency_key=idempotency_key
-    )
+        if force_research:
+            api_context["force_research"] = True
 
-    # If the mission was already created and is running/terminal, we return it.
-    # But we should only trigger execution if it's in a state that needs it (e.g. PENDING).
-    # However, create_mission returns the object. We need to know if it was *just* created.
-    # For now, we rely on the Lock. If we can't acquire lock, we assume it's running.
-    # Better: check status.
-    if mission.status != MissionStatus.PENDING:
-        logger.info(
-            f"Mission {mission.id} already exists with status {mission.status}. Returning existing instance."
+        response = await orchestrator_client.create_mission(
+            objective=objective,
+            context=api_context,
+            priority=1,
+            idempotency_key=idempotency_key,
+        )
+
+        # Convert Response to Domain Model (Transient)
+        # This allows existing handlers to work with the Mission object structure
+        mission = Mission(
+            id=response.id,
+            objective=response.objective,
+            status=MissionStatus(response.status)
+            if response.status
+            else MissionStatus.PENDING,
+            result_summary=response.result.get("summary") if response.result else None,
+            created_at=response.created_at,
+            updated_at=response.updated_at,
         )
         return mission
 
-    # 2. Acquire Lock (Optimistic)
-    # We use a lock to ensure that if we add retry logic later, we don't spawn doubles.
-    # For a NEW mission with a unique ID, collision is unlikely, but good practice.
-    lock_key = f"mission_lock:{mission.id}"
-    client = redis.from_url(redis_url, encoding="utf-8", decode_responses=True)
-
-    try:
-        lock = client.lock(lock_key, timeout=10)
-        acquired = await lock.acquire(blocking=False)
-
-        if not acquired:
-            logger.warning(f"Mission {mission.id} is locked. Skipping execution trigger.")
-            return mission
-
-        try:
-            # 3. Log Started Event
-            await state_manager.log_event(
-                mission.id,
-                MissionEventType.STATUS_CHANGE,
-                {"status": "starting", "triggered_by": "entrypoint"},
-            )
-
-            # 4. Trigger Background Execution
-            # We explicitly define the task wrapper here to decouple from the caller.
-            # Assigning to variable to satisfy linter (RUF006)
-            _task = asyncio.create_task(_run_mission_task(mission.id, force_research))  # noqa: RUF006
-
-            logger.info(f"Mission {mission.id} dispatched via Unified Entrypoint.")
-
-        finally:
-            await lock.release()
-
     except Exception as e:
-        logger.error(f"Failed to dispatch mission {mission.id}: {e}")
-        # We don't rollback the mission creation because it's already committed in create_mission
-        # But we should update status to FAILED
-        await state_manager.update_mission_status(
-            mission.id, MissionStatus.FAILED, note=f"Dispatch Error: {e}"
-        )
+        logger.error(f"Failed to dispatch mission via Orchestrator Client: {e}")
         raise e
-    finally:
-        await client.close()
-
-    return mission
-
-
-async def _run_mission_task(mission_id: int, force_research: bool = False) -> None:
-    """
-    Background Task Wrapper for Overmind Execution.
-    Creates a NEW session for the execution (isolated from the request).
-    """
-    from app.core.database import async_session_factory  # Lazy import to avoid circular deps
-
-    async with async_session_factory() as session:
-        try:
-            # Re-hydrate the Overmind Service with the new session
-            overmind = await create_overmind(session)
-
-            # Execute the Logic (The Brain)
-            await overmind.run_mission(mission_id, force_research=force_research)
-
-        except Exception as e:
-            logger.critical(
-                f"FATAL: Mission {mission_id} background task crashed: {e}", exc_info=True
-            )
-
-            # Attempt to record failure
-            try:
-                state_manager = MissionStateManager(session)
-                await state_manager.update_mission_status(
-                    mission_id, MissionStatus.FAILED, note=f"System Crash: {e}"
-                )
-            except Exception as db_err:
-                logger.critical(f"Failed to log crash for mission {mission_id}: {db_err}")
