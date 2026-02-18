@@ -1,8 +1,11 @@
 
+from unittest.mock import AsyncMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock
-from app.services.overmind.orchestrator import OvermindOrchestrator
+
 from app.core.domain.mission import MissionStatus
+from app.services.overmind.orchestrator import OvermindOrchestrator
+
 
 @pytest.mark.asyncio
 async def test_arbitrate_mission_outcome_failures():
