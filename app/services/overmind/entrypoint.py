@@ -5,7 +5,6 @@ Ensures Single Control Plane and Source of Truth via Orchestrator Service.
 """
 
 import logging
-from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -62,7 +61,7 @@ async def start_mission(
 
         # Convert Response to Domain Model (Transient)
         # This allows existing handlers to work with the Mission object structure
-        mission = Mission(
+        return Mission(
             id=response.id,
             objective=response.objective,
             status=MissionStatus(response.status)
@@ -72,7 +71,6 @@ async def start_mission(
             created_at=response.created_at,
             updated_at=response.updated_at,
         )
-        return mission
 
     except Exception as e:
         logger.error(f"Failed to dispatch mission via Orchestrator Client: {e}")
