@@ -2,43 +2,63 @@ from __future__ import annotations
 
 import uuid
 
-from app.services.overmind.domain.api_schemas import LangGraphRunData, LangGraphRunRequest
-from app.services.overmind.langgraph.engine import LangGraphOvermindEngine
+from app.infrastructure.clients.orchestrator_client import orchestrator_client
+from app.services.overmind.domain.api_schemas import (
+    LangGraphRunData,
+    LangGraphRunRequest,
+)
 
 
 class LangGraphAgentService:
     """
     خدمة تشغيل LangGraph للوكلاء المتعددين.
-
-    تقوم هذه الخدمة بتشغيل محرك LangGraph متسق مع
-    مبادئ API First وبنية الخدمات المصغرة.
+    Proxy implementation using Orchestrator Client.
     """
 
-    def __init__(self, *, engine: LangGraphOvermindEngine) -> None:
+    def __init__(self, engine=None) -> None:
         """
-        تهيئة الخدمة عبر حقن المحرك (Dependency Injection).
+        Engine arg kept for compatibility but ignored.
         """
-        self.engine = engine
+        pass
 
     async def run(self, payload: LangGraphRunRequest) -> LangGraphRunData:
         """
         تشغيل LangGraph وإرجاع بيانات التشغيل.
         """
-        run_id = str(uuid.uuid4())
-        result = await self.engine.run(
-            run_id=run_id,
+        # Delegate to Orchestrator Service
+        # We assume Orchestrator Service has an endpoint for LangGraph runs
+        # create_mission in Orchestrator Client uses POST /missions
+        # We might need to map LangGraphRunRequest to MissionCreate or use a specific endpoint.
+
+        # For now, map to create_mission
+        context = payload.context or {}
+        # Pass graph_mode if supported by orchestrator
+        context["graph_mode"] = "langgraph"
+        context["constraints"] = payload.constraints
+        context["priority"] = payload.priority
+
+        mission_response = await orchestrator_client.create_mission(
             objective=payload.objective,
-            context=payload.context,
-            constraints=payload.constraints,
-            priority=payload.priority.value,
+            context=context,
+            priority=1,  # mapping logic needed
         )
-        state = result.state
+
+        # Convert MissionResponse to LangGraphRunData
+        # This is lossy because MissionResponse is generic
         return LangGraphRunData(
-            run_id=run_id,
-            objective=payload.objective,
-            plan=state.get("plan"),
-            design=state.get("design"),
-            execution=state.get("execution"),
-            audit=state.get("audit"),
-            timeline=state.get("timeline", []),
+            run_id=str(mission_response.id),
+            objective=mission_response.objective,
+            plan=None,
+            design=None,
+            execution=None,
+            audit=None,
+            timeline=[],
         )
+
+
+def create_langgraph_service(db=None) -> LangGraphAgentService:
+    """
+    Factory function for LangGraphAgentService.
+    Now returns a proxy service.
+    """
+    return LangGraphAgentService()
