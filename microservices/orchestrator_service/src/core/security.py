@@ -3,6 +3,7 @@ from fastapi import HTTPException, WebSocket
 
 ALGORITHM = "HS256"
 
+
 def extract_bearer_token(auth_header: str | None) -> str:
     if not auth_header:
         raise HTTPException(status_code=401, detail="Authorization header missing")
@@ -12,6 +13,7 @@ def extract_bearer_token(auth_header: str | None) -> str:
         raise HTTPException(status_code=401, detail="Invalid Authorization header format")
 
     return parts[1]
+
 
 def decode_user_id(token: str, secret_key: str) -> int:
     try:
@@ -28,10 +30,12 @@ def decode_user_id(token: str, secret_key: str) -> int:
     except ValueError as exc:
         raise HTTPException(status_code=401, detail="Invalid user ID in token") from exc
 
+
 def _parse_protocol_header(protocol_header: str | None) -> list[str]:
     if not protocol_header:
         return []
     return [protocol.strip() for protocol in protocol_header.split(",") if protocol.strip()]
+
 
 def _extract_token_from_protocols(protocols: list[str]) -> str | None:
     if "jwt" not in protocols:
@@ -43,6 +47,7 @@ def _extract_token_from_protocols(protocols: list[str]) -> str | None:
     if jwt_index + 1 >= len(protocols):
         return None
     return protocols[jwt_index + 1]
+
 
 def extract_websocket_auth(websocket: WebSocket) -> tuple[str | None, str | None]:
     protocols = _parse_protocol_header(websocket.headers.get("sec-websocket-protocol"))

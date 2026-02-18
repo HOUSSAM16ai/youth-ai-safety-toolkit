@@ -12,12 +12,14 @@ from microservices.orchestrator_service.src.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+
 def create_engine() -> AsyncEngine:
     return create_async_engine(
         settings.DATABASE_URL,
         echo=False,
         future=True,
     )
+
 
 engine = create_engine()
 async_session_factory = async_sessionmaker(
@@ -27,6 +29,7 @@ async_session_factory = async_sessionmaker(
     autocommit=False,
     autoflush=False,
 )
+
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with async_session_factory() as session:

@@ -17,12 +17,16 @@ from sqlmodel import Field, Relationship, SQLModel
 def utc_now():
     return datetime.utcnow()
 
+
 class FlexibleEnum(Enum):
     """Placeholder for FlexibleEnum if needed, or just use Enum."""
+
     pass
+
 
 class CaseInsensitiveEnum(StrEnum):
     """Case insensitive enum mixin."""
+
     @classmethod
     def _missing_(cls, value):
         for member in cls:
@@ -30,13 +34,16 @@ class CaseInsensitiveEnum(StrEnum):
                 return member
         return None  # Fix RET503
 
+
 class JSONText(Text):
     """JSON type for Text column."""
+
     def bind_processor(self, dialect):
         def process(value):
             if value is None:
                 return None
             return json.dumps(value)
+
         return process
 
     def result_processor(self, dialect, coltype):
@@ -44,7 +51,9 @@ class JSONText(Text):
             if value is None:
                 return None
             return json.loads(value)
+
         return process
+
 
 class MissionStatus(CaseInsensitiveEnum):
     PENDING = "pending"
@@ -136,7 +145,8 @@ class Mission(SQLModel, table=True):
     )
     mission_plans: list[MissionPlan] = Relationship(
         sa_relationship=relationship(
-            "MissionPlan", back_populates="mission", # foreign_keys="[MissionPlan.mission_id]"
+            "MissionPlan",
+            back_populates="mission",  # foreign_keys="[MissionPlan.mission_id]"
         )
     )
     events: list[MissionEvent] = Relationship(
@@ -166,12 +176,11 @@ class MissionPlan(SQLModel, table=True):
     # Relationships
     mission: Mission = Relationship(
         sa_relationship=relationship(
-            "Mission", back_populates="mission_plans", # foreign_keys="[MissionPlan.mission_id]"
+            "Mission",
+            back_populates="mission_plans",  # foreign_keys="[MissionPlan.mission_id]"
         )
     )
-    tasks: list[Task] = Relationship(
-        sa_relationship=relationship("Task", back_populates="plan")
-    )
+    tasks: list[Task] = Relationship(sa_relationship=relationship("Task", back_populates="plan"))
 
 
 class Task(SQLModel, table=True):
@@ -211,12 +220,14 @@ class Task(SQLModel, table=True):
     # Relationships
     mission: Mission = Relationship(
         sa_relationship=relationship(
-            "Mission", back_populates="tasks", # foreign_keys=lambda: [Task.mission_id]
+            "Mission",
+            back_populates="tasks",  # foreign_keys=lambda: [Task.mission_id]
         )
     )
     plan: MissionPlan = Relationship(
         sa_relationship=relationship(
-            "MissionPlan", back_populates="tasks", # foreign_keys=lambda: [Task.plan_id]
+            "MissionPlan",
+            back_populates="tasks",  # foreign_keys=lambda: [Task.plan_id]
         )
     )
 

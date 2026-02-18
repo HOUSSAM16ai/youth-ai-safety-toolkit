@@ -7,6 +7,7 @@ from microservices.orchestrator_service.src.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+
 class EventBus:
     def __init__(self):
         self.redis = redis.from_url(settings.REDIS_URL, encoding="utf-8", decode_responses=True)
@@ -38,7 +39,9 @@ class EventBus:
     async def close(self):
         await self.redis.close()
 
+
 event_bus = EventBus()
+
 
 def get_event_bus():
     return event_bus

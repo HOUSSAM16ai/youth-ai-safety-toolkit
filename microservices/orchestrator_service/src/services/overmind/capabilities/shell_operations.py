@@ -84,7 +84,7 @@ class ShellOperations:
 
             # Double check the command after split
             if not args or args[0] not in self.allowed_commands:
-                 return {
+                return {
                     "success": False,
                     "error": f"Command '{args[0] if args else ''}' is not in the allowed list",
                     "stdout": "",
@@ -95,7 +95,7 @@ class ShellOperations:
             result = subprocess.run(
                 args,
                 check=False,
-                shell=False, # Secure
+                shell=False,  # Secure
                 cwd=cwd,
                 timeout=timeout,
                 capture_output=True,
