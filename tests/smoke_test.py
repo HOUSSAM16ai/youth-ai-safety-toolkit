@@ -30,6 +30,7 @@ async def test_overmind_client_access():
     # Instead, we verify we can import the client entrypoint.
     try:
         from app.services.overmind.entrypoint import start_mission
+
         assert start_mission is not None
     except ImportError as e:
         pytest.fail(f"Overmind entrypoint import failed: {e}")
