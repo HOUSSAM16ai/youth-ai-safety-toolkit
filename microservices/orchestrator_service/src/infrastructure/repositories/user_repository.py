@@ -10,8 +10,8 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from microservices.orchestrator_service.src.core.domain.user import User
 from microservices.orchestrator_service.src.core.domain.repositories import UserUpdatePayload
+from microservices.orchestrator_service.src.core.domain.user import User
 
 
 class SQLAlchemyUserRepository:

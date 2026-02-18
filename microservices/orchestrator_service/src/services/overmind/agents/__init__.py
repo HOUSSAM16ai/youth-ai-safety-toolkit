@@ -61,13 +61,13 @@
 
 from typing import NamedTuple
 
+from microservices.orchestrator_service.src.core.ai_gateway import AIClient
 from microservices.orchestrator_service.src.core.protocols import (
     AgentArchitect,
     AgentExecutor,
     AgentPlanner,
     AgentReflector,
 )
-from microservices.orchestrator_service.src.core.ai_gateway import AIClient
 
 from .architect import ArchitectAgent
 from .auditor import AuditorAgent

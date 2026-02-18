@@ -11,8 +11,8 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from microservices.orchestrator_service.src.core.logging import get_logger
 from microservices.orchestrator_service.src.core.domain.chat import CustomerConversation, CustomerMessage
+from microservices.orchestrator_service.src.core.logging import get_logger
 from microservices.orchestrator_service.src.models.mission import Mission
 
 logger = get_logger(__name__)

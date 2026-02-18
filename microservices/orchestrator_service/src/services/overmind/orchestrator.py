@@ -21,8 +21,14 @@
 import logging
 from typing import TYPE_CHECKING
 
-from microservices.orchestrator_service.src.core.governance.policies import MissionContext, MissionOutcomePolicy
-from microservices.orchestrator_service.src.core.protocols import MissionStateManagerProtocol, TaskExecutorProtocol
+from microservices.orchestrator_service.src.core.governance.policies import (
+    MissionContext,
+    MissionOutcomePolicy,
+)
+from microservices.orchestrator_service.src.core.protocols import (
+    MissionStateManagerProtocol,
+    TaskExecutorProtocol,
+)
 from microservices.orchestrator_service.src.models.mission import (
     Mission,
     MissionEventType,

@@ -24,9 +24,9 @@ from pathlib import Path
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from microservices.orchestrator_service.src.core.logging import get_logger
 from microservices.orchestrator_service.src.core.config import get_settings
 from microservices.orchestrator_service.src.core.database import async_session_factory
+from microservices.orchestrator_service.src.core.logging import get_logger
 from microservices.orchestrator_service.src.services.overmind.knowledge_environment import (
     build_environment_info,
 )

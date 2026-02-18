@@ -6,7 +6,7 @@ Coordinators domain logic, infrastructure, and fallback strategies.
 
 import httpx
 
-from ....core.logging import get_logger
+from microservices.orchestrator_service.src.core.logging import get_logger
 from . import local_store, parsing, remote_client
 
 logger = get_logger("tool-retrieval-service")

@@ -14,9 +14,9 @@ from datetime import datetime
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from microservices.orchestrator_service.src.core.logging import get_logger
-from microservices.orchestrator_service.src.core.domain.user import User
 from microservices.orchestrator_service.src.core.database import async_session_factory
+from microservices.orchestrator_service.src.core.domain.user import User
+from microservices.orchestrator_service.src.core.logging import get_logger
 from microservices.orchestrator_service.src.services.overmind.user_knowledge.basic_info import (
     get_user_basic_info,
     list_all_users,

@@ -9,9 +9,9 @@
 
 import difflib
 
-from ...core.constants import BRANCH_MAP
-from ...core.logging import get_logger
-from ...infrastructure.clients.research_client import research_client
+from microservices.orchestrator_service.src.core.constants import BRANCH_MAP
+from microservices.orchestrator_service.src.core.logging import get_logger
+from microservices.orchestrator_service.src.infrastructure.clients.research_client import research_client
 from .schemas import SearchContentSchema
 
 logger = get_logger("content-tools")

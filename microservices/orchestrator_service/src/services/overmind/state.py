@@ -12,8 +12,8 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from microservices.orchestrator_service.src.core.protocols import EventBusProtocol
 from microservices.orchestrator_service.src.core.event_bus import get_event_bus
+from microservices.orchestrator_service.src.core.protocols import EventBusProtocol
 from microservices.orchestrator_service.src.models.mission import (
     Mission,
     MissionEvent,
