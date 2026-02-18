@@ -14,17 +14,25 @@ from datetime import datetime
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from microservices.orchestrator_service.src.core.database import async_session_factory
 from app.core.di import get_logger
 from app.core.domain.user import User
+from microservices.orchestrator_service.src.core.database import async_session_factory
 from microservices.orchestrator_service.src.services.overmind.user_knowledge.basic_info import (
     get_user_basic_info,
     list_all_users,
 )
-from microservices.orchestrator_service.src.services.overmind.user_knowledge.performance import get_user_performance
-from microservices.orchestrator_service.src.services.overmind.user_knowledge.relations import get_user_relations
-from microservices.orchestrator_service.src.services.overmind.user_knowledge.search import search_users
-from microservices.orchestrator_service.src.services.overmind.user_knowledge.statistics import get_user_statistics
+from microservices.orchestrator_service.src.services.overmind.user_knowledge.performance import (
+    get_user_performance,
+)
+from microservices.orchestrator_service.src.services.overmind.user_knowledge.relations import (
+    get_user_relations,
+)
+from microservices.orchestrator_service.src.services.overmind.user_knowledge.search import (
+    search_users,
+)
+from microservices.orchestrator_service.src.services.overmind.user_knowledge.statistics import (
+    get_user_statistics,
+)
 
 logger = get_logger(__name__)
 

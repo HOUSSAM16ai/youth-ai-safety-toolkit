@@ -10,9 +10,15 @@ from datetime import datetime
 from app.core.di import get_logger
 from microservices.orchestrator_service.src.services.overmind.agents import AgentCouncil
 from microservices.orchestrator_service.src.services.overmind.collaboration import CollaborationHub
-from microservices.orchestrator_service.src.services.overmind.domain.super_intelligence.analyzer import SituationAnalyzer
-from microservices.orchestrator_service.src.services.overmind.domain.super_intelligence.models import Decision
-from microservices.orchestrator_service.src.services.overmind.domain.super_intelligence.synthesizer import DecisionSynthesizer
+from microservices.orchestrator_service.src.services.overmind.domain.super_intelligence.analyzer import (
+    SituationAnalyzer,
+)
+from microservices.orchestrator_service.src.services.overmind.domain.super_intelligence.models import (
+    Decision,
+)
+from microservices.orchestrator_service.src.services.overmind.domain.super_intelligence.synthesizer import (
+    DecisionSynthesizer,
+)
 
 logger = get_logger(__name__)
 

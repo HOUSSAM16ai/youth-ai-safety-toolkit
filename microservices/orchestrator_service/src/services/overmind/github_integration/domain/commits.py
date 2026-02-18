@@ -1,6 +1,10 @@
 from app.core.di import get_logger
-from microservices.orchestrator_service.src.services.overmind.github_integration.client import GitHubClient
-from microservices.orchestrator_service.src.services.overmind.github_integration.models import GitHubCommit
+from microservices.orchestrator_service.src.services.overmind.github_integration.client import (
+    GitHubClient,
+)
+from microservices.orchestrator_service.src.services.overmind.github_integration.models import (
+    GitHubCommit,
+)
 
 logger = get_logger(__name__)
 

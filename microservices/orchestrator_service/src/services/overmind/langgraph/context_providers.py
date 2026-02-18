@@ -4,8 +4,13 @@ import os
 from dataclasses import dataclass
 
 from app.core.logging import get_logger
-from microservices.orchestrator_service.src.services.overmind.langgraph.context_contracts import RefineResult, Snippet
-from microservices.orchestrator_service.src.services.overmind.langgraph.research_agent_client import ResearchAgentClient
+from microservices.orchestrator_service.src.services.overmind.langgraph.context_contracts import (
+    RefineResult,
+    Snippet,
+)
+from microservices.orchestrator_service.src.services.overmind.langgraph.research_agent_client import (
+    ResearchAgentClient,
+)
 
 logger = get_logger(__name__)
 

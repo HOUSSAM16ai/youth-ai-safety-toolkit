@@ -8,7 +8,9 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.di import get_logger
-from microservices.orchestrator_service.src.services.overmind.database_tools.operations_logger import OperationsLogger
+from microservices.orchestrator_service.src.services.overmind.database_tools.operations_logger import (
+    OperationsLogger,
+)
 from microservices.orchestrator_service.src.services.overmind.database_tools.validators import (
     ensure_columns_exist,
     quote_identifier,

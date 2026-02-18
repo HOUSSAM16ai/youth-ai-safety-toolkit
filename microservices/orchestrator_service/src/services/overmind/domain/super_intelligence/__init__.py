@@ -11,7 +11,9 @@ from microservices.orchestrator_service.src.services.overmind.domain.super_intel
     DecisionImpact,
     DecisionPriority,
 )
-from microservices.orchestrator_service.src.services.overmind.domain.super_intelligence.system import SuperCollectiveIntelligence
+from microservices.orchestrator_service.src.services.overmind.domain.super_intelligence.system import (
+    SuperCollectiveIntelligence,
+)
 
 __all__ = [
     "Decision",

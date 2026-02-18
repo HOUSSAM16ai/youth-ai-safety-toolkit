@@ -14,23 +14,37 @@ import os
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from microservices.orchestrator_service.src.core.ai_gateway import get_ai_client
 from app.core.protocols import MissionStateManagerProtocol
-from microservices.orchestrator_service.src.infrastructure.clients.auditor_client import AuditorClient
 
 # استيراد الأدوات (يجب ضمان وجود هذا المسار أو استخدام واجهة بديلة)
 from app.services.agent_tools import get_registry
+from microservices.orchestrator_service.src.core.ai_gateway import get_ai_client
+from microservices.orchestrator_service.src.infrastructure.clients.auditor_client import (
+    AuditorClient,
+)
 from microservices.orchestrator_service.src.services.overmind.agents.architect import ArchitectAgent
 
 # from microservices.orchestrator_service.src.services.overmind.agents.auditor import AuditorAgent  # Removed: Now using Microservice
 from microservices.orchestrator_service.src.services.overmind.agents.operator import OperatorAgent
-from microservices.orchestrator_service.src.services.overmind.agents.strategist import StrategistAgent
+from microservices.orchestrator_service.src.services.overmind.agents.strategist import (
+    StrategistAgent,
+)
 from microservices.orchestrator_service.src.services.overmind.executor import TaskExecutor
-from microservices.orchestrator_service.src.services.overmind.langgraph.context_enricher import ContextEnricher
-from microservices.orchestrator_service.src.services.overmind.langgraph.engine import LangGraphOvermindEngine
-from microservices.orchestrator_service.src.services.overmind.langgraph.service import LangGraphAgentService
-from microservices.orchestrator_service.src.services.overmind.langgraph.state_manager import EphemeralMissionStateManager
-from microservices.orchestrator_service.src.services.overmind.orchestrator import OvermindOrchestrator
+from microservices.orchestrator_service.src.services.overmind.langgraph.context_enricher import (
+    ContextEnricher,
+)
+from microservices.orchestrator_service.src.services.overmind.langgraph.engine import (
+    LangGraphOvermindEngine,
+)
+from microservices.orchestrator_service.src.services.overmind.langgraph.service import (
+    LangGraphAgentService,
+)
+from microservices.orchestrator_service.src.services.overmind.langgraph.state_manager import (
+    EphemeralMissionStateManager,
+)
+from microservices.orchestrator_service.src.services.overmind.orchestrator import (
+    OvermindOrchestrator,
+)
 from microservices.orchestrator_service.src.services.overmind.state import MissionStateManager
 
 __all__ = ["create_langgraph_service", "create_overmind"]

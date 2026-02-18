@@ -14,9 +14,11 @@ import json
 import logging
 from collections.abc import Awaitable, Callable
 
-from microservices.orchestrator_service.src.models.mission import Task
 from app.core.protocols import MissionStateManagerProtocol
-from microservices.orchestrator_service.src.services.overmind.tool_canonicalizer import canonicalize_tool_name
+from microservices.orchestrator_service.src.models.mission import Task
+from microservices.orchestrator_service.src.services.overmind.tool_canonicalizer import (
+    canonicalize_tool_name,
+)
 
 logger = logging.getLogger(__name__)
 

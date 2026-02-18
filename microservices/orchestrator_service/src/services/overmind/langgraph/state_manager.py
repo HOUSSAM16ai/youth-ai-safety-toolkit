@@ -2,8 +2,13 @@ from __future__ import annotations
 
 from collections.abc import AsyncGenerator
 
-from microservices.orchestrator_service.src.models.mission import Mission, MissionEvent, MissionEventType, MissionStatus
 from app.core.protocols import MissionStateManagerProtocol
+from microservices.orchestrator_service.src.models.mission import (
+    Mission,
+    MissionEvent,
+    MissionEventType,
+    MissionStatus,
+)
 
 
 class EphemeralMissionStateManager(MissionStateManagerProtocol):

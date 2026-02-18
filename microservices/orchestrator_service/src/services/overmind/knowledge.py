@@ -24,11 +24,15 @@ from pathlib import Path
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.di import get_logger
 from microservices.orchestrator_service.src.core.config import get_settings
 from microservices.orchestrator_service.src.core.database import async_session_factory
-from app.core.di import get_logger
-from microservices.orchestrator_service.src.services.overmind.knowledge_environment import build_environment_info
-from microservices.orchestrator_service.src.services.overmind.knowledge_mapping import build_database_map
+from microservices.orchestrator_service.src.services.overmind.knowledge_environment import (
+    build_environment_info,
+)
+from microservices.orchestrator_service.src.services.overmind.knowledge_mapping import (
+    build_database_map,
+)
 from microservices.orchestrator_service.src.services.overmind.knowledge_queries import (
     fetch_all_tables,
     fetch_foreign_keys,
@@ -36,12 +40,17 @@ from microservices.orchestrator_service.src.services.overmind.knowledge_queries 
     fetch_table_columns,
     fetch_table_count,
 )
-from microservices.orchestrator_service.src.services.overmind.knowledge_schema import build_schema_object, log_schema_info
+from microservices.orchestrator_service.src.services.overmind.knowledge_schema import (
+    build_schema_object,
+    log_schema_info,
+)
 from microservices.orchestrator_service.src.services.overmind.knowledge_structure import (
     build_microservices_summary,
     build_project_structure,
 )
-from microservices.orchestrator_service.src.services.overmind.knowledge_timestamp import build_project_timestamp
+from microservices.orchestrator_service.src.services.overmind.knowledge_timestamp import (
+    build_project_timestamp,
+)
 
 logger = get_logger(__name__)
 

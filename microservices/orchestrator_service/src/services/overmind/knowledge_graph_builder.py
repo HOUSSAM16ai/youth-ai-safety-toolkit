@@ -5,8 +5,8 @@ from dataclasses import dataclass
 
 from sqlalchemy import text
 
-from microservices.orchestrator_service.src.core.database import async_session_factory
 from app.core.logging import get_logger
+from microservices.orchestrator_service.src.core.database import async_session_factory
 
 logger = get_logger(__name__)
 

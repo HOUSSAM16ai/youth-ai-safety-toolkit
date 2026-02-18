@@ -8,7 +8,9 @@
 from pathlib import Path
 
 from app.core.logging import get_logger
-from microservices.orchestrator_service.src.services.overmind.code_intelligence.models import ProjectAnalysis
+from microservices.orchestrator_service.src.services.overmind.code_intelligence.models import (
+    ProjectAnalysis,
+)
 
 from .html_templates import create_complete_html, create_file_row_html
 

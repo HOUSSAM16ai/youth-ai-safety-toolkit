@@ -14,11 +14,23 @@ from app.core.protocols import (
     AgentPlanner,
     AgentReflector,
 )
-from microservices.orchestrator_service.src.services.overmind.domain.context import InMemoryCollaborationContext
-from microservices.orchestrator_service.src.services.overmind.domain.council_session import CouncilSession
-from microservices.orchestrator_service.src.services.overmind.domain.enums import CognitiveEvent, CognitivePhase, OvermindMessage
-from microservices.orchestrator_service.src.services.overmind.domain.exceptions import StalemateError
-from microservices.orchestrator_service.src.services.overmind.domain.phase_runner import CognitivePhaseRunner
+from microservices.orchestrator_service.src.services.overmind.domain.context import (
+    InMemoryCollaborationContext,
+)
+from microservices.orchestrator_service.src.services.overmind.domain.council_session import (
+    CouncilSession,
+)
+from microservices.orchestrator_service.src.services.overmind.domain.enums import (
+    CognitiveEvent,
+    CognitivePhase,
+    OvermindMessage,
+)
+from microservices.orchestrator_service.src.services.overmind.domain.exceptions import (
+    StalemateError,
+)
+from microservices.orchestrator_service.src.services.overmind.domain.phase_runner import (
+    CognitivePhaseRunner,
+)
 from microservices.orchestrator_service.src.services.overmind.domain.primitives import (
     CognitiveCritique,
     CognitiveState,

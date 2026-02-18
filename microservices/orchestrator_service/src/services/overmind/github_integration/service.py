@@ -5,12 +5,24 @@ Adheres to strictly typed async operations.
 """
 
 from app.core.di import get_logger
-from microservices.orchestrator_service.src.services.overmind.github_integration.client import GitHubClient
-from microservices.orchestrator_service.src.services.overmind.github_integration.domain.branches import BranchManager
-from microservices.orchestrator_service.src.services.overmind.github_integration.domain.commits import CommitManager
-from microservices.orchestrator_service.src.services.overmind.github_integration.domain.files import FileManager
-from microservices.orchestrator_service.src.services.overmind.github_integration.domain.issues import IssueManager
-from microservices.orchestrator_service.src.services.overmind.github_integration.domain.pr import PRManager
+from microservices.orchestrator_service.src.services.overmind.github_integration.client import (
+    GitHubClient,
+)
+from microservices.orchestrator_service.src.services.overmind.github_integration.domain.branches import (
+    BranchManager,
+)
+from microservices.orchestrator_service.src.services.overmind.github_integration.domain.commits import (
+    CommitManager,
+)
+from microservices.orchestrator_service.src.services.overmind.github_integration.domain.files import (
+    FileManager,
+)
+from microservices.orchestrator_service.src.services.overmind.github_integration.domain.issues import (
+    IssueManager,
+)
+from microservices.orchestrator_service.src.services.overmind.github_integration.domain.pr import (
+    PRManager,
+)
 from microservices.orchestrator_service.src.services.overmind.github_integration.models import (
     GitHubBranch,
     GitHubCommit,

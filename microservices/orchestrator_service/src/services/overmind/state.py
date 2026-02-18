@@ -12,6 +12,8 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from app.core.protocols import EventBusProtocol
+from microservices.orchestrator_service.src.core.event_bus import get_event_bus
 from microservices.orchestrator_service.src.models.mission import (
     Mission,
     MissionEvent,
@@ -23,9 +25,10 @@ from microservices.orchestrator_service.src.models.mission import (
     Task,
     TaskStatus,
 )
-from microservices.orchestrator_service.src.core.event_bus import get_event_bus
-from app.core.protocols import EventBusProtocol
-from microservices.orchestrator_service.src.services.overmind.domain.types import JsonValue, MissionContext
+from microservices.orchestrator_service.src.services.overmind.domain.types import (
+    JsonValue,
+    MissionContext,
+)
 
 logger = logging.getLogger(__name__)
 

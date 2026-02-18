@@ -21,14 +21,20 @@
 import logging
 from typing import TYPE_CHECKING
 
-from microservices.orchestrator_service.src.models.mission import Mission, MissionEventType, MissionStatus
 from app.core.governance.policies import MissionContext, MissionOutcomePolicy
 from app.core.protocols import MissionStateManagerProtocol, TaskExecutorProtocol
+from microservices.orchestrator_service.src.models.mission import (
+    Mission,
+    MissionEventType,
+    MissionStatus,
+)
 from microservices.orchestrator_service.src.services.overmind.domain.enums import OvermindMessage
 
 if TYPE_CHECKING:
     from microservices.orchestrator_service.src.services.overmind.domain.cognitive import SuperBrain
-    from microservices.orchestrator_service.src.services.overmind.langgraph.engine import LangGraphOvermindEngine
+    from microservices.orchestrator_service.src.services.overmind.langgraph.engine import (
+        LangGraphOvermindEngine,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +84,9 @@ class OvermindOrchestrator:
                 return
 
             # --- Layer C: Provider Readiness Gate ---
-            from microservices.orchestrator_service.src.services.overmind.readiness import check_mission_readiness
+            from microservices.orchestrator_service.src.services.overmind.readiness import (
+                check_mission_readiness,
+            )
 
             readiness_check = await check_mission_readiness()
 

@@ -9,8 +9,12 @@ MissionComplexHandler and DeepAnalysisHandler.
 import logging
 from pathlib import Path
 
-from microservices.orchestrator_service.src.services.overmind.code_intelligence.core import StructuralCodeIntelligence
-from microservices.orchestrator_service.src.services.overmind.code_intelligence.models import ProjectAnalysis
+from microservices.orchestrator_service.src.services.overmind.code_intelligence.core import (
+    StructuralCodeIntelligence,
+)
+from microservices.orchestrator_service.src.services.overmind.code_intelligence.models import (
+    ProjectAnalysis,
+)
 
 logger = logging.getLogger(__name__)
 

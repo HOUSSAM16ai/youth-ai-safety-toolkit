@@ -17,7 +17,6 @@ import logging
 import re
 from collections.abc import Awaitable, Callable
 
-from microservices.orchestrator_service.src.models.mission import Mission
 from app.core.protocols import (
     AgentArchitect,
     AgentExecutor,
@@ -25,12 +24,24 @@ from app.core.protocols import (
     AgentPlanner,
     AgentReflector,
 )
+from microservices.orchestrator_service.src.models.mission import Mission
 from microservices.orchestrator_service.src.services.overmind.collaboration import CollaborationHub
-from microservices.orchestrator_service.src.services.overmind.domain.context import InMemoryCollaborationContext
-from microservices.orchestrator_service.src.services.overmind.domain.council_session import CouncilSession
-from microservices.orchestrator_service.src.services.overmind.domain.enums import CognitiveEvent, CognitivePhase
-from microservices.orchestrator_service.src.services.overmind.domain.exceptions import StalemateError
-from microservices.orchestrator_service.src.services.overmind.domain.phase_runner import CognitivePhaseRunner
+from microservices.orchestrator_service.src.services.overmind.domain.context import (
+    InMemoryCollaborationContext,
+)
+from microservices.orchestrator_service.src.services.overmind.domain.council_session import (
+    CouncilSession,
+)
+from microservices.orchestrator_service.src.services.overmind.domain.enums import (
+    CognitiveEvent,
+    CognitivePhase,
+)
+from microservices.orchestrator_service.src.services.overmind.domain.exceptions import (
+    StalemateError,
+)
+from microservices.orchestrator_service.src.services.overmind.domain.phase_runner import (
+    CognitivePhaseRunner,
+)
 from microservices.orchestrator_service.src.services.overmind.domain.phases import (
     DesignPhase,
     ExecutionPhase,

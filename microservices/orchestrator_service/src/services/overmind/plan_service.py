@@ -10,15 +10,19 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from microservices.orchestrator_service.src.core.ai_gateway import get_ai_client
 from app.core.di import get_logger
-from microservices.orchestrator_service.src.services.overmind.agents.strategist import StrategistAgent
+from microservices.orchestrator_service.src.core.ai_gateway import get_ai_client
+from microservices.orchestrator_service.src.services.overmind.agents.strategist import (
+    StrategistAgent,
+)
 from microservices.orchestrator_service.src.services.overmind.domain.api_schemas import (
     AgentPlanData,
     AgentPlanStepResponse,
     AgentsPlanRequest,
 )
-from microservices.orchestrator_service.src.services.overmind.domain.context import InMemoryCollaborationContext
+from microservices.orchestrator_service.src.services.overmind.domain.context import (
+    InMemoryCollaborationContext,
+)
 from microservices.orchestrator_service.src.services.overmind.plan_registry import AgentPlanRecord
 
 logger = get_logger(__name__)

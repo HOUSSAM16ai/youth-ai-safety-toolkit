@@ -7,7 +7,10 @@ Responsible for visualizing networks and relationships.
 
 import math
 
-from microservices.orchestrator_service.src.services.overmind.art.styles import ArtStyle, VisualTheme
+from microservices.orchestrator_service.src.services.overmind.art.styles import (
+    ArtStyle,
+    VisualTheme,
+)
 
 
 class NetworkArtist:
