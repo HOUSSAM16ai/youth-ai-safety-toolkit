@@ -6,7 +6,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from microservices.orchestrator_service.src.api import routes
 from microservices.orchestrator_service.src.core.config import settings
+from microservices.orchestrator_service.src.core.database import init_db
 from microservices.orchestrator_service.src.core.event_bus import event_bus
+# Ensure models are registered with SQLModel
+import microservices.orchestrator_service.src.models.mission  # noqa: F401
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("orchestrator_service")
@@ -15,6 +18,7 @@ logger = logging.getLogger("orchestrator_service")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Orchestrator Service Starting...")
+    await init_db()
     yield
     logger.info("Orchestrator Service Shutting Down...")
     await event_bus.close()

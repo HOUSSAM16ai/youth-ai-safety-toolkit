@@ -5,9 +5,10 @@ services:
   # Infrastructure Services
   # ==========================================
 
-  postgres:
+  # Postgres Core - For Monolith/Core Kernel
+  postgres-core:
     image: postgres:15-alpine
-    container_name: cogniforge-postgres
+    container_name: cogniforge-postgres-core
     restart: unless-stopped
     ports:
       - "5432:5432"
@@ -16,30 +17,54 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
-      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+      POSTGRES_DB: core_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d core_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Postgres Orchestrator - Dedicated for Orchestrator Service
+  postgres-orchestrator:
+    image: postgres:15-alpine
+    container_name: cogniforge-postgres-orchestrator
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    networks:
+      - appnet
+    volumes:
+      - ./infra/postgres/init-orchestrator-db.sh:/docker-entrypoint-initdb.d/init.sh
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: orchestrator_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d orchestrator_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Postgres Agents - Shared instance for Agents
+  postgres-agents:
+    image: postgres:15-alpine
+    container_name: cogniforge-postgres-agents
+    restart: unless-stopped
+    ports:
+      - "5434:5432"
+    networks:
+      - appnet
+    volumes:
+      - ./infra/postgres/init-agents-db.sh:/docker-entrypoint-initdb.d/init.sh
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: postgres
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 5s
       timeout: 5s
       retries: 5
-
-  db-init:
-    image: python:3.11-slim
-    container_name: cogniforge-db-init
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - appnet
-    volumes:
-      - ./scripts:/scripts
-    environment:
-      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
-      POSTGRES_PORT: 5432
-    command: >
-      bash -c "pip install psycopg2-binary && python /scripts/init_databases.py"
 
   redis:
     image: redis:7.2-alpine
@@ -102,7 +127,7 @@ services:
     networks:
       - appnet
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@${POSTGRES_HOST:-postgres}:5432/core_db
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres-core:5432/core_db
       ENVIRONMENT: ${ENVIRONMENT:-production}
       # Point to microservices
       # External API Keys (Passed from Host/Secrets)
@@ -111,8 +136,8 @@ services:
       FIRECRAWL_API_KEY: ${FIRECRAWL_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     depends_on:
-      db-init:
-        condition: service_completed_successfully
+      postgres-core:
+        condition: service_healthy
 
   # Orchestrator Service - Unified Control Plane
   orchestrator-service:
@@ -128,8 +153,8 @@ services:
     networks:
       - appnet
     environment:
-      ORCHESTRATOR_DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@${POSTGRES_HOST:-postgres}:5432/orchestrator_db?options=-c%20search_path%3Dorchestrator
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@${POSTGRES_HOST:-postgres}:5432/orchestrator_db?options=-c%20search_path%3Dorchestrator
+      ORCHESTRATOR_DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres-orchestrator:5432/orchestrator_db?options=-c%20search_path%3Dorchestrator
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres-orchestrator:5432/orchestrator_db?options=-c%20search_path%3Dorchestrator
       REDIS_URL: redis://redis:6379
       SECRET_KEY: ${SECRET_KEY:-super_secret_key_change_in_production}
 
@@ -140,20 +165,10 @@ services:
       retries: 5
       start_period: 15s
     depends_on:
-      db-init:
-        condition: service_completed_successfully
       redis:
         condition: service_healthy
-      postgres:
+      postgres-orchestrator:
         condition: service_healthy
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
 
   # Frontend - Next.js Application
   frontend:
@@ -195,10 +210,10 @@ services:
       retries: 5
       start_period: 15s
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@${POSTGRES_HOST:-postgres}:5432/observability_db?options=-c%20search_path%3Dobservability
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres-agents:5432/observability_db?options=-c%20search_path%3Dobservability
     depends_on:
-      db-init:
-        condition: service_completed_successfully
+      postgres-agents:
+        condition: service_healthy
 
   # Planning Agent - Generates plans
   planning-agent:
@@ -217,8 +232,8 @@ services:
       - appnet
 
     environment:
-      PLANNING_DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@${POSTGRES_HOST:-postgres}:5432/planning_db?options=-c%20search_path%3Dplanning
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@${POSTGRES_HOST:-postgres}:5432/planning_db?options=-c%20search_path%3Dplanning
+      PLANNING_DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres-agents:5432/planning_db?options=-c%20search_path%3Dplanning
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres-agents:5432/planning_db?options=-c%20search_path%3Dplanning
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
 
@@ -229,8 +244,8 @@ services:
       retries: 5
       start_period: 15s
     depends_on:
-      db-init:
-        condition: service_completed_successfully
+      postgres-agents:
+        condition: service_healthy
 
   # Memory Agent - Retrieves context
   memory-agent:
@@ -249,8 +264,8 @@ services:
       - appnet
 
     environment:
-      MEMORY_DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@${POSTGRES_HOST:-postgres}:5432/memory_db?options=-c%20search_path%3Dmemory
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@${POSTGRES_HOST:-postgres}:5432/memory_db?options=-c%20search_path%3Dmemory
+      MEMORY_DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres-agents:5432/memory_db?options=-c%20search_path%3Dmemory
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres-agents:5432/memory_db?options=-c%20search_path%3Dmemory
 
     healthcheck:
       test: ["CMD", "bash", "-c", "curl -f http://localhost:8000/health || exit 1"]
@@ -259,8 +274,8 @@ services:
       retries: 5
       start_period: 15s
     depends_on:
-      db-init:
-        condition: service_completed_successfully
+      postgres-agents:
+        condition: service_healthy
 
   # User Service - Manages users
   user-service:
@@ -279,8 +294,8 @@ services:
       - appnet
 
     environment:
-      USER_DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@${POSTGRES_HOST:-postgres}:5432/user_db?options=-c%20search_path%3Duser_service
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@${POSTGRES_HOST:-postgres}:5432/user_db?options=-c%20search_path%3Duser_service
+      USER_DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres-agents:5432/user_db?options=-c%20search_path%3Duser_service
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres-agents:5432/user_db?options=-c%20search_path%3Duser_service
 
     healthcheck:
       test: ["CMD", "bash", "-c", "curl -f http://localhost:8000/health || exit 1"]
@@ -289,8 +304,8 @@ services:
       retries: 5
       start_period: 15s
     depends_on:
-      db-init:
-        condition: service_completed_successfully
+      postgres-agents:
+        condition: service_healthy
 
   # Research Agent - Search and Retrieval
   research-agent:
@@ -309,8 +324,8 @@ services:
       - appnet
 
     environment:
-      RESEARCH_DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@${POSTGRES_HOST:-postgres}:5432/research_db?options=-c%20search_path%3Dresearch
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@${POSTGRES_HOST:-postgres}:5432/research_db?options=-c%20search_path%3Dresearch
+      RESEARCH_DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres-agents:5432/research_db?options=-c%20search_path%3Dresearch
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres-agents:5432/research_db?options=-c%20search_path%3Dresearch
       TAVILY_API_KEY: ${TAVILY_API_KEY:-}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       FIRECRAWL_API_KEY: ${FIRECRAWL_API_KEY:-}
@@ -323,8 +338,8 @@ services:
       retries: 5
       start_period: 15s
     depends_on:
-      db-init:
-        condition: service_completed_successfully
+      postgres-agents:
+        condition: service_healthy
 
   # Reasoning Agent - Deep Thinking
   reasoning-agent:
@@ -343,8 +358,8 @@ services:
       - appnet
 
     environment:
-      REASONING_DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@${POSTGRES_HOST:-postgres}:5432/reasoning_db?options=-c%20search_path%3Dreasoning
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@${POSTGRES_HOST:-postgres}:5432/reasoning_db?options=-c%20search_path%3Dreasoning
+      REASONING_DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres-agents:5432/reasoning_db?options=-c%20search_path%3Dreasoning
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres-agents:5432/reasoning_db?options=-c%20search_path%3Dreasoning
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
 
@@ -355,8 +370,8 @@ services:
       retries: 5
       start_period: 15s
     depends_on:
-      db-init:
-        condition: service_completed_successfully
+      postgres-agents:
+        condition: service_healthy
 
 networks:
   appnet:

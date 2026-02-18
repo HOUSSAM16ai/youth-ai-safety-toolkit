@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+from sqlmodel import SQLModel
 
 from microservices.orchestrator_service.src.core.config import settings
 
@@ -41,3 +42,16 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             raise
         finally:
             await session.close()
+
+
+async def init_db() -> None:
+    """Initialize database schema."""
+    try:
+        # Import models here or ensure they are imported before calling this
+        # We rely on main.py importing them.
+        async with engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all)
+        logger.info("Database initialized successfully.")
+    except Exception as e:
+        logger.error(f"Database initialization failed: {e}")
+        raise
