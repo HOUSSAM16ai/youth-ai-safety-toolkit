@@ -3,11 +3,21 @@ from datetime import datetime
 from pathlib import Path
 
 from app.core.logging import get_logger
-from microservices.orchestrator_service.src.services.overmind.code_intelligence.analyzers.complexity import ComplexityAnalyzer
-from microservices.orchestrator_service.src.services.overmind.code_intelligence.analyzers.git import GitAnalyzer
-from microservices.orchestrator_service.src.services.overmind.code_intelligence.analyzers.hotspot import HotspotAnalyzer
-from microservices.orchestrator_service.src.services.overmind.code_intelligence.analyzers.smells import StructuralSmellDetector
-from microservices.orchestrator_service.src.services.overmind.code_intelligence.analyzers.statistics import StatisticsAnalyzer
+from microservices.orchestrator_service.src.services.overmind.code_intelligence.analyzers.complexity import (
+    ComplexityAnalyzer,
+)
+from microservices.orchestrator_service.src.services.overmind.code_intelligence.analyzers.git import (
+    GitAnalyzer,
+)
+from microservices.orchestrator_service.src.services.overmind.code_intelligence.analyzers.hotspot import (
+    HotspotAnalyzer,
+)
+from microservices.orchestrator_service.src.services.overmind.code_intelligence.analyzers.smells import (
+    StructuralSmellDetector,
+)
+from microservices.orchestrator_service.src.services.overmind.code_intelligence.analyzers.statistics import (
+    StatisticsAnalyzer,
+)
 from microservices.orchestrator_service.src.services.overmind.code_intelligence.models import (
     ComplexityStats,
     FileMetrics,

@@ -8,9 +8,16 @@ from typing import TypedDict
 from langgraph.graph import END, StateGraph
 
 from app.core.protocols import AgentArchitect, AgentExecutor, AgentPlanner, AgentReflector
-from microservices.orchestrator_service.src.services.overmind.domain.context import InMemoryCollaborationContext
-from microservices.orchestrator_service.src.services.overmind.langgraph.context_enricher import ContextEnricher
-from microservices.orchestrator_service.src.services.overmind.langgraph.loop_policy import LoopPolicy, should_continue_loop
+from microservices.orchestrator_service.src.services.overmind.domain.context import (
+    InMemoryCollaborationContext,
+)
+from microservices.orchestrator_service.src.services.overmind.langgraph.context_enricher import (
+    ContextEnricher,
+)
+from microservices.orchestrator_service.src.services.overmind.langgraph.loop_policy import (
+    LoopPolicy,
+    should_continue_loop,
+)
 
 logger = logging.getLogger(__name__)
 

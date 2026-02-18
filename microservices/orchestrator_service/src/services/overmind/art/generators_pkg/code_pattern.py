@@ -8,7 +8,10 @@ Responsible for generating generative art patterns based on code structures.
 import math
 import random
 
-from microservices.orchestrator_service.src.services.overmind.art.styles import ArtStyle, VisualTheme
+from microservices.orchestrator_service.src.services.overmind.art.styles import (
+    ArtStyle,
+    VisualTheme,
+)
 
 
 class CodePatternArtist:

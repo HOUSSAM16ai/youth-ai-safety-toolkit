@@ -19,6 +19,8 @@
 - KISS: بساطة وسهولة الصيانة
 """
 
-from microservices.orchestrator_service.src.services.overmind.user_knowledge.service import UserKnowledge
+from microservices.orchestrator_service.src.services.overmind.user_knowledge.service import (
+    UserKnowledge,
+)
 
 __all__ = ["UserKnowledge"]

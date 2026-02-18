@@ -10,7 +10,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from microservices.orchestrator_service.src.services.overmind.domain.api_schemas import AgentPlanData
+from microservices.orchestrator_service.src.services.overmind.domain.api_schemas import (
+    AgentPlanData,
+)
 
 
 @dataclass(frozen=True)

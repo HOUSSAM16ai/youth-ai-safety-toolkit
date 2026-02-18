@@ -8,7 +8,9 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from app.core.di import get_logger
-from microservices.orchestrator_service.src.services.overmind.domain.super_intelligence.expertise import build_expertise_profile
+from microservices.orchestrator_service.src.services.overmind.domain.super_intelligence.expertise import (
+    build_expertise_profile,
+)
 
 logger = get_logger(__name__)
 

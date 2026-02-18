@@ -11,7 +11,11 @@ import redis.asyncio as redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from microservices.orchestrator_service.src.core.config import get_settings
-from microservices.orchestrator_service.src.models.mission import Mission, MissionEventType, MissionStatus
+from microservices.orchestrator_service.src.models.mission import (
+    Mission,
+    MissionEventType,
+    MissionStatus,
+)
 from microservices.orchestrator_service.src.services.overmind.domain.types import MissionContext
 from microservices.orchestrator_service.src.services.overmind.factory import create_overmind
 from microservices.orchestrator_service.src.services.overmind.state import MissionStateManager
@@ -115,7 +119,9 @@ async def _run_mission_task(mission_id: int, force_research: bool = False) -> No
     Background Task Wrapper for Overmind Execution.
     Creates a NEW session for the execution (isolated from the request).
     """
-    from microservices.orchestrator_service.src.core.database import async_session_factory  # Lazy import to avoid circular deps
+    from microservices.orchestrator_service.src.core.database import (
+        async_session_factory,  # Lazy import to avoid circular deps
+    )
 
     async with async_session_factory() as session:
         try:

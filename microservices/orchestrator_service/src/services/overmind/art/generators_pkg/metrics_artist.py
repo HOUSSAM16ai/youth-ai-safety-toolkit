@@ -7,7 +7,10 @@ Responsible for visualizing software metrics artistically.
 
 import math
 
-from microservices.orchestrator_service.src.services.overmind.art.styles import ArtStyle, VisualTheme
+from microservices.orchestrator_service.src.services.overmind.art.styles import (
+    ArtStyle,
+    VisualTheme,
+)
 
 
 class MetricsArtist:

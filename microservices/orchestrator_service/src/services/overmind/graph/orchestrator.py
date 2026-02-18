@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import logging
 
-from microservices.orchestrator_service.src.services.overmind.graph.nodes import AgentMessage, AgentNode
+from microservices.orchestrator_service.src.services.overmind.graph.nodes import (
+    AgentMessage,
+    AgentNode,
+)
 
 logger = logging.getLogger(__name__)
 

@@ -15,7 +15,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.di import get_logger
 from microservices.orchestrator_service.src.models.mission import Mission
-from microservices.orchestrator_service.src.services.overmind.user_knowledge.statistics import get_user_statistics
+from microservices.orchestrator_service.src.services.overmind.user_knowledge.statistics import (
+    get_user_statistics,
+)
 
 logger = get_logger(__name__)
 

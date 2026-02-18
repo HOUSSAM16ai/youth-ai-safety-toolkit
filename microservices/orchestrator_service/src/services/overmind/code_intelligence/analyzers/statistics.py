@@ -1,4 +1,7 @@
-from microservices.orchestrator_service.src.services.overmind.code_intelligence.models import ComplexityStats, LineStats
+from microservices.orchestrator_service.src.services.overmind.code_intelligence.models import (
+    ComplexityStats,
+    LineStats,
+)
 
 
 class StatisticsAnalyzer:

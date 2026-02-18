@@ -11,10 +11,20 @@ from collections.abc import Awaitable, Callable
 from typing import TypeVar
 
 from app.core.protocols import AgentMemory
-from microservices.orchestrator_service.src.services.overmind.domain.context import InMemoryCollaborationContext
-from microservices.orchestrator_service.src.services.overmind.domain.council_session import CouncilSession
-from microservices.orchestrator_service.src.services.overmind.domain.enums import CognitiveEvent, CognitivePhase
-from microservices.orchestrator_service.src.services.overmind.domain.primitives import AgentUnitOfWork, EventLogger
+from microservices.orchestrator_service.src.services.overmind.domain.context import (
+    InMemoryCollaborationContext,
+)
+from microservices.orchestrator_service.src.services.overmind.domain.council_session import (
+    CouncilSession,
+)
+from microservices.orchestrator_service.src.services.overmind.domain.enums import (
+    CognitiveEvent,
+    CognitivePhase,
+)
+from microservices.orchestrator_service.src.services.overmind.domain.primitives import (
+    AgentUnitOfWork,
+    EventLogger,
+)
 
 logger = logging.getLogger(__name__)
 

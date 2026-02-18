@@ -3,7 +3,10 @@
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from microservices.orchestrator_service.src.services.overmind.database_tools.validators import quote_identifier, validate_identifier
+from microservices.orchestrator_service.src.services.overmind.database_tools.validators import (
+    quote_identifier,
+    validate_identifier,
+)
 
 
 async def fetch_all_tables(session: AsyncSession) -> list[str]:

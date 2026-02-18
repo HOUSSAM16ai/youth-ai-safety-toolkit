@@ -13,7 +13,10 @@ CS73 Core Concepts:
 - Visual Storytelling: السرد البصري
 """
 
-from microservices.orchestrator_service.src.services.overmind.art.styles import ArtStyle, VisualTheme
+from microservices.orchestrator_service.src.services.overmind.art.styles import (
+    ArtStyle,
+    VisualTheme,
+)
 
 
 class CodeArtVisualizer:

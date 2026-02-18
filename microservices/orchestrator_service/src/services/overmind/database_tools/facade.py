@@ -11,15 +11,27 @@
 from sqlalchemy import MetaData
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.di import get_logger
 from microservices.orchestrator_service.src.core.config import get_settings
 from microservices.orchestrator_service.src.core.database import get_db
-from app.core.di import get_logger
-from microservices.orchestrator_service.src.services.overmind.database_tools.column_manager import ColumnManager
-from microservices.orchestrator_service.src.services.overmind.database_tools.data_manager import DataManager
-from microservices.orchestrator_service.src.services.overmind.database_tools.index_manager import IndexManager
-from microservices.orchestrator_service.src.services.overmind.database_tools.operations_logger import OperationsLogger
-from microservices.orchestrator_service.src.services.overmind.database_tools.query_executor import QueryExecutor
-from microservices.orchestrator_service.src.services.overmind.database_tools.table_manager import TableManager
+from microservices.orchestrator_service.src.services.overmind.database_tools.column_manager import (
+    ColumnManager,
+)
+from microservices.orchestrator_service.src.services.overmind.database_tools.data_manager import (
+    DataManager,
+)
+from microservices.orchestrator_service.src.services.overmind.database_tools.index_manager import (
+    IndexManager,
+)
+from microservices.orchestrator_service.src.services.overmind.database_tools.operations_logger import (
+    OperationsLogger,
+)
+from microservices.orchestrator_service.src.services.overmind.database_tools.query_executor import (
+    QueryExecutor,
+)
+from microservices.orchestrator_service.src.services.overmind.database_tools.table_manager import (
+    TableManager,
+)
 
 logger = get_logger(__name__)
 
