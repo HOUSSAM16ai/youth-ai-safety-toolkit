@@ -30,8 +30,11 @@ async def test_data_mesh_refactor_verification(async_client):
     assert response.status_code != 404, "Data Mesh Metrics endpoint not found at new location"
 
     # 3. Verify Observability Metrics (GET /api/observability/metrics)
+    # Update: Observability has been decoupled into a separate microservice.
+    # The Monolith (core-kernel) should NOT serve this anymore.
+    # So we EXPECT 404 here when querying the Monolith directly.
     response = await client.get("/api/observability/metrics")
-    assert response.status_code != 404, "Observability Metrics endpoint not found"
+    assert response.status_code == 404, "Observability Metrics should be removed from Monolith (Decoupled)"
 
     # 4. Verify AIOps Telemetry (POST /api/v1/platform/aiops/telemetry)
     # Verify legacy endpoint is removed (Dead Code Cleanup)

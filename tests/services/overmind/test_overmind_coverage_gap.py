@@ -1,3 +1,4 @@
+import importlib
 import inspect
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -114,6 +115,10 @@ async def test_overmind_factory_assembly(mock_db_session):
     """
     Test that the factory correctly assembles the Overmind components.
     """
+    # Ensure module is clean
+    importlib.reload(factory_module)
+    from app.services.overmind.factory import create_overmind as fresh_create_overmind
+
     registry: dict[str, object] = {}
     with (
         patch.object(factory_module, "get_ai_client"),
@@ -131,7 +136,11 @@ async def test_overmind_factory_assembly(mock_db_session):
         mock_db = AsyncMock()
 
         # Execute
-        result = await create_overmind(mock_db)
+        # Check if fresh_create_overmind is async
+        if inspect.iscoroutinefunction(fresh_create_overmind):
+            result = await fresh_create_overmind(mock_db)
+        else:
+            result = fresh_create_overmind(mock_db)
 
         # Robustly handle both coroutine and synchronous return values (e.g. from mocks)
         if inspect.iscoroutine(result):
