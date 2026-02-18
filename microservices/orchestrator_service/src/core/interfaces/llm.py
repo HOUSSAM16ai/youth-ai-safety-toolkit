@@ -7,7 +7,7 @@
 from collections.abc import AsyncGenerator
 from typing import Protocol, runtime_checkable
 
-from ..types import JSONDict
+from microservices.orchestrator_service.src.core.types import JSONDict
 
 
 @runtime_checkable

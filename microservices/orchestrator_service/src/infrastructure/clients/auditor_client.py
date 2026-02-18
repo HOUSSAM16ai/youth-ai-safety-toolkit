@@ -1,9 +1,16 @@
+import json
 import logging
 import os
 
 import httpx
 
-from microservices.orchestrator_service.src.core.protocols import AgentReflector, CollaborationContext
+from microservices.orchestrator_service.src.core.protocols import (
+    AgentReflector,
+    CollaborationContext,
+)
+from microservices.orchestrator_service.src.services.overmind.domain.exceptions import (
+    StalemateError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -92,17 +99,13 @@ class AuditorClient(AgentReflector):
 
         Let's keep a simple local implementation to avoid network overhead for hash checks.
         """
-        # Re-implement basic check locally to satisfy protocol
         import hashlib
-        import json
 
         try:
             encoded = json.dumps(current_plan, sort_keys=True, default=str).encode("utf-8")
             current_hash = hashlib.sha256(encoded).hexdigest()
 
             if history_hashes.count(current_hash) >= 2:
-                from microservices.orchestrator_service.src.services.overmind.domain.exceptions import StalemateError
-
                 raise StalemateError("Infinite loop detected by Client.")
         except Exception as e:
             logger.warning(f"Loop detection failed: {e}")
@@ -112,7 +115,6 @@ class AuditorClient(AgentReflector):
         Compute hash locally.
         """
         import hashlib
-        import json
 
         try:
             encoded = json.dumps(plan, sort_keys=True, default=str).encode("utf-8")

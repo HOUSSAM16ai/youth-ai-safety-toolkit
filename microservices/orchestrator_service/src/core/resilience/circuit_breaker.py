@@ -31,13 +31,12 @@ DOES NOT:
 
 from __future__ import annotations
 
-import logging
 import threading
 import time
 from dataclasses import dataclass
 from enum import Enum
 
-from ..logging import get_logger
+from microservices.orchestrator_service.src.core.logging import get_logger
 
 logger = get_logger(__name__)
 

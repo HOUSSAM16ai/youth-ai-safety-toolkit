@@ -20,7 +20,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from microservices.orchestrator_service.src.core.logging import get_logger
-from microservices.orchestrator_service.src.services.overmind.agents.principles import get_agent_principles
+from microservices.orchestrator_service.src.services.overmind.agents.principles import (
+    get_agent_principles,
+)
 from microservices.orchestrator_service.src.services.overmind.agents.system_principles import (
     format_architecture_system_principles,
     format_system_principles,

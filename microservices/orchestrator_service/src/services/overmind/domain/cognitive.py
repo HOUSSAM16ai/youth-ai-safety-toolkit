@@ -52,6 +52,9 @@ from microservices.orchestrator_service.src.services.overmind.domain.primitives 
     CognitiveState,
     EventLogger,
 )
+from microservices.orchestrator_service.src.services.tools.retrieval import (
+    search_educational_content,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -254,8 +257,6 @@ class SuperBrain:
             return
 
         try:
-            from microservices.orchestrator_service.src.services.tools.retrieval import search_educational_content
-
             content = await search_educational_content(**extracted)
         except Exception as exc:
             logger.warning("Educational content retrieval failed: %s", exc)
