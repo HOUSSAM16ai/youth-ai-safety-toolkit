@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
-from enum import Enum
+from enum import Enum, StrEnum
 
 from sqlalchemy import Column, DateTime, Text, func
 from sqlalchemy.orm import relationship
@@ -21,7 +21,7 @@ class FlexibleEnum(Enum):
     """Placeholder for FlexibleEnum if needed, or just use Enum."""
     pass
 
-class CaseInsensitiveEnum(str, Enum):
+class CaseInsensitiveEnum(StrEnum):
     """Case insensitive enum mixin."""
     @classmethod
     def _missing_(cls, value):
