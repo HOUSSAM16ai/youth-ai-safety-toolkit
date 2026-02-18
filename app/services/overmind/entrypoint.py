@@ -64,9 +64,7 @@ async def start_mission(
         return Mission(
             id=response.id,
             objective=response.objective,
-            status=MissionStatus(response.status)
-            if response.status
-            else MissionStatus.PENDING,
+            status=MissionStatus(response.status) if response.status else MissionStatus.PENDING,
             result_summary=response.result.get("summary") if response.result else None,
             created_at=response.created_at,
             updated_at=response.updated_at,

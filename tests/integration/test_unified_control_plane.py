@@ -28,7 +28,7 @@ async def test_start_mission_success(db_session):
             objective="Test Unified Control Plane",
             status="pending",
             created_at="2024-01-01T00:00:00",
-            updated_at="2024-01-01T00:00:00"
+            updated_at="2024-01-01T00:00:00",
         )
         mock_client.create_mission = AsyncMock(return_value=mock_response)
 
@@ -66,7 +66,7 @@ async def test_start_mission_idempotency(db_session):
             objective="Obj",
             status="pending",
             created_at="2024-01-01",
-            updated_at="2024-01-01"
+            updated_at="2024-01-01",
         )
         mock_client.create_mission = AsyncMock(return_value=mock_response)
 
