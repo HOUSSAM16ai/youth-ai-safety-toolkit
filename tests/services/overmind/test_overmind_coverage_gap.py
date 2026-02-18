@@ -1,3 +1,4 @@
+import inspect
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -131,7 +132,9 @@ async def test_overmind_factory_assembly(mock_db_session):
 
         # Execute
         result = await create_overmind(mock_db)
-        if hasattr(result, "__await__"):
+
+        # Robustly handle both coroutine and synchronous return values (e.g. from mocks)
+        if inspect.iscoroutine(result):
             orchestrator = await result
         else:
             orchestrator = result
