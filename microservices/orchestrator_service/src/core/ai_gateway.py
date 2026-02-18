@@ -27,8 +27,14 @@ from microservices.orchestrator_service.src.core.gateway.exceptions import (
     AIProviderError,
     AIRateLimitError,
 )
-from microservices.orchestrator_service.src.core.gateway.mesh import AIClient, NeuralRoutingMesh, get_ai_client
-from microservices.orchestrator_service.src.core.superhuman_performance_optimizer import get_performance_optimizer
+from microservices.orchestrator_service.src.core.gateway.mesh import (
+    AIClient,
+    NeuralRoutingMesh,
+    get_ai_client,
+)
+from microservices.orchestrator_service.src.core.superhuman_performance_optimizer import (
+    get_performance_optimizer,
+)
 
 # Re-export key components for backward compatibility
 __all__ = [

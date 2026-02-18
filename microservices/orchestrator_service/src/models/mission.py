@@ -5,14 +5,14 @@ Decoupled from User Service.
 
 from __future__ import annotations
 
+import json
 from datetime import datetime
 from enum import Enum
-from typing import Any
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, Text, func
+from sqlalchemy import Column, DateTime, Text, func
 from sqlalchemy.orm import relationship
 from sqlmodel import Field, Relationship, SQLModel
-import json
+
 
 def utc_now():
     return datetime.utcnow()
@@ -28,6 +28,7 @@ class CaseInsensitiveEnum(str, Enum):
         for member in cls:
             if member.value.lower() == value.lower():
                 return member
+        return None  # Fix RET503
 
 class JSONText(Text):
     """JSON type for Text column."""
@@ -126,19 +127,19 @@ class Mission(SQLModel, table=True):
 
     # Relationships
     # Removed User relationship
-    tasks: list["Task"] = Relationship(
+    tasks: list[Task] = Relationship(
         sa_relationship=relationship(
             "Task",
             back_populates="mission",
             # foreign_keys=lambda: [Task.mission_id],
         )
     )
-    mission_plans: list["MissionPlan"] = Relationship(
+    mission_plans: list[MissionPlan] = Relationship(
         sa_relationship=relationship(
             "MissionPlan", back_populates="mission", # foreign_keys="[MissionPlan.mission_id]"
         )
     )
-    events: list["MissionEvent"] = Relationship(
+    events: list[MissionEvent] = Relationship(
         sa_relationship=relationship("MissionEvent", back_populates="mission")
     )
 
@@ -168,7 +169,7 @@ class MissionPlan(SQLModel, table=True):
             "Mission", back_populates="mission_plans", # foreign_keys="[MissionPlan.mission_id]"
         )
     )
-    tasks: list["Task"] = Relationship(
+    tasks: list[Task] = Relationship(
         sa_relationship=relationship("Task", back_populates="plan")
     )
 

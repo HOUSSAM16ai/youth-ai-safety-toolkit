@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
 
-from microservices.orchestrator_service.src.core.gateway.models import ProviderCandidate, RoutingStrategy
+from microservices.orchestrator_service.src.core.gateway.models import (
+    ProviderCandidate,
+    RoutingStrategy,
+)
 
 
 class BaseRoutingStrategy(ABC):

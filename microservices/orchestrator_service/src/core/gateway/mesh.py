@@ -11,12 +11,15 @@ import time
 from collections.abc import AsyncGenerator
 
 from app.core.ai_config import get_ai_config
-from microservices.orchestrator_service.src.core.gateway.circuit_breaker import CircuitBreaker
-from microservices.orchestrator_service.src.core.gateway.exceptions import AIAllModelsExhaustedError, AIProviderError
-from microservices.orchestrator_service.src.core.gateway.node import NeuralNode
-from microservices.orchestrator_service.src.core.gateway.simple_client import SimpleAIClient
 from app.core.interfaces.llm import LLMClient as AIClient
 from app.core.types import JSONDict
+from microservices.orchestrator_service.src.core.gateway.circuit_breaker import CircuitBreaker
+from microservices.orchestrator_service.src.core.gateway.exceptions import (
+    AIAllModelsExhaustedError,
+    AIProviderError,
+)
+from microservices.orchestrator_service.src.core.gateway.node import NeuralNode
+from microservices.orchestrator_service.src.core.gateway.simple_client import SimpleAIClient
 
 _ai_config = get_ai_config()
 

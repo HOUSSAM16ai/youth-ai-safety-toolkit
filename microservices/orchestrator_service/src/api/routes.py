@@ -1,6 +1,5 @@
 import logging
 import uuid
-import asyncio
 
 from fastapi import (
     APIRouter,
@@ -14,10 +13,13 @@ from fastapi import (
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from microservices.orchestrator_service.src.core.config import get_settings
-from microservices.orchestrator_service.src.core.database import get_db, async_session_factory
-from microservices.orchestrator_service.src.models.mission import Mission
+from microservices.orchestrator_service.src.core.database import async_session_factory, get_db
 from microservices.orchestrator_service.src.core.event_bus import get_event_bus
-from microservices.orchestrator_service.src.core.security import extract_websocket_auth, decode_user_id
+from microservices.orchestrator_service.src.core.security import (
+    decode_user_id,
+    extract_websocket_auth,
+)
+from microservices.orchestrator_service.src.models.mission import Mission
 from microservices.orchestrator_service.src.services.overmind.domain.api_schemas import (
     MissionCreate,
     MissionResponse,

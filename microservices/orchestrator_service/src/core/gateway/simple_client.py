@@ -14,10 +14,13 @@ import httpx
 
 from app.core.ai_config import get_ai_config
 from app.core.cognitive_cache import CognitiveResonanceEngine, get_cognitive_engine
-from microservices.orchestrator_service.src.core.gateway.connection import BASE_TIMEOUT, ConnectionManager
 from app.core.interfaces.llm import LLMClient
 from app.core.types import JSONDict
 from app.services.llm.safety_net import SafetyNetService
+from microservices.orchestrator_service.src.core.gateway.connection import (
+    BASE_TIMEOUT,
+    ConnectionManager,
+)
 
 logger = logging.getLogger(__name__)
 

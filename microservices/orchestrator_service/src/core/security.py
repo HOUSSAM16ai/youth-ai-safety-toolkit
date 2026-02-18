@@ -1,6 +1,5 @@
 import jwt
 from fastapi import HTTPException, WebSocket
-from microservices.orchestrator_service.src.core.config import settings
 
 ALGORITHM = "HS256"
 

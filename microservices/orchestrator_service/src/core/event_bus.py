@@ -1,7 +1,8 @@
 import json
 import logging
-import asyncio
+
 import redis.asyncio as redis
+
 from microservices.orchestrator_service.src.core.config import settings
 
 logger = logging.getLogger(__name__)

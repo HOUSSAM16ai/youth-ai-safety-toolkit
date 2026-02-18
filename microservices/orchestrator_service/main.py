@@ -4,8 +4,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from microservices.orchestrator_service.src.core.config import settings
 from microservices.orchestrator_service.src.api import routes
+from microservices.orchestrator_service.src.core.config import settings
 from microservices.orchestrator_service.src.core.event_bus import event_bus
 
 logging.basicConfig(level=logging.INFO)

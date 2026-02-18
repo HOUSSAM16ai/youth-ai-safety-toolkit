@@ -6,7 +6,9 @@ import time
 from collections import OrderedDict
 from datetime import timedelta
 
-from microservices.orchestrator_service.src.core.gateway.protocols.cache import CacheProviderProtocol
+from microservices.orchestrator_service.src.core.gateway.protocols.cache import (
+    CacheProviderProtocol,
+)
 
 logger = logging.getLogger(__name__)
 
