@@ -8,7 +8,6 @@ import app.services.overmind.factory as factory_module
 from app.core.domain.models import Mission, MissionStatus
 from app.services.overmind.domain.cognitive import SuperBrain
 from app.services.overmind.executor import TaskExecutor
-from app.services.overmind.factory import create_overmind
 from app.services.overmind.orchestrator import OvermindOrchestrator
 from app.services.overmind.state import MissionStateManager
 
