@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     RESEARCH_AGENT_URL: str = "http://research-agent:8000"
     REASONING_AGENT_URL: str = "http://reasoning-agent:8000"
     ORCHESTRATOR_SERVICE_URL: str = "http://orchestrator-service:8000"
+    CORE_KERNEL_URL: str = "http://core-kernel:8000"
 
     # Gateway Configuration
     API_V1_STR: str = "/api/v1"

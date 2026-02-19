@@ -5,12 +5,12 @@ services:
   # Infrastructure Services
   # ==========================================
 
-  # Redis - Required by Orchestrator
-  redis:
+  # Redis - Dedicated for Orchestrator (Renamed to avoid conflict)
+  redis-orchestrator:
     image: redis:alpine
-    container_name: cogniforge-redis
+    container_name: cogniforge-redis-orchestrator
     ports:
-      - "6379:6379"
+      - "6380:6379"
     networks:
       - cogniforge-network
     healthcheck:
@@ -18,24 +18,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
-
-  # Postgres Core - For Monolith/Core Kernel
-  postgres-core:
-    image: postgres:15-alpine
-    container_name: cogniforge-postgres-core
-    ports:
-      - "5432:5432"
-    networks:
-      - cogniforge-network
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
-      POSTGRES_DB: core_db
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d core_db"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
 
   # Postgres Planning - Dedicated
   postgres-planning:
@@ -178,18 +160,36 @@ services:
       retries: 5
 
   # ==========================================
-  # API Gateway - نقطة الدخول المركزية
+  # Core Platform Services
   # ==========================================
+
+  # Frontend - Next.js Application
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cogniforge-frontend
+    ports:
+      - "3000:3000"
+    networks:
+      - cogniforge-network
+    environment:
+      # API_URL tells the Next.js server side proxy where to find the backend
+      API_URL: http://api-gateway:8000
+    depends_on:
+      - api-gateway
+
+  # API Gateway - Central Microservice Gateway
   api-gateway:
     build:
       context: ./microservices/api_gateway
       dockerfile: Dockerfile
     container_name: cogniforge-gateway
     ports:
-      - "8000:8000"
+      - "8008:8000"
     environment:
       - ENVIRONMENT=production
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres-core:5432/core_db
+      - CORE_KERNEL_URL=http://core-kernel:8000
       - SECRET_KEY=${SECRET_KEY:-super_secret_key_change_in_production}
       - PLANNING_AGENT_URL=http://planning-agent:8001
       - MEMORY_AGENT_URL=http://memory-agent:8002
@@ -207,7 +207,6 @@ services:
       - research-agent
       - reasoning-agent
       - orchestrator-service
-      - postgres-core
     networks:
       - cogniforge-network
     healthcheck:
@@ -217,9 +216,7 @@ services:
       retries: 3
       start_period: 40s
 
-  # ==========================================
-  # Planning Agent - وكيل التخطيط
-  # ==========================================
+  # Planning Agent - Generator of Plans
   planning-agent:
     build:
       context: ./microservices/planning_agent
@@ -245,9 +242,7 @@ services:
       timeout: 10s
       retries: 3
 
-  # ==========================================
-  # Memory Agent - وكيل الذاكرة
-  # ==========================================
+  # Memory Agent
   memory-agent:
     build:
       context: ./microservices/memory_agent
@@ -273,9 +268,7 @@ services:
       timeout: 10s
       retries: 3
 
-  # ==========================================
-  # User Service - خدمة المستخدمين
-  # ==========================================
+  # User Service
   user-service:
     build:
       context: ./microservices/user_service
@@ -301,9 +294,7 @@ services:
       timeout: 10s
       retries: 3
 
-  # ==========================================
-  # Observability Service - خدمة المراقبة
-  # ==========================================
+  # Observability Service
   observability-service:
     build:
       context: ./microservices/observability_service
@@ -328,9 +319,7 @@ services:
       timeout: 10s
       retries: 3
 
-  # ==========================================
-  # Orchestrator Service - المايسترو
-  # ==========================================
+  # Orchestrator Service - The Maestro
   orchestrator-service:
     build:
       context: ./microservices/orchestrator_service
@@ -342,7 +331,7 @@ services:
       - SERVICE_NAME=orchestrator-service
       - SECRET_KEY=${SECRET_KEY:-super_secret_key_change_in_production}
       - ORCHESTRATOR_DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres-orchestrator:5432/orchestrator_db
-      - REDIS_URL=redis://redis:6379
+      - REDIS_URL=redis://redis-orchestrator:6379
       - PLANNING_AGENT_URL=http://planning-agent:8001
       - MEMORY_AGENT_URL=http://memory-agent:8002
       - RESEARCH_AGENT_URL=http://research-agent:8007
@@ -354,7 +343,7 @@ services:
     depends_on:
       postgres-orchestrator:
         condition: service_healthy
-      redis:
+      redis-orchestrator:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
@@ -362,9 +351,7 @@ services:
       timeout: 10s
       retries: 3
 
-  # ==========================================
-  # Research Agent - وكيل البحث
-  # ==========================================
+  # Research Agent
   research-agent:
     build:
       context: ./microservices/research_agent
@@ -387,9 +374,7 @@ services:
       timeout: 10s
       retries: 3
 
-  # ==========================================
-  # Reasoning Agent - وكيل الاستدلال
-  # ==========================================
+  # Reasoning Agent
   reasoning-agent:
     build:
       context: ./microservices/reasoning_agent
@@ -414,5 +399,4 @@ services:
 
 networks:
   cogniforge-network:
-    driver: bridge
-    name: cogniforge-network
+    external: true

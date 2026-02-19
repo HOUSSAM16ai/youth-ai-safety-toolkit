@@ -163,5 +163,18 @@ async def orchestrator_proxy(path: str, request: Request) -> StreamingResponse:
     )
 
 
+@app.api_route(
+    "/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+    include_in_schema=False,
+)
+async def legacy_proxy(path: str, request: Request) -> StreamingResponse:
+    """
+    Catch-all proxy for legacy Monolith (Core Kernel) requests.
+    This ensures that any route not handled by microservices is forwarded to the Core Kernel.
+    """
+    return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, path)
+
+
 if __name__ == "__main__":
     uvicorn.run("microservices.api_gateway.main:app", host="0.0.0.0", port=8000, reload=True)
