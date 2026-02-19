@@ -3,8 +3,8 @@ import logging
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import Depends, FastAPI, Request
-from fastapi.responses import StreamingResponse
+from fastapi import Depends, FastAPI, Request, Response
+from fastapi.responses import JSONResponse, StreamingResponse
 
 # Local imports
 from microservices.api_gateway.config import settings
@@ -163,17 +163,90 @@ async def orchestrator_proxy(path: str, request: Request) -> StreamingResponse:
     )
 
 
+# --- Legacy Monolith Proxies (Explicit Whitelist) ---
+
+@app.api_route(
+    "/admin/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+    include_in_schema=False,
+)
+async def legacy_admin_proxy(path: str, request: Request) -> StreamingResponse:
+    return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"admin/{path}")
+
+
+@app.api_route(
+    "/api/security/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+    include_in_schema=False,
+)
+async def legacy_security_proxy(path: str, request: Request) -> StreamingResponse:
+    return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"api/security/{path}")
+
+
+@app.api_route(
+    "/api/v1/data-mesh/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+    include_in_schema=False,
+)
+async def legacy_data_mesh_proxy(path: str, request: Request) -> StreamingResponse:
+    return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"api/v1/data-mesh/{path}")
+
+
+@app.api_route(
+    "/api/v1/resources/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+    include_in_schema=False,
+)
+async def legacy_crud_proxy(path: str, request: Request) -> StreamingResponse:
+    return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"api/v1/resources/{path}")
+
+
+@app.api_route(
+    "/api/chat/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+    include_in_schema=False,
+)
+async def legacy_customer_chat_proxy(path: str, request: Request) -> StreamingResponse:
+    return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"api/chat/{path}")
+
+
+@app.api_route(
+    "/v1/content/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+    include_in_schema=False,
+)
+async def legacy_content_proxy(path: str, request: Request) -> StreamingResponse:
+    return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"v1/content/{path}")
+
+
+@app.api_route(
+    "/system/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+    include_in_schema=False,
+)
+async def legacy_system_proxy(path: str, request: Request) -> StreamingResponse:
+    return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"system/{path}")
+
+
+# --- Fallback / 404 Handler ---
+
 @app.api_route(
     "/{path:path}",
     methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
     include_in_schema=False,
 )
-async def legacy_proxy(path: str, request: Request) -> StreamingResponse:
+async def not_found_handler(path: str, request: Request) -> JSONResponse:
     """
-    Catch-all proxy for legacy Monolith (Core Kernel) requests.
-    This ensures that any route not handled by microservices is forwarded to the Core Kernel.
+    Catch-all handler that returns 404 for any route not explicitly defined above.
+    This prevents accidental leakage to the Monolith.
     """
-    return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, path)
+    return JSONResponse(
+        status_code=404,
+        content={
+            "error": "Microservice not found",
+            "detail": f"The path '{path}' is not routed to any active microservice or legacy endpoint.",
+        },
+    )
 
 
 if __name__ == "__main__":
