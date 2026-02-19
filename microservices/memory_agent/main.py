@@ -134,9 +134,7 @@ def create_app(settings: MemoryAgentSettings | None = None) -> FastAPI:
 
     # تطبيق Zero Trust: التحقق من الهوية عند البوابة
     app.include_router(_build_public_router(effective_settings))
-    app.include_router(
-        _build_protected_router(), dependencies=[Depends(verify_service_token)]
-    )
+    app.include_router(_build_protected_router(), dependencies=[Depends(verify_service_token)])
 
     return app
 
