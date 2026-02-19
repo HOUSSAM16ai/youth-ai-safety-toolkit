@@ -1,32 +1,48 @@
-# Data Policy
+# Data Policy: Privacy-by-Design
 
-This repository and its associated research adhere to the **"data protection by design and by default"** principle. All evaluation data is minimized, encrypted, and governed by strict access controls.
+This policy outlines the data governance framework for the NAAS-Agentic-Core project. We adhere to a "Privacy-by-Design" and "Privacy-by-Default" approach to protect all participants, specifically focusing on youth safety.
 
-## Data Categories
+## 1. Data Collection Scope
 
-We collect and process only the minimum data necessary for safety evaluation:
+We strictly limit data collection to the minimum necessary for safety evaluation and research integrity.
 
-* **Guardian Contact Details:** Collected separately for consent purposes (where applicable). Stored in a distinct, secure database.
-* **Participant Age Band:** Collected as a range (e.g., 12-14, 15-17), never as a full date of birth.
-* **Pseudonymised IDs:** Unique identifiers assigned to participants, replacing all direct identifiers.
-* **Privacy-Preserving Telemetry:** Aggregated signals including unsafe flags, prompt-based bypass attempts, and PII-risk events.
-* **Optional Wellbeing Check-ins:** Non-clinical, aggregated responses to simple mood/wellbeing questions.
+### Data We Collect
+*   **Guardian Contact Information:** Email/phone for consent purposes (stored separately from session data).
+*   **Participant Age Band:** Aggregated age ranges (e.g., "13-15", "16-18") rather than exact dates of birth.
+*   **Pseudonymised Session IDs:** Unique, random identifiers linked to interaction logs to allow for analysis without revealing identity.
+*   **Privacy-Preserving Telemetry:** System performance metrics, safety flag activations, and error rates.
+*   **Optional Wellbeing Check-ins:** Aggregated, non-clinical self-reported wellbeing scores (if applicable to specific study protocols).
 
-## Storage and Security
+### Data We Do NOT Collect
+*   **Full Date of Birth:** We do not store exact birth dates.
+*   **National Identification Numbers:** No government IDs are collected or stored.
+*   **Precise Geolocation:** No GPS or precise location data is recorded by default.
+*   **Raw Chat Logs for Publication:** We do not publish raw, unredacted conversations.
+*   **Direct Identifiers in Analysis:** Names and addresses are never stored with analysis datasets.
 
-* **Access Control (RBAC):** Data access is restricted to authorized researchers based on role.
-* **Encryption:** All data is encrypted in transit (TLS 1.3) and at rest (AES-256).
-* **Audit Logs:** Access to sensitive data is logged for accountability.
-* **Separation:** Identifiers (e.g., email addresses) are stored separately from research data.
+## 2. Storage & Security
 
-## Data Retention
+*   **Role-Based Access Control (RBAC):** Access to raw data is restricted to authorized researchers with active safeguarding training.
+*   **Encryption:** All sensitive data is encrypted in transit (TLS 1.2+) and at rest (AES-256).
+*   **Audit Logs:** Access to sensitive data stores is logged and auditable.
+*   **Separation of Duties:** Contact information (for consent) is stored in a separate, siloed system from research data (telemetry/chats).
 
-Data is retained only for the duration of the active research phase plus a defined audit window (e.g., 12 months). Upon expiration, all personal data is permanently deleted securely.
-Anonymised, aggregated datasets may be retained indefinitely for scientific reproducibility.
+## 3. Data Retention
 
-## Publication Rules
+We enforce strict retention schedules to minimize risk.
 
-To ensure privacy and safety:
-* We publish only **aggregated and anonymised** metrics and findings.
-* We publish **sanitized test cases** (synthetic or redacted) to demonstrate failure modes.
-* We **never** publish raw chat logs, participant identifiers, or unredacted incidents involving minors.
+*   **Raw Telemetry & Logs:** Retained for **30 days** post-collection for immediate analysis and debugging.
+*   **Anonymised/Aggregated Data:** Retained indefinitely for longitudinal research and publication.
+*   **Incident Records:** Retained as required by the [SAFEGUARDING.md](./SAFEGUARDING.md) protocol (typically longer, pending institutional review) if a safety incident occurs.
+*   **Deletion:** Upon expiration of the retention period, raw data is securely deleted/overwritten.
+
+## 4. Publication & Sharing
+
+*   **Aggregated Findings:** We publish statistical analysis, interception rates, and error patterns.
+*   **Sanitised Test Cases:** We share constructed "red-teaming" prompts that do not contain user data.
+*   **No Raw Youth Data:** We **never** publish raw transcripts of youth interactions.
+*   **Incident Patterns:** We share anonymised descriptions of safety failure modes to help the community improve, without identifying individuals.
+
+## 5. Compliance
+
+This policy aligns with the principles of data minimization and purpose limitation (e.g., GDPR Art. 25). However, users deploying this toolkit must verify compliance with their specific local jurisdiction's data protection laws.

@@ -1,25 +1,40 @@
-# Getting Started with the Youth AI Safety Toolkit
+# Partner Onboarding: Start Here
 
-Welcome to the technical core of the EL-NUKHBA project. This toolkit is designed to be run by youth auditors under the supervision of trained facilitators.
+Welcome to the North African AI Safety Lab (NAAS Lab) toolkit. This guide will help you prepare your organization for a safe and effective pilot.
 
-## Prerequisites
+## 1. Prerequisites
 
--   **Hardware**: Laptop or Tablet with a modern web browser.
--   **Software**: Docker (for local deployment) or access to the hosted web app.
--   **Knowledge**: Basic understanding of Generative AI (LLMs).
+Before deploying any tools, ensure you have:
 
-## Modules
+*   [ ] **Institutional Approval:** Signed permission from your school/NGO leadership.
+*   [ ] **Designated Safeguarding Lead (DSL):** A named individual responsible for safety (Name: __________).
+*   [ ] **Technical Setup:** Internet-connected devices (tablets/laptops) with access to the hosted verification API.
+*   [ ] **Guardian Consent:** Collected consent forms for all youth participants (Template available upon request).
 
-1.  **Bias Detection**: Prompts designed to reveal cultural or gender stereotypes.
-2.  **Safety Probing**: "Red Teaming" scenarios to test refusal mechanisms.
-3.  **Literacy Quiz**: Pre/Post assessment module.
+## 2. Mentor Training
 
-## Running a Session
+All adult supervisors must complete the following:
 
-1.  **Login**: Use the anonymized User ID provided by your facilitator (e.g., `User-001`).
-2.  **Select a Mission**: Choose a predefined audit scenario.
-3.  **Log Findings**: Use the "Flag" button to report any unsafe or biased output.
+*   [ ] **Read:** [SAFEGUARDING.md](../SAFEGUARDING.md) (Mandatory).
+*   [ ] **Read:** [DATA_POLICY.md](../DATA_POLICY.md).
+*   [ ] **Workshop:** Attend the "AI Safety 101" briefing (1 hour).
+*   [ ] **Practice:** Complete 3 mock incident scenarios using the [Incident Log Template](./INCIDENT_LOG_TEMPLATE.md).
 
-## Technical Setup
+## 3. Deployment Checklist
 
-To run the toolkit locally, see the root `README.md`.
+**Day of Session:**
+
+1.  **Environment Check:** Ensure screens are visible to mentors (no hidden corners).
+2.  **System Check:** Verify the "Verify-then-Reply" agent is active (test with a harmless probe prompt).
+3.  **Briefing:** Remind participants of the session rules (be kind, no personal info).
+4.  **Monitoring:** Active supervision ratio (1 mentor per 5-10 students).
+
+## 4. Post-Session
+
+1.  **Debrief:** Mentors discuss any flagged interactions.
+2.  **Log:** Record any technical issues or safety concerns in the Incident Log.
+3.  **Data Sync:** Ensure telemetry is securely uploaded (if using offline mode).
+
+## Contact Support
+*   **Email:** support@example.org
+*   **Emergency:** Contact your local DSL immediately.

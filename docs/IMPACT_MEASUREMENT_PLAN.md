@@ -1,30 +1,39 @@
 # Impact Measurement Plan
 
-**Purpose:** To measure the project's effectiveness on safety (primary) and youth wellbeing (secondary).
-**Scope:** Pilot cohort and workshop participants.
+The North African AI Safety Lab uses a mixed-methods approach to assess the real-world impact of our tools on youth safety and educational outcomes.
 
-## 1. Reach & Beneficiaries
-* **Deep Pilot:** 15–20 learners (High retention, longitudinal data).
-* **Broader Engagement:** Up to 100–150 students (Workshops, Beta testing).
-* **Educators/Mentors:** 5–10 facilitators (Training & observation).
+## 1. Quantitative Indicators (Telemetry)
 
-## 2. Measurement Methods
-### A. Technical Impact (Safety)
-* **Telemetry Logs:** Automated counters for blocks, flags, and interventions.
-* **Repository Analytics:** Clones, forks, and stars of the open-source toolkit (measure of *reusability*).
-* **Reuse:** Number of documented Issues/PRs from the community.
+We collect privacy-preserving telemetry to track:
 
-### B. Wellbeing Indicators (Non-Clinical)
-We use lightweight, validated scales appropriate for adolescents.
-* **SWEMWBS (Short Warwick-Edinburgh Mental Well-being Scale):** Administered Pre- and Post-pilot. Aggregated to track general trends in confidence.
-* **Perceived Anxiety Check-in:** Single-question Likert scale: *"How confident do you feel about using AI for exam prep?"*
+*   **Intervention Volume:** Number of unsafe interactions blocked by the agent.
+*   **Session Quality:** Duration of safe, uninterrupted educational sessions.
+*   **Latency Impact:** The added time cost of the "Verify-then-Reply" layer (target: < 1.5s).
 
-## 3. Ethics & Consent
-* **Opt-In:** All wellbeing measurement is optional.
-* **Aggregation:** Scores are never analyzed at the individual level, only as a cohort average.
-* **Referral:** If a student self-discloses severe distress in comments, the Safeguarding Protocol (Escalation) is triggered. We do not diagnose.
+## 2. Qualitative Feedback (Wellbeing)
 
-## 4. Reviewer Checklist
-* ✅ **Validated Scales:** Uses SWEMWBS (appropriate for 11+).
-* ✅ **Privacy:** No PII in impact reports.
-* ✅ **Ethics:** Clear opt-out mechanisms.
+We incorporate optional, non-clinical feedback mechanisms:
+
+*   **Mentor Debriefs:** Weekly structured interviews with adult supervisors to identify behavioral trends.
+*   **Participant Sentiment:** Simple "thumbs up/down" or emoji-based feedback on the helpfulness of the AI tutor.
+
+## 3. Blinded Audits
+
+To ensure our safety definitions remain culturally relevant:
+
+1.  **Selection:** We sample 50 interactions per week (anonymised).
+2.  **Review:** Two independent reviewers (cultural experts) label the interactions for safety and helpfulness.
+3.  **Consensus:** Disagreements are resolved by a third senior reviewer.
+4.  **Metric:** We track the "Agreement Rate" between the AI system's decision and the human experts.
+
+## 4. Long-Term Outcomes
+
+We aim to measure:
+
+*   **Trust:** Do educators trust the tool more after seeing the safety layer in action?
+*   **Adoption:** Number of classrooms/NGOs deploying the toolkit.
+*   **Policy Influence:** Citations of our work in regional AI safety guidelines.
+
+## 5. Publishing Results
+
+We commit to publishing an annual "State of Safety" report summarizing these metrics across all deployments, ensuring transparency while protecting individual partner identities.

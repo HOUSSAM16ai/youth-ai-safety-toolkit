@@ -1,32 +1,51 @@
 # Safeguarding Policy
 
-This project strictly adheres to safety protocols for youth participation in AI research and evaluation. Our primary duty is to the safety and wellbeing of all participants.
+This document establishes the non-negotiable safety protocols for all research and deployments involving the NAAS-Agentic-Core toolkit, specifically regarding youth participants.
 
-## Consent & Assent
+## 1. Consent & Assent
 
-For all participants under 18:
-* **Guardian Consent:** Written permission must be obtained from a legal guardian or parent.
-* **Participant Assent:** The minor must also provide clear, understandable assent.
-* **Right to Withdraw:** Participants may withdraw at any time without penalty or explanation.
+All research involving human subjects must adhere to strict ethical clearance.
 
-## Supervision Model
+*   **Guardian Consent:** Written, informed consent is mandatory from a parent or legal guardian for all participants under the age of majority (typically 18).
+*   **Youth Assent:** In addition to guardian consent, the youth participant must provide affirmative assent to participate.
+*   **Right to Withdraw:** Participants and guardians have the absolute right to withdraw consent and have their data deleted at any time, without penalty.
 
-* **Trained Mentors:** All data collection sessions are monitored by trained, safeguarding-vetted mentors.
-* **Designated Safeguarding Lead (DSL):** A single point of contact responsible for overseeing safety incidents and escalations.
+## 2. Supervision Requirements
 
-**Policy Statement:** **No unsupervised data collection from minors.** All AI interactions are supervised or conducted within a controlled environment.
+No automated system is a substitute for human care.
 
-## Escalation Matrix
+*   **No Unsupervised Sessions:** Minors must never interact with the system without the presence or immediate availability of a trained adult mentor or supervisor.
+*   **Designated Safeguarding Lead (DSL):** Every deployment or pilot must have a named DSL at the host institution responsible for handling concerns.
+*   **Mentor Training:** All supervisors must complete the [Mentor Onboarding Checklist](../toolkit/START_HERE.md) and be vetted according to local institutional policies.
 
-In the event of a safety concern, the following escalation paths apply:
+## 3. Incident Escalation Matrix
 
-| Severity Level | Description | Immediate Actions | Escalation Path |
+In the event of a safety concern, use the following matrix to determine the immediate action.
+
+| Risk Level | Definition | Action Required | Timeline |
 | :--- | :--- | :--- | :--- |
-| **Low** | Minor distress or confusion; inappropriate language (non-harmful). | Mentor pauses session; clarifies intent; logs incident. | Report to DSL within 24 hours. |
-| **Medium** | Persistent distress; disclosures of bullying or anxiety; ambiguous references to harm. | Mentor terminates session immediately; separates participant; logs detailed report. | Contact DSL immediately; notify guardian if appropriate. |
-| **High** | Immediate risk of harm (self or others); disclosure of abuse; severe distress. | Mentor ensures immediate physical safety; contacts emergency services if imminent danger. | Contact DSL immediately; notify authorities/guardian as per local laws. |
+| **High** | Disclosure of immediate harm, abuse, or severe distress. | 1. Intervene immediately to ensure safety.<br>2. Terminate session.<br>3. Report to DSL & Emergency Services (if applicable). | **Immediate** |
+| **Medium** | Distress, inappropriate content generation, or behavioral concern. | 1. Pause session.<br>2. Debrief with participant.<br>3. Log incident.<br>4. Notify DSL. | Same Day |
+| **Low** | Tech failure, minor frustration, or confusing output (non-harmful). | 1. Assist participant.<br>2. Log technical error.<br>3. Review in weekly meeting. | 24-48 Hours |
 
-## Related Documents
+## 4. Session Rules
 
-* [DATA_POLICY.md](./DATA_POLICY.md): Data handling and privacy rules.
-* [GOVERNANCE.md](./GOVERNANCE.md): Project governance and ethics.
+1.  **Safety First:** The physical and emotional wellbeing of the youth always takes precedence over data collection.
+2.  **Verify Outputs:** Mentors should help verify model outputs if the participant is confused or distressed.
+3.  **No Private Channels:** All communication must occur in observable, sanctioned channels.
+4.  **No Publication of Chats:** Raw chat logs are strictly confidential and must never be shared on social media or public forums.
+
+## 5. Training & Documentation
+
+To ensure consistency and safety, the following artifacts must be maintained:
+
+*   **Mentor Onboarding Checklist:** Confirmation that all supervisors understand these protocols.
+*   **Incident Log:** A privacy-preserving record of any issues (see `toolkit/INCIDENT_LOG_TEMPLATE.md`).
+*   **Emergency Contact List:** A physical and digital list of local emergency contacts and the DSL's contact info, accessible to all mentors.
+
+## 6. Emergency & Referral
+
+If a disclosure of harm occurs:
+1.  **Stay Calm:** Listen without judgment.
+2.  **Do Not Promise Secrecy:** Explain that you must keep them safe, which may involve telling a designated person.
+3.  **Refer:** Pass the information strictly to the Designated Safeguarding Lead or appropriate legal authority aligned with the host institution's policy.

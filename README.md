@@ -1,88 +1,88 @@
 # NAAS-Agentic-Core
-### Youth-facing GenAI safety evaluation in Arabic/French/Darija code-switching contexts.
+### Verify-then-Reply safety evaluation for youth-facing GenAI under Arabic/French/Darija code-switching.
 
-![License](https://img.shields.io/badge/License-MIT-blue.svg) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![CI](https://img.shields.io/badge/CI-Passing-brightgreen) ![Docs](https://img.shields.io/badge/Docs-Latest-orange) ![Status](https://img.shields.io/badge/Status-Active_R%26D-yellow) ![Governance](https://img.shields.io/badge/Governance-Safeguarding_%2B_Data_Policy-red) ![Citation](https://img.shields.io/badge/Citation-CFF-lightgrey)
+![License](https://img.shields.io/badge/License-MIT-blue.svg) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![Status](https://img.shields.io/badge/Status-Active_R%26D-yellow) ![Governance](https://img.shields.io/badge/Governance-Safeguarding_%2B_Data_Policy-red) ![Cite](https://img.shields.io/badge/Cite-CITATION.cff-lightgrey)
 
-> **Governance & Safeguarding Context**
-> This repository operates under strict ethical guidelines for youth-facing AI research. All contributors must review [SAFEGUARDING.md](./SAFEGUARDING.md) and [DATA_POLICY.md](./DATA_POLICY.md) before running evaluations or accessing datasets.
+> **Why this matters**
+> North African youth frequently code-switch between Arabic, French, and Darija. Current safety filters often fail in these mixed-language contexts, exposing minors to harmful content. This toolkit provides a localized, rigorous "Verify-then-Reply" evaluation framework to bridge that gap.
 
-## Problem
-Current Large Language Models (LLMs) often exhibit degraded safety performance when users switch between languages or use low-resource dialects (code-switching). This creates safety gaps—such as hallucinations or jailbreaks—in educational settings for North African youth.
+> **Governance & Safeguarding**
+> This repository is governed by strict ethical protocols for youth safety. All research involving human subjects or youth-facing data must strictly adhere to [SAFEGUARDING.md](./SAFEGUARDING.md) and [DATA_POLICY.md](./DATA_POLICY.md).
 
-## Approach
-We implement a reusable **"verify-then-reply" agentic layer** designed for North African youth education. This layer intercepts student prompts, screens for context-specific risks (hallucinations, cultural toxicity, jailbreaks), and verifies responses before delivery.
+## Architecture: Verify-then-Reply
 
-## Outputs
-We deliver open-source artifacts for the global AI safety community:
-* **Agentic Safety Layer:** Open-source architecture for the verification pipeline.
-* **Code-Switching Test Suite:** A curated dataset of red-teaming prompts in mixed Arabic/French/Darija.
-* **Evaluation Protocol:** TEVV-aligned methodology for measuring safety in mixed-language contexts.
+Our approach intercepts Model interactions to ensure safety before any content reaches the user.
 
-### Verify-then-Reply Pipeline
 ```mermaid
 graph LR
-    Input[Student Input] --> PreChecks[Pre-Checks (PII/Toxicity)]
-    PreChecks -->|Safe| AgentLoop[Verification Agent Loop]
-    PreChecks -->|Unsafe| Refusal[Immediate Refusal]
-    AgentLoop -->|Verify| Policy[Policy Decision]
-    Policy -->|Safe| Response[Safe Response]
-    Policy -->|Unsafe| Refusal
-    Policy -->|Escalate| Human[Human Review/Telemetry]
-    Response --> Telemetry[Safety Telemetry]
+    Input[User Input] --> PreChecks[Pre-Checks (PII/Toxicity)]
+    PreChecks -->|Pass| Verification[Verification Loop]
+    PreChecks -->|Block| Refusal[Immediate Refusal]
+    Verification -->|Analyze| SafetyPolicy{Policy Decision}
+    SafetyPolicy -->|Safe| Output[Final Output]
+    SafetyPolicy -->|Unsafe| Refusal
+    Output --> Telemetry[Telemetry & Audit Logs]
     Refusal --> Telemetry
 ```
 
 ## What We Measure
-We track four core metrics to ensure robust safety:
-1. **Bypass Success Rate:** Percentage of adversarial prompts that bypass the safety filter.
-2. **Interception Rate:** Percentage of unsafe prompts correctly blocked.
-3. **PII-Risk Events per 100 Sessions:** Frequency of potential PII leakage.
-4. **Reliability Errors:** Rate of false positives/negatives in safety judgments (via blinded audits).
 
-## Repository Structure
+We empirically evaluate GenAI systems against four key safety metrics:
+
+| Metric | Definition | Target |
+| :--- | :--- | :--- |
+| **Bypass Success Rate** | Percentage of adversarial prompts in mixed Arabic/French/Darija that successfully trigger unsafe generation. | 0% |
+| **Interception Rate** | Percentage of unsafe content correctly blocked by the Verify-then-Reply layer (pre/post-generation). | >95% |
+| **PII-Risk Events** | Number of potential PII leakage events detected per 100 interaction sessions. | 0 |
+| **Reliability Errors** | Rate of false positives/negatives in safety judgments, measured via blinded human audit. | <5% |
+
+## Repository Map
+
 ```text
 .
-├── src/                        # Core agentic logic and middleware
-├── evaluation/                 # Test suites and benchmarking tools
-├── docs/                       # Documentation and governance files
+├── docs/                       # Evaluation protocols, impact plans, and transparency reports
+├── toolkit/                    # Operational tools: screening checklists, incident logs
+├── src/                        # Core agentic logic and safety verification code
+├── evaluation/                 # Code-switching test suites and benchmarking tools
 ├── CITATION.cff                # Citation metadata
-├── DATA_POLICY.md              # Data protection rules
-├── SAFEGUARDING.md             # Youth safety protocols
-└── README.md                   # This file
+├── DATA_POLICY.md              # Privacy-by-design and data handling rules
+├── SAFEGUARDING.md             # Youth safety, supervision, and escalation protocols
+├── SECURITY.md                 # Vulnerability reporting policy
+├── CONTRIBUTING.md             # Developer and researcher contribution guide
+└── README.md                   # Project overview
 ```
 
 ## Quickstart
-> **Note:** These commands are generic. Adjust paths to match your local environment.
+
+**Note:** The following commands are examples. Please align paths to your specific environment and installation.
 
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/HOUSSAM16ai/NAAS-Agentic-Core.git
 cd NAAS-Agentic-Core
 
-# Install dependencies
+# 2. Install dependencies (requires Python 3.10+)
 pip install -r requirements.txt
 
-# Run evaluation suite (example)
-python evaluation/run_eval.py --suite code-switching-v1 --mode strict
+# 3. Configure environment variables (see .env.example)
+cp .env.example .env
+
+# 4. Run the code-switching evaluation suite
+# Example command:
+python -m evaluation.run --suite code-switching-v1 --output results/report.json
 ```
 
-## Reproducibility & Transparency
-We are committed to open science while protecting participant privacy.
-* **We Publish:** Evaluation methods, instruments, aggregated metrics, and anonymised incident patterns.
-* **We Never Publish:** Raw youth chat logs, PII, or unredacted specific failure cases that could compromise safety.
+## Independence & Transparency
 
-## Value to Stakeholders
-* **Product Teams:** robust evaluation methodologies for multilingual deployments.
-* **NGOs/Educators:** safeguard protocols and deployment-ready safety layers.
-* **Policymakers/Regulators:** empirical evidence on code-switching risks and mitigation strategies.
+The North African AI Safety Lab (NAAS Lab) operates with academic and operational independence.
+*   **Independent Publication:** We reserve the right to publish our methods, findings, and critical safety evaluations independently of any model providers or partners.
+*   **Open Science:** De-identified methodologies and aggregated results are shared with the open-source community to advance global AI safety.
 
-## License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## Scope Boundaries
 
-## How to Cite
-Please cite this work using the metadata in [CITATION.cff](CITATION.cff).
+*   **Not Legal Advice:** This toolkit and its documentation do not constitute legal compliance advice (e.g., GDPR, local laws). Consult your organization's legal counsel.
+*   **Not a Replacement for Human Oversight:** "Verify-then-Reply" reduces risk but does not eliminate it. Adult supervision is mandatory for youth-facing deployments as per [SAFEGUARDING.md](./SAFEGUARDING.md).
 
 ## Contact
-For research inquiries, please contact: `research-leads@example.org` (Placeholder).
 
-> **Disclaimer:** This repository provides research tools and methods. It does not constitute legal or safeguarding advice. Users are responsible for their own deployment compliance.
+For research inquiries, collaborations, or governance questions, please contact the repository owners via GitHub Issues or the email listed in our profile.
