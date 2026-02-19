@@ -24,8 +24,12 @@ def test_base_service_settings_defaults(monkeypatch):
     assert settings.DATABASE_URL == "sqlite+aiosqlite:///test.db"
 
 
-def test_user_service_settings_inheritance():
+def test_user_service_settings_inheritance(monkeypatch):
     """Test that UserServiceSettings correctly inherits and sets defaults."""
+    # Ensure isolation from CI environment or conftest.py overrides
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    monkeypatch.delenv("USER_DATABASE_URL", raising=False)
+
     settings = UserServiceSettings()
     assert settings.SERVICE_NAME == "user-service"
     assert "user_service.db" in settings.DATABASE_URL
