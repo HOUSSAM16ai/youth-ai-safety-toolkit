@@ -54,7 +54,7 @@ async def websocket_proxy(client_ws: WebSocket, target_url: str):
 
             # Run both tasks concurrently
             # If either task finishes (e.g. disconnect), we cancel the other and exit
-            done, pending = await asyncio.wait(
+            _done, pending = await asyncio.wait(
                 [asyncio.create_task(client_to_target()), asyncio.create_task(target_to_client())],
                 return_when=asyncio.FIRST_COMPLETED,
             )
