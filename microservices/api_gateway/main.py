@@ -3,7 +3,7 @@ import logging
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Request, WebSocket
 from fastapi.responses import StreamingResponse
 
 # Local imports
@@ -11,6 +11,7 @@ from microservices.api_gateway.config import settings
 from microservices.api_gateway.middleware import RequestIdMiddleware, StructuredLoggingMiddleware
 from microservices.api_gateway.proxy import GatewayProxy
 from microservices.api_gateway.security import create_service_token, verify_gateway_request
+from microservices.api_gateway.websockets import websocket_proxy
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -163,17 +164,68 @@ async def orchestrator_proxy(path: str, request: Request) -> StreamingResponse:
     )
 
 
-@app.api_route(
-    "/{path:path}",
-    methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
-    include_in_schema=False,
-)
-async def legacy_proxy(path: str, request: Request) -> StreamingResponse:
+# --- Explicit Legacy Routes ---
+
+@app.api_route("/admin/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"], include_in_schema=False)
+async def admin_proxy(path: str, request: Request) -> StreamingResponse:
+    return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"admin/{path}")
+
+
+@app.api_route("/api/security/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"], include_in_schema=False)
+async def security_proxy(path: str, request: Request) -> StreamingResponse:
+    return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"api/security/{path}")
+
+
+@app.api_route("/api/chat/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"], include_in_schema=False)
+async def chat_http_proxy(path: str, request: Request) -> StreamingResponse:
+    return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"api/chat/{path}")
+
+
+@app.websocket("/api/chat/ws")
+async def chat_ws_proxy(websocket: WebSocket):
     """
-    Catch-all proxy for legacy Monolith (Core Kernel) requests.
-    This ensures that any route not handled by microservices is forwarded to the Core Kernel.
+    Proxy for Customer Chat WebSocket.
     """
-    return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, path)
+    target_url = settings.CORE_KERNEL_URL.replace("http", "ws") + "/api/chat/ws"
+    await websocket_proxy(websocket, target_url)
+
+
+@app.websocket("/admin/api/chat/ws")
+async def admin_chat_ws_proxy(websocket: WebSocket):
+    """
+    Proxy for Admin Chat WebSocket.
+    """
+    target_url = settings.CORE_KERNEL_URL.replace("http", "ws") + "/admin/api/chat/ws"
+    await websocket_proxy(websocket, target_url)
+
+
+@app.api_route("/v1/content/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"], include_in_schema=False)
+async def content_proxy(path: str, request: Request) -> StreamingResponse:
+    return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"v1/content/{path}")
+
+
+@app.api_route("/api/v1/data-mesh/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"], include_in_schema=False)
+async def datamesh_proxy(path: str, request: Request) -> StreamingResponse:
+    return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"api/v1/data-mesh/{path}")
+
+
+@app.api_route("/api/v1/resources/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"], include_in_schema=False)
+async def resources_proxy(path: str, request: Request) -> StreamingResponse:
+    return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"api/v1/resources/{path}")
+
+
+@app.api_route("/system/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"], include_in_schema=False)
+async def system_proxy(path: str, request: Request) -> StreamingResponse:
+    return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"system/{path}")
+
+
+@app.api_route("/api/v1/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"], include_in_schema=False)
+async def legacy_v1_fallback(path: str, request: Request) -> StreamingResponse:
+    """
+    Fallback for other legacy v1 routes (e.g. CRUD).
+    MUST be defined after specific microservice routes.
+    """
+    return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"api/v1/{path}")
 
 
 if __name__ == "__main__":

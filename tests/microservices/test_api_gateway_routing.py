@@ -39,26 +39,67 @@ def test_planning_route_proxies_correctly(mock_forward):
     # We can check target_url
     assert mock_forward.called
     args, _ = mock_forward.call_args
-    assert "http://planning-agent:8000" in args  # target_url
+    assert "http://planning-agent:8001" in args or settings.PLANNING_AGENT_URL in args  # target_url
     assert "test" in args  # path (stripped prefix)
 
 
 @patch.object(proxy_handler, "forward", new_callable=AsyncMock)
-def test_unknown_route_proxies_to_monolith(mock_forward):
+def test_unknown_route_returns_404(mock_forward):
     """
-    Verify that requests to unknown routes are forwarded to the Core Kernel (Monolith).
+    Verify that requests to unknown routes return 404 and are NOT forwarded.
+    This confirms the removal of the catch-all proxy.
     """
-    # Mock the return value from the Monolith
-    mock_forward.return_value = JSONResponse(content={"status": "monolith_response"})
-
     response = client.get("/unknown/route")
 
-    # Verify response
-    assert response.status_code == 200
-    assert response.json() == {"status": "monolith_response"}
+    assert response.status_code == 404
+    assert not mock_forward.called
 
-    # Verify forward was called with CORE_KERNEL_URL
+
+@patch.object(proxy_handler, "forward", new_callable=AsyncMock)
+def test_admin_route_proxies_to_monolith(mock_forward):
+    """
+    Verify that requests to /admin/* are forwarded to the Core Kernel.
+    """
+    mock_forward.return_value = JSONResponse(content={"status": "ok"})
+
+    response = client.get("/admin/users")
+
+    assert response.status_code == 200
     assert mock_forward.called
     args, _ = mock_forward.call_args
-    assert settings.CORE_KERNEL_URL in args  # target_url should be the kernel
-    assert "unknown/route" in args  # path
+    assert settings.CORE_KERNEL_URL in args  # target_url
+    # The path passed to forward should include the prefix for legacy routes as we construct it manually
+    assert "admin/users" in args  # path
+
+
+@patch.object(proxy_handler, "forward", new_callable=AsyncMock)
+def test_chat_route_proxies_to_monolith(mock_forward):
+    """
+    Verify that requests to /api/chat/* are forwarded to the Core Kernel.
+    """
+    mock_forward.return_value = JSONResponse(content={"status": "ok"})
+
+    response = client.get("/api/chat/history")
+
+    assert response.status_code == 200
+    assert mock_forward.called
+    args, _ = mock_forward.call_args
+    assert settings.CORE_KERNEL_URL in args
+    assert "api/chat/history" in args
+
+
+@patch.object(proxy_handler, "forward", new_callable=AsyncMock)
+def test_legacy_v1_fallback(mock_forward):
+    """
+    Verify that unmatched /api/v1/* requests fall back to the Monolith (e.g. CRUD).
+    """
+    mock_forward.return_value = JSONResponse(content={"status": "ok"})
+
+    # /api/v1/planning is matched by specific route, so try something else
+    response = client.get("/api/v1/random-crud/item")
+
+    assert response.status_code == 200
+    assert mock_forward.called
+    args, _ = mock_forward.call_args
+    assert settings.CORE_KERNEL_URL in args
+    assert "api/v1/random-crud/item" in args

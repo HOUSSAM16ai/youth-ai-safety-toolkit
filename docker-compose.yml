@@ -260,7 +260,6 @@ services:
       - ORCHESTRATOR_SERVICE_URL=http://orchestrator-service:8006
     command: uvicorn microservices.api_gateway.main:app --host 0.0.0.0 --port 8000
     depends_on:
-      - core-kernel
       - planning-agent
       - memory-agent
       - user-service
