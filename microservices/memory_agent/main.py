@@ -32,6 +32,7 @@ from microservices.memory_agent.src.schemas.memory_schemas import (
     MemorySearchRequest,
 )
 from microservices.memory_agent.src.services.memory_service import MemoryService
+from microservices.memory_agent.src.api.knowledge import router as knowledge_router
 
 logger = get_logger("memory-agent")
 
@@ -135,6 +136,7 @@ def create_app(settings: MemoryAgentSettings | None = None) -> FastAPI:
     # تطبيق Zero Trust: التحقق من الهوية عند البوابة
     app.include_router(_build_public_router(effective_settings))
     app.include_router(_build_protected_router(), dependencies=[Depends(verify_service_token)])
+    app.include_router(knowledge_router, dependencies=[Depends(verify_service_token)])
 
     return app
 

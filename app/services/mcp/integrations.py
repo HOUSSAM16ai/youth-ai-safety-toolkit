@@ -362,7 +362,7 @@ class MCPIntegrations:
 
             profile = await get_student_profile(student_id)
             checker = get_prerequisite_checker()
-            report = checker.check_readiness(profile, concept_id)
+            report = await checker.check_readiness(profile, concept_id)
 
             # استخدام Reranker لترتيب المتطلبات حسب الأهمية (عبر Kernel)
             missing = report.missing_prerequisites
@@ -396,10 +396,10 @@ class MCPIntegrations:
     ) -> dict[str, object]:
         """إيجاد مسار التعلم."""
         try:
-            from app.services.knowledge.concept_graph import get_concept_graph
+            from app.infrastructure.clients.memory_client import get_memory_client
 
-            graph = get_concept_graph()
-            path = graph.get_learning_path(from_concept, to_concept)
+            client = get_memory_client()
+            path = await client.get_learning_path(from_concept, to_concept)
 
             return {
                 "success": True,
@@ -419,22 +419,22 @@ class MCPIntegrations:
         يستخدم DSPy لتحسين البحث.
         """
         try:
-            from app.services.knowledge.concept_graph import get_concept_graph
+            from app.infrastructure.clients.memory_client import get_memory_client
 
-            graph = get_concept_graph()
+            client = get_memory_client()
 
             # تحسين البحث بـ DSPy (عبر Kernel)
             refined = await self.refine_query(topic)
             search_term = refined.get("refined_query", topic) if refined.get("success") else topic
 
-            concept = graph.find_concept_by_topic(search_term)
+            concept = await client.find_concept_by_topic(search_term)
 
             if not concept:
                 return {"success": False, "error": "مفهوم غير موجود"}
 
-            related = graph.get_related_concepts(concept.concept_id)
-            prereqs = graph.get_prerequisites(concept.concept_id)
-            next_concepts = graph.get_next_concepts(concept.concept_id)
+            related = await client.get_related_concepts(concept.concept_id)
+            prereqs = await client.get_prerequisites(concept.concept_id)
+            next_concepts = await client.get_next_concepts(concept.concept_id)
 
             return {
                 "success": True,
@@ -449,14 +449,11 @@ class MCPIntegrations:
     def get_knowledge_status(self) -> dict[str, object]:
         """حالة خدمات المعرفة."""
         try:
-            from app.services.knowledge import ConceptGraph, PrerequisiteChecker  # noqa: F401
-            from app.services.knowledge.concept_graph import get_concept_graph
-
-            graph = get_concept_graph()
+            # تم نقل المنطق إلى Memory Agent
+            # لا يمكننا التحقق من العدد بشكل متزامن بسهولة، لذا نعيد الحالة العامة
             return {
-                "status": "active",
-                "concepts_count": len(graph.concepts),
-                "relations_count": len(graph.relations),
+                "status": "active (remote)",
+                "service": "memory-agent",
             }
         except ImportError:
             return {"status": "unavailable"}

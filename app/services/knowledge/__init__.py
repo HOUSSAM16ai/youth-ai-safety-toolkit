@@ -3,21 +3,14 @@
 =================================================
 
 تتضمن:
-- ConceptGraph: الرسم البياني للمفاهيم
-- PrerequisiteChecker: فاحص المتطلبات السابقة
+- PrerequisiteChecker: فاحص المتطلبات السابقة (Refactored to use Memory Service)
 
 تتكامل مع:
+- Memory Agent: عبر MemoryClient
 - Reranker: لترتيب المتطلبات حسب الأهمية
 - DSPy: لتحسين البحث عن المفاهيم
 """
 
-from app.services.knowledge.concept_graph import (
-    Concept,
-    ConceptGraph,
-    ConceptRelation,
-    RelationType,
-    get_concept_graph,
-)
 from app.services.knowledge.prerequisite_checker import (
     PrerequisiteChecker,
     ReadinessReport,
@@ -25,14 +18,8 @@ from app.services.knowledge.prerequisite_checker import (
 )
 
 __all__ = [
-    "Concept",
-    # Concept Graph
-    "ConceptGraph",
-    "ConceptRelation",
     # Prerequisite Checker
     "PrerequisiteChecker",
     "ReadinessReport",
-    "RelationType",
-    "get_concept_graph",
     "get_prerequisite_checker",
 ]
