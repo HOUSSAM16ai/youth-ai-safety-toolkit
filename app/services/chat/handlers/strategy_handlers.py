@@ -23,7 +23,6 @@ from app.core.domain.mission import (
     MissionEvent,
     MissionEventType,
     MissionPlan,
-    MissionStatus,
     Task,
 )
 from app.core.patterns.strategy import Strategy
@@ -192,8 +191,8 @@ class MissionComplexHandler(IntentHandler):
         Streams updates to the user using Strict Output Contract.
         """
         # Defer imports to prevent circular dependency
-        from app.services.overmind.entrypoint import start_mission
         from app.infrastructure.clients.orchestrator_client import orchestrator_client
+        from app.services.overmind.entrypoint import start_mission
 
         # Global try-except to prevent stream crash
         try:
@@ -314,19 +313,17 @@ class MissionComplexHandler(IntentHandler):
                                     # Try to extract result from this event payload
                                     result = payload.get("result", {})
                                     if result:
-                                         # Already handled by _format_event_to_message if event_type matched
-                                         pass
+                                        # Already handled by _format_event_to_message if event_type matched
+                                        pass
                                     else:
-                                         yield {
+                                        yield {
                                             "type": "assistant_final",
-                                            "payload": {
-                                                "content": "✅ تمت المهمة بنجاح."
-                                            },
+                                            "payload": {"content": "✅ تمت المهمة بنجاح."},
                                         }
                             elif evt_type == "mission_failed":
                                 running = False
                                 if not final_sent:
-                                     yield {
+                                    yield {
                                         "type": "assistant_error",
                                         "payload": {
                                             "content": f"❌ فشلت المهمة: {payload.get('error') or 'Unknown error'}"
@@ -428,7 +425,7 @@ class MissionComplexHandler(IntentHandler):
             # FIX: We use unique run_id per iteration to prevent UI jumping/merging
             run_id = f"{mission_id}:{current_iteration}"
 
-            if event_type == MissionEventType.STATUS_CHANGE or event_type == "status_change":
+            if event_type in (MissionEventType.STATUS_CHANGE, "status_change"):
                 brain_evt = str(payload.get("brain_event", ""))
                 data = payload.get("data", {})
 
@@ -490,7 +487,10 @@ class MissionComplexHandler(IntentHandler):
                 event_type = event.event_type
 
             # 1. Handle Final Completion
-            if event_type == MissionEventType.MISSION_COMPLETED or event_type == "mission_completed":
+            if event_type in (
+                MissionEventType.MISSION_COMPLETED,
+                "mission_completed",
+            ):
                 result = payload.get("result", {})
                 result_text = ""
 
@@ -517,14 +517,14 @@ class MissionComplexHandler(IntentHandler):
                 return {"type": "assistant_final", "payload": {"content": result_text}}
 
             # 2. Handle Failure
-            if event_type == MissionEventType.MISSION_FAILED or event_type == "mission_failed":
+            if event_type in (MissionEventType.MISSION_FAILED, "mission_failed"):
                 return {
                     "type": "assistant_error",
                     "payload": {"content": f"💀 **فشل:** {payload.get('error')}"},
                 }
 
             # 3. Handle Status/Progress (Assistant Delta)
-            if event_type == MissionEventType.STATUS_CHANGE or event_type == "status_change":
+            if event_type in (MissionEventType.STATUS_CHANGE, "status_change"):
                 brain_evt = payload.get("brain_event")
                 if brain_evt:
                     # Convert brain events to text deltas if relevant

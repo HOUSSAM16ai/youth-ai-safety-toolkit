@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 async def start_mission(
-    session: AsyncSession,  # Kept for compatibility, but unused for local DB creation
+    session: AsyncSession | None,  # Kept for compatibility, but unused for local DB creation
     objective: str,
     initiator_id: int,
     context: MissionContext | None = None,
