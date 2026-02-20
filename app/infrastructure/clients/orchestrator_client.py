@@ -104,12 +104,19 @@ class OrchestratorClient:
 
     async def get_mission_events(self, mission_id: int) -> list[dict]:
         """
-        Get mission events (if supported by service).
-        This might require a new endpoint in Orchestrator Service.
-        For now, we return empty list if not implemented, or we rely on WS.
+        Get mission events from the Orchestrator Service.
         """
-        # TODO: Implement GET /missions/{id}/events in Orchestrator Service
-        return []
+        url = f"{self.base_url}/missions/{mission_id}/events"
+        client = await self._get_client()
+        try:
+            response = await client.get(url)
+            if response.status_code == 404:
+                return []
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            logger.error(f"Failed to get mission events {mission_id}: {e}")
+            return []
 
 
 # Singleton

@@ -22,6 +22,7 @@ from microservices.orchestrator_service.src.core.security import (
 from microservices.orchestrator_service.src.models.mission import Mission
 from microservices.orchestrator_service.src.services.overmind.domain.api_schemas import (
     MissionCreate,
+    MissionEventResponse,
     MissionResponse,
 )
 from microservices.orchestrator_service.src.services.overmind.entrypoint import start_mission
@@ -92,6 +93,35 @@ async def get_mission_endpoint(
         raise HTTPException(status_code=404, detail="Mission not found")
 
     return _serialize_mission(mission)
+
+
+@router.get(
+    "/missions/{mission_id}/events",
+    response_model=list[MissionEventResponse],
+    summary="Get Mission Events",
+)
+async def get_mission_events_endpoint(
+    mission_id: int, req: Request, db: AsyncSession = Depends(get_db)
+) -> list[MissionEventResponse]:
+    """
+    Retrieve historical events for a mission.
+    """
+    state_manager = MissionStateManager(db)
+    events = await state_manager.get_mission_events(mission_id)
+
+    return [
+        MissionEventResponse(
+            event_type=(
+                evt.event_type.value
+                if hasattr(evt.event_type, "value")
+                else str(evt.event_type)
+            ),
+            mission_id=evt.mission_id,
+            timestamp=evt.created_at,
+            payload=evt.payload_json or {},
+        )
+        for evt in events
+    ]
 
 
 @router.websocket("/missions/{mission_id}/ws")

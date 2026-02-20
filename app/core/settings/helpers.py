@@ -35,8 +35,9 @@ def _ensure_database_url(value: str | None, environment: str) -> str:
     if environment == "testing":
         return "sqlite+aiosqlite:///:memory:"
 
-    logger.warning("⚠️ No DATABASE_URL found! Activating Fallback (SQLite).")
-    return "sqlite+aiosqlite:///./backup_storage.db"
+    raise ValueError(
+        "❌ CRITICAL: DATABASE_URL is missing! You must configure the database connection explicitly."
+    )
 
 
 def _upgrade_postgres_protocol(url: str) -> str:
