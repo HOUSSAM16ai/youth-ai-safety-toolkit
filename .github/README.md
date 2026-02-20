@@ -93,13 +93,14 @@ We intend to publish methods and findings independently (including failures), an
 
 ---
 
-## Legal host & contact (EMEA eligibility)
-**Legal host (NGO / non-profit):** TODO (use the incubator’s legal name exactly as registered)
-**Country of registration:** Algeria (EMEA)
+## Legal host, governance, and contact (EMEA eligibility)
+
+**Registered legal entity:** Interactive Training Courses Platform (trading as NAAS AI Safety Lab)
+**Jurisdiction:** Algeria (EMEA)
+**Project governance:** Independent research project (methods and findings remain independently publishable).
 **Project lead:** Houssam Benmerah
-**Contact:** TODO (email / website)
+**Research contact:** h.benmerah@univ-eltarf.dz
+**Repository:** https://github.com/HOUSSAM16ai/NAAS-Agentic-Core
 
----
-
-## Notes on naming and affiliations
-This repository is an independent project submission. References to third-party organisations or products do not imply endorsement or affiliation.
+> This repository is maintained by the project team under the registered entity above.
+> References to third-party organisations, platforms, or products do not imply endorsement or affiliation.
