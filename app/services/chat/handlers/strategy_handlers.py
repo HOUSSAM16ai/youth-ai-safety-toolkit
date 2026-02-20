@@ -10,7 +10,6 @@ import re
 from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
 
-from sqlalchemy import select
 from sqlmodel import SQLModel
 
 # Import chat domain to ensure AdminConversation is registered, preventing mapping errors
@@ -193,8 +192,8 @@ class MissionComplexHandler(IntentHandler):
         Streams updates to the user using Strict Output Contract.
         """
         # Defer imports to prevent circular dependency
-        from app.core.event_bus import get_event_bus
         from app.services.overmind.entrypoint import start_mission
+        from app.infrastructure.clients.orchestrator_client import orchestrator_client
 
         # Global try-except to prevent stream crash
         try:
@@ -202,13 +201,6 @@ class MissionComplexHandler(IntentHandler):
                 "type": "assistant_delta",
                 "payload": {"content": "🚀 **بدء المهمة الخارقة (Super Agent)**...\n"},
             }
-
-            if not context.session_factory:
-                yield {
-                    "type": "assistant_error",
-                    "payload": {"content": "❌ خطأ: لا يوجد مصنع جلسات (Session Factory)."},
-                }
-                return
 
             # 0. Fail-Fast Configuration Check
             config_error = self._check_provider_config()
@@ -227,27 +219,23 @@ class MissionComplexHandler(IntentHandler):
 
             # 1. Initialize Mission via Unified Entrypoint (Command Pattern)
             mission_id = 0
-            task = None
 
             try:
-                async with context.session_factory() as session:
-                    # Self-healing: Ensure schema exists
-                    await self._ensure_mission_schema(session)
+                # Use Unified Entrypoint (Handles DB Creation, Locking, Execution Trigger)
+                # Note: We pass session=None to enforce decoupling from local Monolith DB
+                mission = await start_mission(
+                    session=None,  # type: ignore
+                    objective=context.question,
+                    initiator_id=context.user_id or 1,
+                    context={"chat_context": True},
+                    force_research=force_research,
+                )
+                mission_id = mission.id
 
-                    # Use Unified Entrypoint (Handles DB Creation, Locking, Execution Trigger)
-                    mission = await start_mission(
-                        session=session,
-                        objective=context.question,
-                        initiator_id=context.user_id or 1,
-                        context={"chat_context": True},
-                        force_research=force_research,
-                    )
-                    mission_id = mission.id
-
-                    yield {
-                        "type": "assistant_delta",
-                        "payload": {"content": f"🆔 رقم المهمة: `{mission.id}`\n⏳ البدء..."},
-                    }
+                yield {
+                    "type": "assistant_delta",
+                    "payload": {"content": f"🆔 رقم المهمة: `{mission.id}`\n⏳ البدء..."},
+                }
             except Exception as e:
                 logger.error(f"Failed to dispatch mission: {e}", exc_info=True)
                 yield {
@@ -257,10 +245,6 @@ class MissionComplexHandler(IntentHandler):
                     },
                 }
                 return
-
-            # 2. Subscribe for events (Gap-Free Strategy)
-            event_bus = get_event_bus()
-            event_queue = event_bus.subscribe_queue(f"mission:{mission_id}")
 
             # Emit RUN_STARTED for UI
             sequence_id = 0
@@ -279,118 +263,81 @@ class MissionComplexHandler(IntentHandler):
                 },
             }
 
-            # 3. Stream Updates (Event-Driven)
-            # Since execution is already triggered by start_mission, we just listen.
-            # But to ensure we don't hang forever if it crashed immediately, we rely on events (Failed).
+            # 3. Stream Updates (Polling Strategy)
+            # Decoupled from local DB and local Redis.
+            # We poll the Orchestrator Service for authoritative events.
 
-            last_event_id = 0
             running = True
-
-            # Keep track if we sent a final result to satisfy Output Contract
+            processed_count = 0
             final_sent = False
 
             try:
                 while running:
-                    try:
-                        event = await asyncio.wait_for(event_queue.get(), timeout=1.0)
-                    except TimeoutError:
-                        event = None
+                    await asyncio.sleep(2.0)  # Polling interval
 
-                    if event is not None:
-                        last_event_id = max(last_event_id, event.id)
+                    events = await orchestrator_client.get_mission_events(mission_id)
 
-                        payload = event.payload_json or {}
-                        if payload.get("brain_event") == "loop_start":
-                            data = payload.get("data", {})
-                            current_iteration = data.get("iteration", current_iteration)
+                    # Process new events
+                    new_events = events[processed_count:]
+                    if new_events:
+                        processed_count = len(events)
 
-                        # Output Protocol: Transform event to structured message
-                        message = self._format_event_to_message(event)
-                        if message:
-                            if message.get("type") == "assistant_final":
-                                final_sent = True
-                            yield message
+                        for evt_data in new_events:
+                            # Convert dict to MissionEvent-like object or use directly if helper supports it
+                            # We assume events are ordered by creation time/id from the API
 
-                        # Canonical Events for Timeline
-                        sequence_id += 1
-                        structured = self._create_structured_event(
-                            event, sequence_id, current_iteration
-                        )
-                        if structured:
-                            yield structured
+                            payload = evt_data.get("payload", {})
+                            if payload.get("brain_event") == "loop_start":
+                                data = payload.get("data", {})
+                                current_iteration = data.get("iteration", current_iteration)
 
-                    if task.done():
-                        running = False
-                        try:
-                            await task  # Check for exceptions
-                        except Exception as e:
-                            logger.error(f"Background mission task failed: {e}")
-                            yield {
-                                "type": "assistant_error",
-                                "payload": {
-                                    "content": "❌ **خطأ غير متوقع في النظام:** يرجى مراجعة السجلات."
-                                },
-                            }
-                            return
+                            # Output Protocol
+                            message = self._format_event_to_message(evt_data)
+                            if message:
+                                if message.get("type") == "assistant_final":
+                                    final_sent = True
+                                yield message
 
-                # Catch-up from DB
-                async with context.session_factory() as session:
-                    stmt = (
-                        select(MissionEvent)
-                        .where(MissionEvent.mission_id == mission_id)
-                        .where(MissionEvent.id > last_event_id)
-                        .order_by(MissionEvent.id)
-                    )
-                    result = await session.execute(stmt)
-                    events = result.scalars().all()
+                            # Canonical Events
+                            sequence_id += 1
+                            structured = self._create_structured_event(
+                                evt_data, sequence_id, current_iteration
+                            )
+                            if structured:
+                                yield structured
 
-                    for event in events:
-                        last_event_id = event.id
-                        payload = event.payload_json or {}
-                        if payload.get("brain_event") == "loop_start":
-                            data = payload.get("data", {})
-                            current_iteration = data.get("iteration", current_iteration)
+                            # Check terminal state from event types
+                            evt_type = evt_data.get("event_type")
+                            if evt_type == "mission_completed":
+                                running = False
+                                if not final_sent:
+                                    # Try to extract result from this event payload
+                                    result = payload.get("result", {})
+                                    if result:
+                                         # Already handled by _format_event_to_message if event_type matched
+                                         pass
+                                    else:
+                                         yield {
+                                            "type": "assistant_final",
+                                            "payload": {
+                                                "content": "✅ تمت المهمة بنجاح."
+                                            },
+                                        }
+                            elif evt_type == "mission_failed":
+                                running = False
+                                if not final_sent:
+                                     yield {
+                                        "type": "assistant_error",
+                                        "payload": {
+                                            "content": f"❌ فشلت المهمة: {payload.get('error') or 'Unknown error'}"
+                                        },
+                                    }
 
-                        message = self._format_event_to_message(event)
-                        if message:
-                            if message.get("type") == "assistant_final":
-                                final_sent = True
-                            yield message
+                            if not running:
+                                break
 
-                        sequence_id += 1
-                        structured = self._create_structured_event(
-                            event, sequence_id, current_iteration
-                        )
-                        if structured:
-                            yield structured
-
-                    # If mission finished but no final event emitted yet (rare case)
-                    if not final_sent:
-                        mission_check = await session.get(Mission, mission_id)
-                        if mission_check and mission_check.status == MissionStatus.COMPLETED:
-                            yield {
-                                "type": "assistant_final",
-                                "payload": {
-                                    "content": "✅ تمت المهمة بنجاح، لكن لم يتم العثور على مخرجات نصية صريحة."
-                                },
-                            }
-                        elif mission_check and mission_check.status == MissionStatus.FAILED:
-                            yield {
-                                "type": "assistant_error",
-                                "payload": {
-                                    "content": f"❌ فشلت المهمة: {mission_check.note or 'Unknown error'}"
-                                },
-                            }
-
-                # End of stream indicator (implied by closure)
             finally:
-                event_bus.unsubscribe_queue(f"mission:{mission_id}", event_queue)
-                if not task.done():
-                    task.cancel()
-                    try:
-                        await task
-                    except asyncio.CancelledError:
-                        logger.info("Background mission task cancelled after stream closure.")
+                pass
         except Exception as global_ex:
             logger.critical(f"Critical error in MissionComplexHandler: {global_ex}", exc_info=True)
             yield {
@@ -460,21 +407,28 @@ class MissionComplexHandler(IntentHandler):
             logger.error(f"Schema self-healing failed: {e}")
 
     def _create_structured_event(
-        self, event: MissionEvent, sequence_id: int, current_iteration: int
+        self, event: MissionEvent | dict, sequence_id: int, current_iteration: int
     ) -> dict | None:
         """
         Create Canonical Event (Production-Grade Contract) for UI FSM.
         """
         try:
-            payload = event.payload_json or {}
-            mission_id = event.mission_id
+            if isinstance(event, dict):
+                payload = event.get("payload", {})
+                mission_id = event.get("mission_id")
+                timestamp = event.get("timestamp")
+                event_type = event.get("event_type")
+            else:
+                payload = event.payload_json or {}
+                mission_id = event.mission_id
+                timestamp = str(event.created_at)
+                event_type = event.event_type
 
             # Use tracked iteration context to ensure Run Isolation
             # FIX: We use unique run_id per iteration to prevent UI jumping/merging
             run_id = f"{mission_id}:{current_iteration}"
-            timestamp = str(event.created_at)
 
-            if event.event_type == MissionEventType.STATUS_CHANGE:
+            if event_type == MissionEventType.STATUS_CHANGE or event_type == "status_change":
                 brain_evt = str(payload.get("brain_event", ""))
                 data = payload.get("data", {})
 
@@ -522,16 +476,21 @@ class MissionComplexHandler(IntentHandler):
             logger.warning(f"Failed to create structured event: {e}")
             return None
 
-    def _format_event_to_message(self, event: MissionEvent) -> dict | None:
+    def _format_event_to_message(self, event: MissionEvent | dict) -> dict | None:
         """
         Format mission event into a Strict Output Contract Message.
         Returns: dict (assistant_delta | assistant_final | tool_result_summary) or None.
         """
         try:
-            payload = event.payload_json or {}
+            if isinstance(event, dict):
+                payload = event.get("payload", {})
+                event_type = event.get("event_type")
+            else:
+                payload = event.payload_json or {}
+                event_type = event.event_type
 
             # 1. Handle Final Completion
-            if event.event_type == MissionEventType.MISSION_COMPLETED:
+            if event_type == MissionEventType.MISSION_COMPLETED or event_type == "mission_completed":
                 result = payload.get("result", {})
                 result_text = ""
 
@@ -558,14 +517,14 @@ class MissionComplexHandler(IntentHandler):
                 return {"type": "assistant_final", "payload": {"content": result_text}}
 
             # 2. Handle Failure
-            if event.event_type == MissionEventType.MISSION_FAILED:
+            if event_type == MissionEventType.MISSION_FAILED or event_type == "mission_failed":
                 return {
                     "type": "assistant_error",
                     "payload": {"content": f"💀 **فشل:** {payload.get('error')}"},
                 }
 
             # 3. Handle Status/Progress (Assistant Delta)
-            if event.event_type == MissionEventType.STATUS_CHANGE:
+            if event_type == MissionEventType.STATUS_CHANGE or event_type == "status_change":
                 brain_evt = payload.get("brain_event")
                 if brain_evt:
                     # Convert brain events to text deltas if relevant
