@@ -1,8 +1,11 @@
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
+
+from microservices.reasoning_agent.src.api.routes import router
 from microservices.reasoning_agent.src.core.config import settings
 from microservices.reasoning_agent.src.core.logging import setup_logging
-from microservices.reasoning_agent.src.api.routes import router
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

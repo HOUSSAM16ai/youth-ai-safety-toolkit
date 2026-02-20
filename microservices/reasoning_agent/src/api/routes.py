@@ -1,8 +1,10 @@
 import time
-from fastapi import APIRouter, HTTPException, Depends
+
+from fastapi import APIRouter
+
+from microservices.reasoning_agent.src.core.logging import get_logger
 from microservices.reasoning_agent.src.domain.models import AgentRequest, AgentResponse
 from microservices.reasoning_agent.src.services.reasoning_service import reasoning_workflow
-from microservices.reasoning_agent.src.core.logging import get_logger
 
 logger = get_logger("api-routes")
 router = APIRouter()
@@ -45,11 +47,10 @@ async def execute(request: AgentRequest) -> AgentResponse:
                 metrics={"duration_ms": duration}
             )
 
-        else:
-            return AgentResponse(
-                status="error",
-                error=f"Action '{request.action}' not supported."
-            )
+        return AgentResponse(
+            status="error",
+            error=f"Action '{request.action}' not supported."
+        )
 
     except Exception as e:
         logger.error(f"Execution failed: {e}", exc_info=True)

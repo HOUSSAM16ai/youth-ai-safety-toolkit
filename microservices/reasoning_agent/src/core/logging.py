@@ -1,7 +1,10 @@
 import logging
 import sys
+
 from pythonjsonlogger import jsonlogger
+
 from microservices.reasoning_agent.src.core.config import settings
+
 
 def setup_logging():
     """Configures structured JSON logging."""

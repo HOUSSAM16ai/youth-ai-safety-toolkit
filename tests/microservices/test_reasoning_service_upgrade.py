@@ -1,8 +1,10 @@
+from unittest.mock import AsyncMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
 from fastapi.testclient import TestClient
+
 from microservices.reasoning_agent.main import app
-from microservices.reasoning_agent.src.domain.models import AgentRequest, ReasoningNode, EvaluationResult
+from microservices.reasoning_agent.src.domain.models import ReasoningNode
 from microservices.reasoning_agent.src.services.strategies.mcts import RMCTSStrategy
 
 client = TestClient(app)
@@ -41,7 +43,7 @@ async def test_mcts_strategy_evaluate():
         result = await strategy.evaluate(node, "context")
 
         assert result.score == 0.8
-        assert result.is_valid == True
+        assert result.is_valid
         assert "Good logic" in result.reasoning
 
 @patch("microservices.reasoning_agent.src.services.reasoning_service.reasoning_workflow.run")

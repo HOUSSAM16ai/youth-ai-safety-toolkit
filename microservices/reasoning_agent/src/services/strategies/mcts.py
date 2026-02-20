@@ -1,8 +1,9 @@
-import uuid
+import contextlib
 import re
-from microservices.reasoning_agent.src.domain.models import ReasoningNode, EvaluationResult
-from microservices.reasoning_agent.src.services.ai_service import ai_service
+
 from microservices.reasoning_agent.src.core.logging import get_logger
+from microservices.reasoning_agent.src.domain.models import EvaluationResult, ReasoningNode
+from microservices.reasoning_agent.src.services.ai_service import ai_service
 
 logger = get_logger("mcts-strategy")
 
@@ -85,10 +86,8 @@ class RMCTSStrategy:
             # Extract Score
             score_match = re.search(r"score:\s*([0-9.]+)", lower_content)
             if score_match:
-                try:
+                with contextlib.suppress(ValueError):
                     score = float(score_match.group(1))
-                except ValueError:
-                    pass
 
             # Extract Validity
             if "valid: false" in lower_content or "valid: no" in lower_content:
@@ -98,7 +97,7 @@ class RMCTSStrategy:
 
         except Exception as e:
             logger.error(f"Evaluation failed: {e}")
-            return EvaluationResult(score=0.0, is_valid=False, reasoning=f"Error: {str(e)}")
+            return EvaluationResult(score=0.0, is_valid=False, reasoning=f"Error: {e!s}")
 
     async def execute(self, root_content: str, context: str, depth: int = 2) -> ReasoningNode:
         """

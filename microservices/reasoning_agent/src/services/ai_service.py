@@ -1,5 +1,6 @@
 import openai
 from tenacity import retry, stop_after_attempt, wait_exponential
+
 from microservices.reasoning_agent.src.core.config import settings
 from microservices.reasoning_agent.src.core.logging import get_logger
 
