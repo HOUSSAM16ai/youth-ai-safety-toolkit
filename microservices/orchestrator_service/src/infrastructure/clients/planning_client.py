@@ -10,12 +10,12 @@ from typing import Any, Final
 
 import httpx
 
+from microservices.orchestrator_service.src.core.config import get_settings
 from microservices.orchestrator_service.src.core.http_client_factory import (
     HTTPClientConfig,
     get_http_client,
 )
 from microservices.orchestrator_service.src.core.logging import get_logger
-from microservices.orchestrator_service.src.core.settings import get_settings
 
 logger = get_logger("planning-client")
 

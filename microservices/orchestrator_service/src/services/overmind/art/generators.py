@@ -2,8 +2,7 @@
 Generators Facade
 =================
 
-This module is kept for backward compatibility.
-Please use `app.services.overmind.art.generators_pkg` instead.
+Exposes the art generation components from the local package.
 """
 
 from microservices.orchestrator_service.src.services.overmind.art.generators_pkg import (

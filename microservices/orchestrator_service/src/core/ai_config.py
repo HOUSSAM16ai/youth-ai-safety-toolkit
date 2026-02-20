@@ -33,8 +33,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from functools import lru_cache
 
+from .config import get_settings
 from .logging import get_logger
-from .settings import get_settings
 
 logger = get_logger(__name__)
 
