@@ -804,227 +804,6 @@ paths:
                       message: "No plan found for the given identifier"
                     timestamp: "2026-01-03T00:00:00Z"
   
-  # ==============================================================================
-  # CRUD Endpoints
-  # ==============================================================================
-  /api/v1/resources/{resource_type}:
-    get:
-      tags:
-        - CRUD
-      summary: List Resources
-      description: |
-        Retrieve a paginated list of resources of a specific type.
-        
-        Supports filtering, sorting, and searching.
-      operationId: listResources
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: resource_type
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [missions, tasks, users, conversations]
-          description: Type of resource to list
-          example: "missions"
-        - name: page
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-          description: Page number
-        - name: per_page
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Items per page
-        - name: sort_by
-          in: query
-          schema:
-            type: string
-          description: Field to sort by
-          example: "created_at"
-        - name: order
-          in: query
-          schema:
-            type: string
-            enum: [asc, desc]
-            default: asc
-          description: Sort order
-        - name: search
-          in: query
-          schema:
-            type: string
-          description: Search query
-          example: "AI project"
-      responses:
-        '200':
-          description: Resources retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedResourceResponse'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-        '404':
-          description: Resource type not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-    
-    post:
-      tags:
-        - CRUD
-      summary: Create Resource
-      description: Create a new resource of the specified type
-      operationId: createResource
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: resource_type
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Type of resource to create
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: true
-      responses:
-        '201':
-          description: Resource created successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessResponse'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/GenericResource'
-        '400':
-          $ref: '#/components/responses/BadRequestError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-  
-  /api/v1/resources/{resource_type}/{item_id}:
-    get:
-      tags:
-        - CRUD
-      summary: Get Resource
-      description: Retrieve a specific resource by ID
-      operationId: getResource
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: resource_type
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Type of resource
-        - name: item_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Resource ID
-      responses:
-        '200':
-          description: Resource retrieved successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessResponse'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/GenericResource'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-    
-    put:
-      tags:
-        - CRUD
-      summary: Update Resource
-      description: Update an existing resource
-      operationId: updateResource
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: resource_type
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: item_id
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: true
-      responses:
-        '200':
-          description: Resource updated successfully
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/SuccessResponse'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/GenericResource'
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
-    
-    delete:
-      tags:
-        - CRUD
-      summary: Delete Resource
-      description: Delete a specific resource
-      operationId: deleteResource
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: resource_type
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: item_id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '204':
-          description: Resource deleted successfully
-        '404':
-          $ref: '#/components/responses/NotFoundError'
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
 
   # ==============================================================================
   # Observability Endpoints
@@ -1129,7 +908,7 @@ paths:
         '200':
           description: Current user profile
 
-  /auth/register:
+  /api/v1/auth/register:
     post:
       tags:
         - Security
@@ -1139,7 +918,7 @@ paths:
         '200':
           description: User registered
 
-  /auth/login:
+  /api/v1/auth/login:
     post:
       tags:
         - Security
@@ -1149,7 +928,7 @@ paths:
         '200':
           description: User authenticated
 
-  /auth/logout:
+  /api/v1/auth/logout:
     post:
       tags:
         - Security
@@ -1159,7 +938,7 @@ paths:
         '200':
           description: User logged out
 
-  /auth/refresh:
+  /api/v1/auth/refresh:
     post:
       tags:
         - Security
@@ -1169,7 +948,7 @@ paths:
         '200':
           description: Token refreshed
 
-  /auth/reauth:
+  /api/v1/auth/reauth:
     post:
       tags:
         - Security
@@ -1179,7 +958,7 @@ paths:
         '200':
           description: Re-authentication completed
 
-  /auth/password/forgot:
+  /api/v1/auth/password/forgot:
     post:
       tags:
         - Security
@@ -1189,7 +968,7 @@ paths:
         '200':
           description: Reset email sent
 
-  /auth/password/reset:
+  /api/v1/auth/password/reset:
     post:
       tags:
         - Security
@@ -1199,7 +978,7 @@ paths:
         '200':
           description: Password reset
 
-  /users/me:
+  /api/v1/users/me:
     get:
       tags:
         - Users
@@ -1217,7 +996,7 @@ paths:
         '200':
           description: Current user updated
 
-  /users/me/change-password:
+  /api/v1/users/me/change-password:
     post:
       tags:
         - Users
@@ -1299,7 +1078,7 @@ paths:
         '200':
           description: Admin conversation details
 
-  /admin/ai-config:
+  /api/v1/admin/ai-config:
     get:
       tags:
         - Admin
@@ -1317,7 +1096,7 @@ paths:
         '200':
           description: AI configuration updated
 
-  /admin/audit:
+  /api/v1/admin/audit:
     get:
       tags:
         - Admin
@@ -1327,7 +1106,7 @@ paths:
         '200':
           description: Audit entries
 
-  /admin/users:
+  /api/v1/admin/users:
     get:
       tags:
         - Admin
@@ -1355,7 +1134,7 @@ paths:
         '200':
           description: Users count
 
-  /admin/users/{user_id}/roles:
+  /api/v1/admin/users/{user_id}/roles:
     post:
       tags:
         - Admin
@@ -1371,7 +1150,7 @@ paths:
         '200':
           description: User roles updated
 
-  /admin/users/{user_id}/status:
+  /api/v1/admin/users/{user_id}/status:
     patch:
       tags:
         - Admin
@@ -1499,7 +1278,7 @@ paths:
         '200':
           description: Mission details
 
-  /qa/question:
+  /api/v1/qa/question:
     post:
       tags:
         - Agents

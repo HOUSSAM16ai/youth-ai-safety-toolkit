@@ -48,15 +48,16 @@ def test_database_url_fixer_handles_simple_sslmode():
 
 
 def test_database_url_defaults_to_sqlite_when_missing(monkeypatch: pytest.MonkeyPatch) -> None:
-    """يوفر رابط SQLite احتياطي في بيئات التطوير والاختبار عند غياب المتغير."""
+    """يوفر رابط SQLite احتياطي في بيئات الاختبار عند غياب المتغير."""
 
     monkeypatch.delenv("DATABASE_URL", raising=False)
-    monkeypatch.setenv("ENVIRONMENT", "development")
+    # Only testing allows implicit sqlite fallback now
+    monkeypatch.setenv("ENVIRONMENT", "testing")
     monkeypatch.setenv("SECRET_KEY", "test-secret-key")
 
     settings = AppSettings()
 
-    assert settings.DATABASE_URL == "sqlite+aiosqlite:///./backup_storage.db"
+    assert settings.DATABASE_URL == "sqlite+aiosqlite:///:memory:"
 
 
 def test_database_url_must_exist_in_production(monkeypatch: pytest.MonkeyPatch) -> None:

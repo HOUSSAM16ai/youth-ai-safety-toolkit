@@ -18,8 +18,9 @@ def _clear_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_database_url_falls_back_in_development() -> None:
-    settings = _TestSettings(ENVIRONMENT="development")
-    assert settings.DATABASE_URL == "sqlite+aiosqlite:///./backup_storage.db"
+    # Development now requires explicit DATABASE_URL
+    with pytest.raises(ValueError, match="DATABASE_URL is missing"):
+        _TestSettings(ENVIRONMENT="development")
 
 
 def test_database_url_missing_in_production_raises() -> None:

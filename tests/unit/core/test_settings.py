@@ -35,13 +35,11 @@ class TestCoreConfig:
 
     def test_database_url_fallback(self):
         """Verify DB URL fallback logic."""
-        # Test default fallback for dev
+        # Test default fallback for testing (dev requires explicit URL)
         with patch.dict(os.environ, {}, clear=True):
-            # Force environment to development in logic simulation if needed,
-            # but here we rely on defaults or explicit instantiation
-            settings = AppSettings(ENVIRONMENT="development", DATABASE_URL=None)
+            settings = AppSettings(ENVIRONMENT="testing", DATABASE_URL=None)
             assert "sqlite" in settings.DATABASE_URL
-            assert "backup_storage.db" in settings.DATABASE_URL
+            assert ":memory:" in settings.DATABASE_URL
 
     def test_production_security_check(self):
         """Verify production security guardrails."""

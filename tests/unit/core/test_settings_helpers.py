@@ -95,10 +95,9 @@ def test_ensure_database_url_defaults_to_memory_in_testing() -> None:
 
 
 def test_ensure_database_url_falls_back_in_development() -> None:
-    assert (
+    # Development now requires explicit DATABASE_URL
+    with pytest.raises(ValueError, match="DATABASE_URL is missing"):
         helpers._ensure_database_url(None, "development")
-        == "sqlite+aiosqlite:///./backup_storage.db"
-    )
 
 
 def test_lenient_json_loads_parses_json() -> None:

@@ -48,12 +48,12 @@ class TestSuperhumanConfiguration:
 
     def test_sqlite_fallback(self):
         """Verifies SQLite injection when DB URL is missing (Safe-Fail)."""
-        # Note: In production, missing DB URL raises error. So we test in development.
+        # Note: In production and dev, missing DB URL raises error. So we test in testing.
         with patch.dict(
-            os.environ, {"SECRET_KEY": "test-key-safe", "ENVIRONMENT": "development"}, clear=True
+            os.environ, {"SECRET_KEY": "test-key-safe", "ENVIRONMENT": "testing"}, clear=True
         ):
             settings = AppSettings(_env_file=None)
-            assert settings.DATABASE_URL == "sqlite+aiosqlite:///./backup_storage.db"
+            assert settings.DATABASE_URL == "sqlite+aiosqlite:///:memory:"
 
     def test_cors_injection(self):
         """
