@@ -8,6 +8,9 @@
   "paths": {
     "/health": {
       "get": {
+        "tags": [
+          "System"
+        ],
         "summary": "Health Check",
         "description": "\u064a\u0641\u062d\u0635 \u062c\u0627\u0647\u0632\u064a\u0629 \u0627\u0644\u0648\u0643\u064a\u0644 \u062f\u0648\u0646 \u0627\u0639\u062a\u0645\u0627\u062f \u062e\u0627\u0631\u062c\u064a.",
         "operationId": "health_check_health_get",
@@ -17,11 +20,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "type": "object",
-                  "title": "Response Health Check Health Get"
+                  "$ref": "#/components/schemas/HealthResponse"
                 }
               }
             }
@@ -31,18 +30,39 @@
     },
     "/memories": {
       "post": {
-        "summary": "Create Memory",
+        "tags": [
+          "Memory"
+        ],
+        "summary": "\u0625\u0646\u0634\u0627\u0621 \u0639\u0646\u0635\u0631 \u0630\u0627\u0643\u0631\u0629",
         "description": "\u064a\u0646\u0634\u0626 \u0639\u0646\u0635\u0631 \u0630\u0627\u0643\u0631\u0629 \u062c\u062f\u064a\u062f \u0648\u064a\u0639\u064a\u062f\u0647.",
         "operationId": "create_memory_memories_post",
+        "parameters": [
+          {
+            "name": "X-Service-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/MemoryCreateRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -70,7 +90,10 @@
     },
     "/memories/search": {
       "get": {
-        "summary": "Search Memories",
+        "tags": [
+          "Memory"
+        ],
+        "summary": "\u0628\u062d\u062b \u0639\u0628\u0631 \u0627\u0644\u0627\u0633\u062a\u0639\u0644\u0627\u0645 \u0627\u0644\u0646\u0635\u064a",
         "description": "\u064a\u0628\u062d\u062b \u0639\u0646 \u0639\u0646\u0627\u0635\u0631 \u0630\u0627\u0643\u0631\u0629 \u0645\u0637\u0627\u0628\u0642\u0629 \u0644\u0644\u0627\u0633\u062a\u0639\u0644\u0627\u0645.\n\u064a\u062a\u0645 \u0627\u0644\u0628\u062d\u062b \u0641\u064a \u0627\u0644\u0645\u062d\u062a\u0648\u0649 \u0648\u0627\u0644\u0648\u0633\u0648\u0645 \u0628\u0627\u0633\u062a\u062e\u062f\u0627\u0645 \u0642\u0627\u0639\u062f\u0629 \u0627\u0644\u0628\u064a\u0627\u0646\u0627\u062a.",
         "operationId": "search_memories_memories_search_get",
         "parameters": [
@@ -80,8 +103,40 @@
             "required": false,
             "schema": {
               "type": "string",
+              "description": "\u0646\u0635 \u0627\u0644\u0628\u062d\u062b",
               "default": "",
               "title": "Query"
+            },
+            "description": "\u0646\u0635 \u0627\u0644\u0628\u062d\u062b"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "description": "\u062d\u062f \u0627\u0644\u0646\u062a\u0627\u0626\u062c",
+              "default": 10,
+              "title": "Limit"
+            },
+            "description": "\u062d\u062f \u0627\u0644\u0646\u062a\u0627\u0626\u062c"
+          },
+          {
+            "name": "X-Service-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
             }
           }
         ],
@@ -111,12 +166,42 @@
             }
           }
         }
-      }
-      ,
+      },
       "post": {
-        "summary": "Search Memories (POST)",
-        "description": "يبحث عن عناصر ذاكرة مع دعم حمولة موسعة.",
-        "operationId": "search_memories_memories_search_post",
+        "tags": [
+          "Memory"
+        ],
+        "summary": "\u0628\u062d\u062b \u0639\u0628\u0631 \u062d\u0645\u0648\u0644\u0629 \u0645\u0648\u0633\u0639\u0629",
+        "description": "\u064a\u0628\u062d\u062b \u0639\u0646 \u0639\u0646\u0627\u0635\u0631 \u0630\u0627\u0643\u0631\u0629 \u0645\u0639 \u062f\u0639\u0645 \u0645\u0631\u0634\u062d\u0627\u062a \u0627\u0644\u0648\u0633\u0648\u0645 \u0639\u0628\u0631 POST.",
+        "operationId": "search_memories_post_memories_search_post",
+        "parameters": [
+          {
+            "name": "X-Service-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemorySearchRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -127,7 +212,390 @@
                   "items": {
                     "$ref": "#/components/schemas/MemoryResponse"
                   },
-                  "title": "Response Search Memories Memories Search Post"
+                  "title": "Response Search Memories Post Memories Search Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/knowledge/concepts/search": {
+      "get": {
+        "tags": [
+          "Knowledge"
+        ],
+        "summary": "Find Concept",
+        "description": "\u064a\u0628\u062d\u062b \u0639\u0646 \u0645\u0641\u0647\u0648\u0645.",
+        "operationId": "find_concept_knowledge_concepts_search_get",
+        "parameters": [
+          {
+            "name": "topic",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "\u0627\u0644\u0645\u0648\u0636\u0648\u0639 \u0644\u0644\u0628\u062d\u062b \u0639\u0646\u0647",
+              "title": "Topic"
+            },
+            "description": "\u0627\u0644\u0645\u0648\u0636\u0648\u0639 \u0644\u0644\u0628\u062d\u062b \u0639\u0646\u0647"
+          },
+          {
+            "name": "X-Service-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Concept"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/knowledge/concepts/{concept_id}": {
+      "get": {
+        "tags": [
+          "Knowledge"
+        ],
+        "summary": "Get Concept",
+        "description": "\u064a\u062d\u0635\u0644 \u0639\u0644\u0649 \u0645\u0641\u0647\u0648\u0645 \u0628\u0648\u0627\u0633\u0637\u0629 \u0645\u0639\u0631\u0641\u0647.",
+        "operationId": "get_concept_knowledge_concepts__concept_id__get",
+        "parameters": [
+          {
+            "name": "concept_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Concept Id"
+            }
+          },
+          {
+            "name": "X-Service-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Concept"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/knowledge/concepts/{concept_id}/prerequisites": {
+      "get": {
+        "tags": [
+          "Knowledge"
+        ],
+        "summary": "Get Prerequisites",
+        "description": "\u064a\u062d\u0635\u0644 \u0639\u0644\u0649 \u0627\u0644\u0645\u062a\u0637\u0644\u0628\u0627\u062a \u0627\u0644\u0633\u0627\u0628\u0642\u0629.",
+        "operationId": "get_prerequisites_knowledge_concepts__concept_id__prerequisites_get",
+        "parameters": [
+          {
+            "name": "concept_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Concept Id"
+            }
+          },
+          {
+            "name": "X-Service-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Concept"
+                  },
+                  "title": "Response Get Prerequisites Knowledge Concepts  Concept Id  Prerequisites Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/knowledge/concepts/{concept_id}/related": {
+      "get": {
+        "tags": [
+          "Knowledge"
+        ],
+        "summary": "Get Related",
+        "description": "\u064a\u062d\u0635\u0644 \u0639\u0644\u0649 \u0627\u0644\u0645\u0641\u0627\u0647\u064a\u0645 \u0627\u0644\u0645\u0631\u062a\u0628\u0637\u0629.",
+        "operationId": "get_related_knowledge_concepts__concept_id__related_get",
+        "parameters": [
+          {
+            "name": "concept_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Concept Id"
+            }
+          },
+          {
+            "name": "X-Service-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Concept"
+                  },
+                  "title": "Response Get Related Knowledge Concepts  Concept Id  Related Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/knowledge/concepts/{concept_id}/next": {
+      "get": {
+        "tags": [
+          "Knowledge"
+        ],
+        "summary": "Get Next",
+        "description": "\u064a\u062d\u0635\u0644 \u0639\u0644\u0649 \u0627\u0644\u0645\u0641\u0627\u0647\u064a\u0645 \u0627\u0644\u062a\u0627\u0644\u064a\u0629.",
+        "operationId": "get_next_knowledge_concepts__concept_id__next_get",
+        "parameters": [
+          {
+            "name": "concept_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Concept Id"
+            }
+          },
+          {
+            "name": "X-Service-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Concept"
+                  },
+                  "title": "Response Get Next Knowledge Concepts  Concept Id  Next Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/knowledge/paths": {
+      "post": {
+        "tags": [
+          "Knowledge"
+        ],
+        "summary": "Get Learning Path",
+        "description": "\u064a\u062c\u062f \u0645\u0633\u0627\u0631 \u062a\u0639\u0644\u0645.",
+        "operationId": "get_learning_path_knowledge_paths_post",
+        "parameters": [
+          {
+            "name": "X-Service-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PathRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Concept"
+                  },
+                  "title": "Response Get Learning Path Knowledge Paths Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -138,6 +606,66 @@
   },
   "components": {
     "schemas": {
+      "Concept": {
+        "properties": {
+          "concept_id": {
+            "type": "string",
+            "title": "Concept Id",
+            "description": "\u0645\u0639\u0631\u0641 \u0627\u0644\u0645\u0641\u0647\u0648\u0645"
+          },
+          "name_ar": {
+            "type": "string",
+            "title": "Name Ar",
+            "description": "\u0627\u0644\u0627\u0633\u0645 \u0628\u0627\u0644\u0639\u0631\u0628\u064a\u0629"
+          },
+          "name_en": {
+            "type": "string",
+            "title": "Name En",
+            "description": "\u0627\u0644\u0627\u0633\u0645 \u0628\u0627\u0644\u0625\u0646\u062c\u0644\u064a\u0632\u064a\u0629",
+            "default": ""
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "\u0648\u0635\u0641 \u0627\u0644\u0645\u0641\u0647\u0648\u0645",
+            "default": ""
+          },
+          "subject": {
+            "type": "string",
+            "title": "Subject",
+            "description": "\u0627\u0644\u0645\u0627\u062f\u0629",
+            "default": "Mathematics"
+          },
+          "level": {
+            "type": "string",
+            "title": "Level",
+            "description": "\u0627\u0644\u0645\u0633\u062a\u0648\u0649",
+            "default": ""
+          },
+          "difficulty": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Difficulty",
+            "description": "\u0627\u0644\u0635\u0639\u0648\u0628\u0629",
+            "default": 0.5
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          }
+        },
+        "type": "object",
+        "required": [
+          "concept_id",
+          "name_ar"
+        ],
+        "title": "Concept",
+        "description": "\u0645\u0641\u0647\u0648\u0645 \u062a\u0639\u0644\u064a\u0645\u064a."
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -150,6 +678,36 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "service": {
+            "type": "string",
+            "title": "Service"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "database": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Database"
+          }
+        },
+        "type": "object",
+        "required": [
+          "service",
+          "status"
+        ],
+        "title": "HealthResponse",
+        "description": "\u0627\u0633\u062a\u062c\u0627\u0628\u0629 \u0635\u062d\u0629 \u0642\u064a\u0627\u0633\u064a\u0629 \u0644\u0648\u0643\u064a\u0644 \u0627\u0644\u0630\u0627\u0643\u0631\u0629."
       },
       "MemoryCreateRequest": {
         "properties": {
@@ -202,6 +760,64 @@
         "title": "MemoryResponse",
         "description": "\u0627\u0633\u062a\u062c\u0627\u0628\u0629 \u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0630\u0627\u0643\u0631\u0629."
       },
+      "MemorySearchFilters": {
+        "properties": {
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "description": "\u0648\u0633\u0648\u0645 \u0627\u0644\u062a\u0635\u0641\u064a\u0629 \u0627\u0644\u0645\u0637\u0644\u0648\u0628\u0629"
+          }
+        },
+        "type": "object",
+        "title": "MemorySearchFilters",
+        "description": "\u0645\u0631\u0634\u062d\u0627\u062a \u0627\u0644\u0628\u062d\u062b \u0628\u0627\u0644\u0648\u0633\u0648\u0645."
+      },
+      "MemorySearchRequest": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query",
+            "description": "\u0646\u0635 \u0627\u0644\u0628\u062d\u062b",
+            "default": ""
+          },
+          "filters": {
+            "$ref": "#/components/schemas/MemorySearchFilters",
+            "description": "\u0645\u0631\u0634\u062d\u0627\u062a \u0627\u0644\u0628\u062d\u062b \u0627\u0644\u062f\u0644\u0627\u0644\u064a"
+          },
+          "limit": {
+            "type": "integer",
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "description": "\u0639\u062f\u062f \u0627\u0644\u0646\u062a\u0627\u0626\u062c \u0627\u0644\u0645\u0637\u0644\u0648\u0628",
+            "default": 10
+          }
+        },
+        "type": "object",
+        "title": "MemorySearchRequest",
+        "description": "\u062d\u0645\u0648\u0644\u0629 \u0627\u0644\u0628\u062d\u062b \u0639\u0646 \u0627\u0644\u0630\u0627\u0643\u0631\u0629 \u0639\u0628\u0631 POST."
+      },
+      "PathRequest": {
+        "properties": {
+          "from_concept": {
+            "type": "string",
+            "title": "From Concept"
+          },
+          "to_concept": {
+            "type": "string",
+            "title": "To Concept"
+          }
+        },
+        "type": "object",
+        "required": [
+          "from_concept",
+          "to_concept"
+        ],
+        "title": "PathRequest"
+      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -225,6 +841,13 @@
           "type": {
             "type": "string",
             "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
           }
         },
         "type": "object",
