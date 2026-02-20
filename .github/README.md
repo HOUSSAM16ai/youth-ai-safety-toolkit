@@ -1,106 +1,150 @@
 # 🛡️ North African AI Safety Lab (NAAS Lab)
-## Project: EL-NUKHBA (The Elite)
+## Project: EL-NUKHBA (The Elite) | NAAS-Agentic-Core
 
-![Status](https://img.shields.io/badge/Status-Active_Research-success?style=for-the-badge)
-![Grant Application](https://img.shields.io/badge/Grant_Application-EMEA_Youth_%26_Wellbeing_2026_(Submitted)-0b7285?style=for-the-badge)
-![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)
-![Tech](https://img.shields.io/badge/Architecture-Agentic_RAG-orange?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Active_Research-success?style=for-the-badge) ![Grant Application](https://img.shields.io/badge/Grant_Application-EMEA_Youth_%26_Wellbeing_2026_(Submitted)-0b7285?style=for-the-badge) ![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge) ![Tech](https://img.shields.io/badge/Architecture-Agentic_RAG-orange?style=for-the-badge) ![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge) ![Governance](https://img.shields.io/badge/Governance-Safeguarding_%2B_Data_Policy-red?style=for-the-badge) ![Cite](https://img.shields.io/badge/Cite-CITATION.cff-lightgrey?style=for-the-badge)
 
-> A safeguarding-first agentic tutoring framework for North African education that reduces AI-related harm in Arabic/French/Darija code-switching contexts through verification, risk screening, and measurable outcomes.
+> **The "Elite" Verify-then-Reply Framework:** A safeguarding-first agentic tutoring framework for North African education that reduces AI-related harm in Arabic/French/Darija code-switching contexts through verification, risk screening, and measurable outcomes.
 
 ---
 
-## Executive summary 
+## 🚨 Governance & Safeguarding (Strict Protocol)
+
+> **Why this matters:** North African youth frequently code-switch between Arabic, French, and Darija. Current safety filters often fail in these mixed-language contexts, exposing minors to harmful content. This toolkit provides a localized, rigorous "Verify-then-Reply" evaluation framework to bridge that gap.
+
+This repository is governed by strict ethical protocols for youth safety. All research involving human subjects or youth-facing data must strictly adhere to:
+*   [**SAFEGUARDING.md**](./SAFEGUARDING.md) (Youth safety, supervision, and escalation protocols)
+*   [**DATA_POLICY.md**](./DATA_POLICY.md) (Privacy-by-design and data handling rules)
+
+> **Note:** "Verify-then-Reply" reduces risk but does not eliminate it. Adult supervision is mandatory for youth-facing deployments.
+
+---
+
+## 🏛️ Executive Summary & Architecture
+
+### The Mission
 A safeguarding-first agentic tutoring toolkit and evaluation framework that helps youth-serving organisations and educators reduce AI-related educational harm and improve wellbeing and AI literacy outcomes in North Africa.
 
----
+### Architecture: The Verify-then-Reply Engine
+Our approach intercepts Model interactions to ensure safety before any content reaches the user.
 
-## Why this matters: the safety gap
-Young people increasingly use AI for learning and guidance, but safety and developmental appropriateness are not guaranteed—especially in low-resource, code-switching contexts. This can lead to:
-1) Educational hallucinations (incorrect facts presented confidently)
-2) Misalignment with local curricula and classroom norms
-3) Inequitable access to high-quality learning support
+```mermaid
+graph LR
+    Input[User Input] --> PreChecks[Pre-Checks (PII/Toxicity)]
+    PreChecks -->|Pass| Verification[Verification Loop]
+    PreChecks -->|Block| Refusal[Immediate Refusal]
+    Verification -->|Analyze| SafetyPolicy{Policy Decision}
+    SafetyPolicy -->|Safe| Output[Final Output]
+    SafetyPolicy -->|Unsafe| Refusal
+    Output --> Telemetry[Telemetry & Audit Logs]
+    Refusal --> Telemetry
+```
 
-NAAS Lab addresses this gap by pairing practical safeguards with independent, shareable evidence on what works in real-world deployments.
-
----
-
-## What we deliver (practical outputs + independent evidence)
-
-### 1) Practical toolkit (usable by partners)
-- **Risk screening checklist** for youth-facing AI use (privacy, misuse, harmful content, age-appropriateness)
-- **Safeguarding playbook** (consent/assent guidance, escalation, incident response)
-- **AI literacy modules** for youth, parents, and educators
-- **Implementation templates** (policies, training agenda, briefing notes)
-
-### 2) Independent evidence (useful beyond direct beneficiaries)
-- **Evaluation protocol** for real-world deployments (pre/post + incident logging with minimal data)
-- **Impact measurement plan** with clear indicators and collection schedule
-- **Stakeholder outputs** (templates for policymakers/regulators, NGOs, and product teams)
+**How it works (Step-by-Step):**
+1.  **Retrieve:** Relevant context from curated sources (no general web retrieval by default).
+2.  **Draft:** A response using structured reasoning.
+3.  **Critique:** With a safety/quality check (accuracy, tone, age-appropriateness, misuse risks).
+4.  **Respond:** Only if the output meets defined thresholds; otherwise revise or abstain.
 
 ---
 
-## How it works (high-level)
-EL-NUKHBA uses a verify-then-reply approach:
-1) **Retrieve** relevant context from curated sources (no general web retrieval by default)
-2) **Draft** a response using structured reasoning
-3) **Critique** with a safety/quality check (accuracy, tone, age-appropriateness, misuse risks)
-4) **Respond** only if the output meets defined thresholds; otherwise revise or abstain
+## 🎯 Impact & Metrics
 
-This repo focuses on making the safeguards operational (checklists, incident workflows, evaluation instruments), not just describing them.
+### Key Safety Metrics (Empirical)
+We empirically evaluate GenAI systems against four key safety metrics:
 
----
+| Metric | Definition | Target |
+| :--- | :--- | :--- |
+| **Bypass Success Rate** | Percentage of adversarial prompts in mixed Arabic/French/Darija that successfully trigger unsafe generation. | 0% |
+| **Interception Rate** | Percentage of unsafe content correctly blocked by the Verify-then-Reply layer (pre/post-generation). | >95% |
+| **PII-Risk Events** | Number of potential PII leakage events detected per 100 interaction sessions. | 0 |
+| **Reliability Errors** | Rate of false positives/negatives in safety judgments, measured via blinded human audit. | <5% |
 
-## Impact measurement (what we will track)
-We use simple, auditable indicators (definitions and instruments in `docs/IMPACT_MEASUREMENT_PLAN.md`):
-- **Safety:** rate of unsafe/incorrect outputs intercepted before reaching learners
-- **Curriculum alignment:** agreement rate with curated curriculum sources and teacher review sampling
-- **Wellbeing (non-clinical):** learner confidence and help-seeking pathways (survey-based, aggregated)
-- **AI literacy:** scenario-based judgement improvements (pre/post)
-- **Adoption:** uptake of “safe mode” workflows by partner sites
-
-We publish only aggregated, non-identifiable results.
+### Broader Impact Indicators
+We also track simple, auditable indicators (definitions in `docs/IMPACT_MEASUREMENT_PLAN.md`):
+- **Curriculum alignment:** Agreement rate with curated curriculum sources.
+- **Wellbeing (non-clinical):** Learner confidence and help-seeking pathways.
+- **AI literacy:** Scenario-based judgement improvements.
+- **Adoption:** Uptake of “safe mode” workflows by partner sites.
 
 ---
 
-## Ethics, safeguarding, and data protection
-This project is safeguarding-first and privacy-by-design:
-- **Safeguarding policy & incident response:** `SAFEGUARDING.md`
-- **Data protection (minimization, storage, retention, publishing rules):** `DATA_PROTECTION.md`
+## 📦 Deliverables & Toolkit
 
-If the project involves direct engagement with minors or their data, the repo documents consent/assent procedures, risk assessment, and incident escalation.
+### 1) Practical Toolkit (Usable by Partners)
+- **Risk screening checklist:** For youth-facing AI use (privacy, misuse, harmful content).
+- **Safeguarding playbook:** Consent/assent guidance, escalation, incident response.
+- **AI literacy modules:** For youth, parents, and educators.
+- **Implementation templates:** Policies, training agendas, briefing notes.
 
----
-
-## Independence & transparency
-We intend to publish methods and findings independently (including failures), and share practical guidance that helps stakeholders understand what safe, responsible AI looks like in real-world youth contexts.
-
----
-
-## Repository map
-- `docs/` — grant alignment, theory of change, roadmap, evaluation protocol, impact measurement plan
-- `toolkit/` — checklists, templates, training materials
-- `briefs/` — stakeholder-facing brief templates
-- `.github/` — CI/CD workflows and engineering automation notes (not the main project narrative)
+### 2) Independent Evidence
+- **Evaluation protocol:** For real-world deployments (pre/post + incident logging).
+- **Impact measurement plan:** Clear indicators and collection schedule.
+- **Stakeholder outputs:** Templates for policymakers/regulators, NGOs, and product teams.
 
 ---
 
-## Quick start (for partners)
-1) Read `toolkit/START_HERE.md`
-2) Run `toolkit/RISK_SCREENING_CHECKLIST.md`
-3) Adopt `SAFEGUARDING.md` and `DATA_PROTECTION.md` requirements
-4) Use `docs/EVALUATION_PROTOCOL.md` and `docs/IMPACT_MEASUREMENT_PLAN.md` for measurement and reporting
+## 🗺️ Repository Map
+
+```text
+.
+├── docs/                       # Evaluation protocols, impact plans, and transparency reports
+├── toolkit/                    # Operational tools: screening checklists, incident logs
+├── src/                        # Core agentic logic and safety verification code
+├── evaluation/                 # Code-switching test suites and benchmarking tools
+├── briefs/                     # Stakeholder-facing brief templates
+├── .github/                    # CI/CD workflows and engineering automation notes
+├── CITATION.cff                # Citation metadata
+├── DATA_POLICY.md              # Privacy-by-design and data handling rules
+├── SAFEGUARDING.md             # Youth safety, supervision, and escalation protocols
+├── SECURITY.md                 # Vulnerability reporting policy
+├── CONTRIBUTING.md             # Developer and researcher contribution guide
+└── README.md                   # Project overview
+```
 
 ---
 
-## Legal host, governance, and contact (EMEA eligibility)
+## 🚀 Quick Start
 
-**Registered legal entity:** Interactive Training Courses Platform (trading as NAAS AI Safety Lab)
+### 👨‍💻 For Developers & Researchers
+**Note:** The following commands are examples. Please align paths to your specific environment.
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/HOUSSAM16ai/NAAS-Agentic-Core.git
+cd NAAS-Agentic-Core
+
+# 2. Install dependencies (requires Python 3.10+)
+pip install -r requirements.txt
+
+# 3. Configure environment variables (see .env.example)
+cp .env.example .env
+
+# 4. Run the code-switching evaluation suite
+# Example command:
+python -m evaluation.run --suite code-switching-v1 --output results/report.json
+```
+
+### 🤝 For Partners & Educators
+1.  Read `toolkit/START_HERE.md`
+2.  Run `toolkit/RISK_SCREENING_CHECKLIST.md`
+3.  Adopt `SAFEGUARDING.md` and `DATA_PROTECTION.md` requirements
+4.  Use `docs/EVALUATION_PROTOCOL.md` and `docs/IMPACT_MEASUREMENT_PLAN.md` for measurement and reporting
+
+---
+
+## ⚖️ Independence, Scope & Legal
+
+### Independence & Transparency
+The North African AI Safety Lab (NAAS Lab) operates with academic and operational independence. We reserve the right to publish our methods, findings, and critical safety evaluations independently of any model providers or partners. Open Science principles apply.
+
+### Scope Boundaries
+*   **Not Legal Advice:** This toolkit and its documentation do not constitute legal compliance advice (e.g., GDPR, local laws). Consult your organization's legal counsel.
+*   **Not a Replacement for Human Oversight:** "Verify-then-Reply" reduces risk but does not eliminate it. Adult supervision is mandatory for youth-facing deployments as per [SAFEGUARDING.md](./SAFEGUARDING.md).
+
+### Legal Host & Contact (EMEA)
+**Registered Entity:** Interactive Training Courses Platform (trading as NAAS AI Safety Lab)
 **Jurisdiction:** Algeria (EMEA)
-**Project governance:** Independent research project (methods and findings remain independently publishable).
-**Project lead:** Houssam Benmerah
-**Research contact:** h.benmerah@univ-eltarf.dz
+**Project Lead:** Houssam Benmerah (h.benmerah@univ-eltarf.dz)
 **Repository:** https://github.com/HOUSSAM16ai/NAAS-Agentic-Core
 
-> This repository is maintained by the project team under the registered entity above.
-> References to third-party organisations, platforms, or products do not imply endorsement or affiliation.
+> This repository is maintained by the project team. References to third-party organisations, platforms, or products do not imply endorsement or affiliation.
