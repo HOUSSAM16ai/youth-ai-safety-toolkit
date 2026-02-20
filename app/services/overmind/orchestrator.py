@@ -58,6 +58,11 @@ class OvermindOrchestrator:
             executor (TaskExecutorProtocol): الذراع التنفيذي.
             brain (SuperBrain | LangGraphOvermindEngine): العقل المفكر (Council of Wisdom).
         """
+        logger.warning(
+            "DEPRECATION WARNING: The Monolith OvermindOrchestrator is deprecated. "
+            "Use the Orchestrator Service (Microservice) instead. "
+            "See microservices/orchestrator_service."
+        )
         self.state = state_manager
         self.executor = executor
         self.brain = brain
