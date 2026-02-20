@@ -5,10 +5,12 @@ from pydantic import BaseModel, Field
 
 # --- Unified Agent Protocol ---
 
+
 class AgentRequest(BaseModel):
     """
     Request payload for executing an agent action.
     """
+
     caller_id: str = Field(..., description="Entity requesting the action")
     target_service: str = Field("reasoning-agent", description="Target service name")
     action: str = Field(..., description="Action to perform (e.g., 'reason')")
@@ -20,6 +22,7 @@ class AgentResponse(BaseModel):
     """
     Standardized response from an agent.
     """
+
     status: Literal["success", "error"] = Field(..., description="Execution status")
     data: object | None = Field(None, description="Result data")
     error: str | None = Field(None, description="Error message")
@@ -28,8 +31,10 @@ class AgentResponse(BaseModel):
 
 # --- Reasoning Models ---
 
+
 class EvaluationResult(BaseModel):
     """Result of evaluating a reasoning step."""
+
     score: float = Field(..., ge=0.0, le=1.0, description="Quality score of the thought")
     is_valid: bool = Field(..., description="Whether the thought is logically valid")
     reasoning: str = Field(..., description="Explanation for the score")
@@ -37,6 +42,7 @@ class EvaluationResult(BaseModel):
 
 class ReasoningNode(BaseModel):
     """A node in the reasoning tree (Tree of Thoughts)."""
+
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     parent_id: str | None = None
     content: str = Field(..., description="The thought content or hypothesis")
@@ -51,7 +57,7 @@ class ReasoningNode(BaseModel):
             "example": {
                 "id": "123",
                 "content": "Let's assume X is true...",
-                "step_type": "hypothesis"
+                "step_type": "hypothesis",
             }
         }
     }

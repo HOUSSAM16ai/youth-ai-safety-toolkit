@@ -9,12 +9,14 @@ from microservices.reasoning_agent.src.services.reasoning_service import reasoni
 logger = get_logger("api-routes")
 router = APIRouter()
 
+
 @router.get("/health", tags=["System"])
 async def health_check() -> dict[str, str]:
     """
     Basic health check endpoint.
     """
     return {"status": "healthy", "service": "reasoning-agent"}
+
 
 @router.post("/execute", response_model=AgentResponse, tags=["Agent"])
 async def execute(request: AgentRequest) -> AgentResponse:
@@ -30,10 +32,7 @@ async def execute(request: AgentRequest) -> AgentResponse:
             context = str(request.payload.get("context", ""))
 
             if not query:
-                return AgentResponse(
-                    status="error",
-                    error="Query is required for reasoning."
-                )
+                return AgentResponse(status="error", error="Query is required for reasoning.")
 
             # Execute Workflow
             # Note: run is async
@@ -42,19 +41,11 @@ async def execute(request: AgentRequest) -> AgentResponse:
             duration = (time.time() - start_time) * 1000
 
             return AgentResponse(
-                status="success",
-                data={"answer": str(result)},
-                metrics={"duration_ms": duration}
+                status="success", data={"answer": str(result)}, metrics={"duration_ms": duration}
             )
 
-        return AgentResponse(
-            status="error",
-            error=f"Action '{request.action}' not supported."
-        )
+        return AgentResponse(status="error", error=f"Action '{request.action}' not supported.")
 
     except Exception as e:
         logger.error(f"Execution failed: {e}", exc_info=True)
-        return AgentResponse(
-            status="error",
-            error=str(e)
-        )
+        return AgentResponse(status="error", error=str(e))

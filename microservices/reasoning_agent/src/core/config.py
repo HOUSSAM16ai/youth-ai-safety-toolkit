@@ -21,10 +21,7 @@ class Settings(BaseSettings):
     DEFAULT_MODEL: str = "gpt-4o"
     REASONING_TIMEOUT: int = 300
 
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
 
 settings = Settings()

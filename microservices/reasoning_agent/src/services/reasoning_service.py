@@ -6,9 +6,11 @@ from microservices.reasoning_agent.src.services.strategies.mcts import mcts_stra
 
 logger = get_logger("reasoning-workflow")
 
+
 class RetrievalEvent(Event):
     query: str
     context: str
+
 
 class ReasoningWorkflow(Workflow):
     def __init__(self, timeout: int = 300, verbose: bool = True):
@@ -45,14 +47,11 @@ class ReasoningWorkflow(Workflow):
             "Synthesize a final answer based on the provided reasoning path."
         )
 
-        final_prompt = (
-            f"Query: {query}\n"
-            f"Context: {context}\n"
-            f"Reasoning Path: {best_node.content}\n"
-        )
+        final_prompt = f"Query: {query}\nContext: {context}\nReasoning Path: {best_node.content}\n"
 
         result = await ai_service.generate_text(prompt=final_prompt, system_prompt=system_prompt)
 
         return StopEvent(result=result)
+
 
 reasoning_workflow = ReasoningWorkflow()

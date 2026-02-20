@@ -9,10 +9,12 @@ from microservices.reasoning_agent.src.services.strategies.mcts import RMCTSStra
 
 client = TestClient(app)
 
+
 def test_health_check():
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json()["status"] == "healthy"
+
 
 @pytest.mark.asyncio
 async def test_mcts_strategy_expand():
@@ -30,6 +32,7 @@ async def test_mcts_strategy_expand():
         assert candidates[0].content == "First Idea"
         assert candidates[0].step_type == "hypothesis"
 
+
 @pytest.mark.asyncio
 async def test_mcts_strategy_evaluate():
     # Mock AI Service
@@ -46,6 +49,7 @@ async def test_mcts_strategy_evaluate():
         assert result.is_valid
         assert "Good logic" in result.reasoning
 
+
 @patch("microservices.reasoning_agent.src.services.reasoning_service.reasoning_workflow.run")
 def test_execute_endpoint(mock_workflow_run):
     # Mocking the async run method requires setting the return value to an awaitable/future
@@ -58,10 +62,7 @@ def test_execute_endpoint(mock_workflow_run):
     payload = {
         "caller_id": "test",
         "action": "reason",
-        "payload": {
-            "query": "Why is the sky blue?",
-            "context": "Physics"
-        }
+        "payload": {"query": "Why is the sky blue?", "context": "Physics"},
     }
 
     # FastAPIs TestClient runs async endpoints synchronously in a thread loop

@@ -7,6 +7,7 @@ from microservices.reasoning_agent.src.services.ai_service import ai_service
 
 logger = get_logger("mcts-strategy")
 
+
 class RMCTSStrategy:
     """
     Recursive Monte Carlo Tree Search Strategy for Reasoning.
@@ -29,7 +30,7 @@ class RMCTSStrategy:
         try:
             content = await ai_service.generate_text(
                 prompt=prompt,
-                system_prompt="You are a Strategic Reasoning Engine. Think diversely and logically."
+                system_prompt="You are a Strategic Reasoning Engine. Think diversely and logically.",
             )
 
             # Robust Parsing
@@ -39,14 +40,12 @@ class RMCTSStrategy:
 
             if not matches:
                 # Fallback: Split by newline if no numbering found
-                matches = [line.strip() for line in content.split('\n') if line.strip()]
+                matches = [line.strip() for line in content.split("\n") if line.strip()]
 
-            for match in matches[:3]: # Limit to 3
+            for match in matches[:3]:  # Limit to 3
                 candidates.append(
                     ReasoningNode(
-                        parent_id=parent.id,
-                        content=match.strip(),
-                        step_type="hypothesis"
+                        parent_id=parent.id, content=match.strip(), step_type="hypothesis"
                     )
                 )
 
@@ -72,8 +71,7 @@ class RMCTSStrategy:
 
         try:
             content = await ai_service.generate_text(
-                prompt=prompt,
-                system_prompt="You are a Critical Reviewer. Be strict."
+                prompt=prompt, system_prompt="You are a Critical Reviewer. Be strict."
             )
 
             # Simple parsing logic (can be upgraded to Instructor later)
@@ -109,7 +107,7 @@ class RMCTSStrategy:
         current_layer = [root]
 
         for i in range(depth):
-            logger.info(f"Depth {i+1}: Expanding {len(current_layer)} nodes")
+            logger.info(f"Depth {i + 1}: Expanding {len(current_layer)} nodes")
             next_layer = []
 
             for node in current_layer:
@@ -136,5 +134,6 @@ class RMCTSStrategy:
         if not current_layer:
             return root
         return current_layer[0]
+
 
 mcts_strategy = RMCTSStrategy()

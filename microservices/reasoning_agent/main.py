@@ -15,15 +15,17 @@ async def lifespan(app: FastAPI):
     yield
     print(f"🛑 {settings.SERVICE_NAME} Stopped")
 
+
 def create_app() -> FastAPI:
     app = FastAPI(
         title="Reasoning Agent",
         description="High-performance Deep Reasoning Microservice",
         version="2.0.0",
-        lifespan=lifespan
+        lifespan=lifespan,
     )
 
     app.include_router(router)
     return app
+
 
 app = create_app()

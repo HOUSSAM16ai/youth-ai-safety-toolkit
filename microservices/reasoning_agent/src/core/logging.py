@@ -23,8 +23,7 @@ def setup_logging():
 
     # Use JSON formatting for production/structured logs
     formatter = jsonlogger.JsonFormatter(
-        "%(asctime)s %(levelname)s %(name)s %(message)s",
-        datefmt="%Y-%m-%dT%H:%M:%S%z"
+        "%(asctime)s %(levelname)s %(name)s %(message)s", datefmt="%Y-%m-%dT%H:%M:%S%z"
     )
 
     handler.setFormatter(formatter)
@@ -33,6 +32,7 @@ def setup_logging():
     # Silence noisy libraries
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
+
 
 def get_logger(name: str) -> logging.Logger:
     return logging.getLogger(name)

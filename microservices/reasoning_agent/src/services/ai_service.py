@@ -6,6 +6,7 @@ from microservices.reasoning_agent.src.core.logging import get_logger
 
 logger = get_logger("ai-service")
 
+
 class AIService:
     def __init__(self):
         # Configure client (OpenRouter or OpenAI)
@@ -21,7 +22,9 @@ class AIService:
         self.model = settings.DEFAULT_MODEL
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
-    async def generate_text(self, prompt: str, system_prompt: str = "You are a helpful assistant.") -> str:
+    async def generate_text(
+        self, prompt: str, system_prompt: str = "You are a helpful assistant."
+    ) -> str:
         """
         Generates text using the configured LLM with retries.
         """
@@ -37,13 +40,14 @@ class AIService:
                 model=self.model,
                 messages=[
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": prompt}
+                    {"role": "user", "content": prompt},
                 ],
-                temperature=0.7
+                temperature=0.7,
             )
             return response.choices[0].message.content or ""
         except Exception as e:
             logger.error(f"AI Generation failed: {e}")
             raise
+
 
 ai_service = AIService()
