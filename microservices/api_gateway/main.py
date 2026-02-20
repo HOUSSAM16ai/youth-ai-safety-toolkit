@@ -166,17 +166,30 @@ async def orchestrator_proxy(path: str, request: Request) -> StreamingResponse:
 
 # --- Explicit Legacy Routes ---
 
-@app.api_route("/admin/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"], include_in_schema=False)
+
+@app.api_route(
+    "/admin/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+    include_in_schema=False,
+)
 async def admin_proxy(path: str, request: Request) -> StreamingResponse:
     return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"admin/{path}")
 
 
-@app.api_route("/api/security/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"], include_in_schema=False)
+@app.api_route(
+    "/api/security/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+    include_in_schema=False,
+)
 async def security_proxy(path: str, request: Request) -> StreamingResponse:
     return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"api/security/{path}")
 
 
-@app.api_route("/api/chat/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"], include_in_schema=False)
+@app.api_route(
+    "/api/chat/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+    include_in_schema=False,
+)
 async def chat_http_proxy(path: str, request: Request) -> StreamingResponse:
     return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"api/chat/{path}")
 
@@ -199,27 +212,51 @@ async def admin_chat_ws_proxy(websocket: WebSocket):
     await websocket_proxy(websocket, target_url)
 
 
-@app.api_route("/v1/content/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"], include_in_schema=False)
+@app.api_route(
+    "/v1/content/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+    include_in_schema=False,
+)
 async def content_proxy(path: str, request: Request) -> StreamingResponse:
     return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"v1/content/{path}")
 
 
-@app.api_route("/api/v1/data-mesh/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"], include_in_schema=False)
+@app.api_route(
+    "/api/v1/data-mesh/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+    include_in_schema=False,
+)
 async def datamesh_proxy(path: str, request: Request) -> StreamingResponse:
-    return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"api/v1/data-mesh/{path}")
+    return await proxy_handler.forward(
+        request, settings.CORE_KERNEL_URL, f"api/v1/data-mesh/{path}"
+    )
 
 
-@app.api_route("/api/v1/resources/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"], include_in_schema=False)
+@app.api_route(
+    "/api/v1/resources/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+    include_in_schema=False,
+)
 async def resources_proxy(path: str, request: Request) -> StreamingResponse:
-    return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"api/v1/resources/{path}")
+    return await proxy_handler.forward(
+        request, settings.CORE_KERNEL_URL, f"api/v1/resources/{path}"
+    )
 
 
-@app.api_route("/system/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"], include_in_schema=False)
+@app.api_route(
+    "/system/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+    include_in_schema=False,
+)
 async def system_proxy(path: str, request: Request) -> StreamingResponse:
     return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"system/{path}")
 
 
-@app.api_route("/api/v1/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"], include_in_schema=False)
+@app.api_route(
+    "/api/v1/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+    include_in_schema=False,
+)
 async def legacy_v1_fallback(path: str, request: Request) -> StreamingResponse:
     """
     Fallback for other legacy v1 routes (e.g. CRUD).
