@@ -112,9 +112,7 @@ async def get_mission_events_endpoint(
     return [
         MissionEventResponse(
             event_type=(
-                evt.event_type.value
-                if hasattr(evt.event_type, "value")
-                else str(evt.event_type)
+                evt.event_type.value if hasattr(evt.event_type, "value") else str(evt.event_type)
             ),
             mission_id=evt.mission_id,
             timestamp=evt.created_at,
