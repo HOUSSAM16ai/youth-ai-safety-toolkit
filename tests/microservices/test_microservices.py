@@ -15,13 +15,6 @@ from fastapi.testclient import TestClient
 TEST_SECRET_KEY = "test-secret-key-for-ci-pipeline"
 os.environ["SECRET_KEY"] = TEST_SECRET_KEY
 
-from microservices.memory_agent.main import create_app as create_memory_app
-from microservices.memory_agent.settings import get_settings as get_memory_settings
-from microservices.planning_agent.main import create_app as create_planning_app
-from microservices.planning_agent.settings import get_settings as get_planning_settings
-from microservices.user_service.main import create_app as create_user_app
-from microservices.user_service.settings import get_settings as get_user_settings
-
 
 def get_auth_headers() -> dict[str, str]:
     """توليد ترويسة مصادقة صالحة للخدمات."""
@@ -36,6 +29,9 @@ def get_auth_headers() -> dict[str, str]:
 
 def test_planning_agent_generates_plan_with_context() -> None:
     """يتحقق من أن وكيل التخطيط يولد خطوات تشمل السياق عند توفره."""
+    from microservices.planning_agent.main import create_app as create_planning_app
+    from microservices.planning_agent.settings import get_settings as get_planning_settings
+
     get_planning_settings.cache_clear()
     client = TestClient(create_planning_app())
     response = client.post(
@@ -73,6 +69,9 @@ def test_planning_agent_generates_plan_with_context() -> None:
 
 def test_memory_agent_stores_and_searches_entries() -> None:
     """يضمن أن وكيل الذاكرة يحفظ العناصر ويعيدها عبر البحث."""
+    from microservices.memory_agent.main import create_app as create_memory_app
+    from microservices.memory_agent.settings import get_settings as get_memory_settings
+
     get_memory_settings.cache_clear()
     client = TestClient(create_memory_app())
     headers = get_auth_headers()
@@ -95,6 +94,9 @@ def test_memory_agent_stores_and_searches_entries() -> None:
 
 def test_user_service_creates_and_lists_users() -> None:
     """يتأكد من أن خدمة المستخدمين تنشئ المستخدمين وتعرضهم."""
+    from microservices.user_service.main import create_app as create_user_app
+    from microservices.user_service.settings import get_settings as get_user_settings
+
     get_user_settings.cache_clear()
     client = TestClient(create_user_app())
     headers = get_auth_headers()
@@ -116,6 +118,9 @@ def test_user_service_creates_and_lists_users() -> None:
 
 def test_user_service_rejects_invalid_email() -> None:
     """يتأكد من أن خدمة المستخدمين ترفض البريد الإلكتروني غير الصالح."""
+    from microservices.user_service.main import create_app as create_user_app
+    from microservices.user_service.settings import get_settings as get_user_settings
+
     get_user_settings.cache_clear()
     client = TestClient(create_user_app())
     headers = get_auth_headers()
