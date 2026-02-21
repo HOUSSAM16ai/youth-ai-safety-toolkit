@@ -56,9 +56,9 @@ def test_unknown_route_returns_404(mock_forward):
 
 
 @patch.object(proxy_handler, "forward", new_callable=AsyncMock)
-def test_admin_route_proxies_to_monolith(mock_forward):
+def test_admin_route_proxies_to_user_service(mock_forward):
     """
-    Verify that requests to /admin/* are forwarded to the Core Kernel.
+    Verify that requests to /admin/* are forwarded to the User Service.
     """
     mock_forward.return_value = JSONResponse(content={"status": "ok"})
 
@@ -67,9 +67,9 @@ def test_admin_route_proxies_to_monolith(mock_forward):
     assert response.status_code == 200
     assert mock_forward.called
     args, _ = mock_forward.call_args
-    assert settings.CORE_KERNEL_URL in args  # target_url
+    assert settings.USER_SERVICE_URL in args  # target_url
     # The path passed to forward should include the prefix for legacy routes as we construct it manually
-    assert "admin/users" in args  # path
+    assert "api/v1/admin/users" in args  # path
 
 
 @patch.object(proxy_handler, "forward", new_callable=AsyncMock)

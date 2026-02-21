@@ -15,7 +15,10 @@ class LoginRequest(RobustBaseModel):
     @field_validator("email")
     @classmethod
     def lowercase_email(cls, v: str) -> str:
-        return v.lower().strip()
+        v = v.lower().strip()
+        if "@" not in v:
+            raise ValueError("Invalid email format")
+        return v
 
 
 class RegisterRequest(RobustBaseModel):
@@ -26,7 +29,10 @@ class RegisterRequest(RobustBaseModel):
     @field_validator("email")
     @classmethod
     def lowercase_email(cls, v: str) -> str:
-        return v.lower().strip()
+        v = v.lower().strip()
+        if "@" not in v:
+            raise ValueError("Invalid email format")
+        return v
 
 
 class TokenVerifyRequest(RobustBaseModel):

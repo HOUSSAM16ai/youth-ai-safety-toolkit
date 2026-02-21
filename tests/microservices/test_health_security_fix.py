@@ -81,7 +81,7 @@ def test_user_service_health_security():
         client = TestClient(app)
 
         response_health = client.get("/health")
-        response_protected = client.get("/users")
+        response_protected = client.get("/api/v1/admin/users")
 
         print(f"User Service - /health status: {response_health.status_code}")
 
@@ -90,5 +90,5 @@ def test_user_service_health_security():
         )
 
         assert response_protected.status_code in [401, 403], (
-            f"User Service /users should be protected (401/403), but got {response_protected.status_code}"
+            f"User Service /api/v1/admin/users should be protected (401/403), but got {response_protected.status_code}"
         )
