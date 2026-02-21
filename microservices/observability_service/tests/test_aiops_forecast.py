@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
-from app.services.observability.aiops.logic import (
+from microservices.observability_service.logic import (
     build_confidence_interval,
     calculate_trend,
     predict_load,
 )
-from app.services.observability.aiops.models import MetricType, TelemetryData
-from app.services.observability.aiops.service import AIOpsService
+from microservices.observability_service.models import MetricType, TelemetryData
+from microservices.observability_service.service import AIOpsService
 
 
 def _add_history(service: AIOpsService, total_points: int) -> list[float]:
