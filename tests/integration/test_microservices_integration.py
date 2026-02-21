@@ -195,40 +195,58 @@ class TestUserServiceAPI:
         """يختبر إنشاء مستخدم."""
         async with _build_client(user_app) as client:
             response = await client.post(
-                "/users",
+                "/api/v1/auth/register",
                 json={
-                    "name": "أحمد محمد",
+                    "full_name": "أحمد محمد",
                     "email": "ahmed@example.com",
+                    "password": "StrongPassword123!",
                 },
                 headers=get_auth_headers(),
             )
             assert response.status_code == 200
             data = response.json()
-            assert "user_id" in data
-            assert data["name"] == "أحمد محمد"
-            assert data["email"] == "ahmed@example.com"
+            assert "user" in data
+            assert data["user"]["name"] == "أحمد محمد"
+            assert data["user"]["email"] == "ahmed@example.com"
 
     @pytest.mark.asyncio
-    async def test_list_users(self, user_app: FastAPI) -> None:
-        """يختبر عرض المستخدمين."""
+    async def test_login_and_me(self, user_app: FastAPI) -> None:
+        """يختبر تسجيل الدخول وعرض الملف الشخصي."""
         async with _build_client(user_app) as client:
             headers = get_auth_headers()
             # إنشاء مستخدم أولاً
             await client.post(
-                "/users",
+                "/api/v1/auth/register",
                 json={
-                    "name": "فاطمة علي",
+                    "full_name": "فاطمة علي",
                     "email": "fatima@example.com",
+                    "password": "StrongPassword123!",
                 },
                 headers=headers,
             )
 
-            # عرض المستخدمين
-            response = await client.get("/users", headers=headers)
+            # تسجيل الدخول
+            login_response = await client.post(
+                "/api/v1/auth/login",
+                json={
+                    "email": "fatima@example.com",
+                    "password": "StrongPassword123!",
+                },
+                headers=headers,
+            )
+            assert login_response.status_code == 200
+            token = login_response.json()["access_token"]
+
+            # عرض الملف الشخصي
+            # نحتاج لإضافة Bearer Token بالإضافة لـ Service Token (لأن الراوتر محمي بـ Service Token)
+            # لكن الراوتر get_me يحتاج user context من Bearer
+            auth_headers = headers.copy()
+            auth_headers["Authorization"] = f"Bearer {token}"
+
+            response = await client.get("/api/v1/auth/user/me", headers=auth_headers)
             assert response.status_code == 200
             data = response.json()
-            assert isinstance(data, list)
-            assert len(data) > 0
+            assert data["email"] == "fatima@example.com"
 
 
 class TestEventBusIntegration:
@@ -300,16 +318,17 @@ class TestEndToEndScenarios:
         # 1. إنشاء مستخدم
         async with _build_client(user_app) as client:
             user_response = await client.post(
-                "/users",
+                "/api/v1/auth/register",
                 json={
-                    "name": "محمد أحمد",
+                    "full_name": "محمد أحمد",
                     "email": "mohamed@example.com",
+                    "password": "StrongPassword123!",
                 },
                 headers=get_auth_headers(),
             )
             assert user_response.status_code == 200
             user_data = user_response.json()
-            user_id = user_data["user_id"]
+            user_id = user_data["user"]["id"]
 
         # 2. إنشاء خطة تعليمية
         async with _build_client(planning_app) as client:

@@ -205,7 +205,9 @@ def static_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
 
 
 @pytest.fixture(autouse=True)
-def db_lifecycle(event_loop: asyncio.AbstractEventLoop) -> None:
+def db_lifecycle(
+    event_loop: asyncio.AbstractEventLoop, request: pytest.FixtureRequest
+) -> None:
     """إدارة دورة حياة قاعدة البيانات (تنظيف + تهيئة) قبل كل اختبار."""
     if _should_skip_db_fixtures():
         yield
@@ -219,17 +221,43 @@ def db_lifecycle(event_loop: asyncio.AbstractEventLoop) -> None:
 
         from app.core.db_schema import validate_and_fix_schema
 
-        # Ensure models are loaded so metadata is complete
+        # Detect if we are running microservice tests
+        # This helps in loading the correct models for the context
+        is_microservice_test = "microservices" in str(request.path) or "microservices" in str(
+            request.node.fspath
+        )
 
-        # Conditionally import user/audit/chat to avoid conflict with microservices tests
-        # If "user" table (singular, microservice) exists, skip monolith "users" models
-        if "user" not in SQLModel.metadata.tables:
-            from app.core.domain import audit, chat, user  # noqa: F401
+        if is_microservice_test:
+            try:
+                # Import microservice models explicitly to ensure schema is correct
+                # This ensures that even if Monolith models aren't loaded, these are.
+                import microservices.user_service.models  # noqa: F401
+            except ImportError:
+                pass
+        else:
+            # Monolith models
+            # Conditionally import user/audit/chat to avoid conflict with microservices tests
+            if "users" not in SQLModel.metadata.tables:
+                from app.core.domain import audit, chat, user  # noqa: F401
 
-        # Conditionally import mission to avoid conflict with microservices tests
-        if "missions" not in SQLModel.metadata.tables and "users" in SQLModel.metadata.tables:
-            # Only import mission (monolith) if users table exists (monolith dependency)
-            from app.core.domain import mission  # noqa: F401
+            # Conditionally import mission to avoid conflict with microservices tests
+            if (
+                "missions" not in SQLModel.metadata.tables
+                and "users" in SQLModel.metadata.tables
+            ):
+                # Only import mission (monolith) if users table exists (monolith dependency)
+                from app.core.domain import mission  # noqa: F401
+
+        # Deduplicate indexes to handle potential accumulation from multiple test runs
+        # or conflicts between Monolith and Microservice models extending the same table
+        for table in SQLModel.metadata.tables.values():
+            unique_indexes = {}
+            # Ensure indexes is a set/list we can iterate safely
+            if hasattr(table, "indexes"):
+                for index in table.indexes:
+                    if index.name not in unique_indexes:
+                        unique_indexes[index.name] = index
+                table.indexes = set(unique_indexes.values())
 
         engine = _get_engine()
 
