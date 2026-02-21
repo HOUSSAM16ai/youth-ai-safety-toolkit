@@ -45,6 +45,9 @@ from microservices.orchestrator_service.src.services.overmind.utils.intent_detec
 from microservices.orchestrator_service.src.services.overmind.utils.regex_intent_detector import (
     RegexIntentDetector,
 )
+from microservices.orchestrator_service.src.services.overmind.utils.mission_complex import (
+    handle_mission_complex_stream,
+)
 from microservices.orchestrator_service.src.services.overmind.utils.tools import ToolRegistry
 
 logger = get_logger("orchestrator-agent")
@@ -137,9 +140,18 @@ class OrchestratorAgent:
         context = context or {}
 
         # 1. Intent Detection
-        if "intent" in context and isinstance(context["intent"], ChatIntent):
-            intent = context["intent"]
-        else:
+        intent = None
+        if "intent" in context:
+            val = context["intent"]
+            if isinstance(val, ChatIntent):
+                intent = val
+            elif isinstance(val, str):
+                try:
+                    intent = ChatIntent(val)
+                except ValueError:
+                    pass
+
+        if not intent:
             intent_result = await self.intent_detector.detect(normalized)
             intent = intent_result.intent
 
@@ -149,38 +161,58 @@ class OrchestratorAgent:
         # 3. Dispatch
         try:
             if intent in {ChatIntent.ADMIN_QUERY, ChatIntent.CODE_SEARCH, ChatIntent.PROJECT_INDEX}:
-                async for chunk in self.admin_agent.run(normalized, context):
+                async for chunk in self._as_json_event(self.admin_agent.run(normalized, context)):
+                    yield chunk
+
+            elif intent == ChatIntent.MISSION_COMPLEX:
+                # Ensure user_id is present for mission creation security
+                if "user_id" not in context:
+                     yield self._make_json_event("❌ خطأ أمني: معرف المستخدم مفقود.")
+                     return
+                user_id = int(context["user_id"])
+                async for chunk in handle_mission_complex_stream(normalized, context, user_id):
                     yield chunk
 
             elif intent in (ChatIntent.ANALYTICS_REPORT, ChatIntent.LEARNING_SUMMARY):
                 result = self.analytics_agent.process(context)
                 if hasattr(result, "__aiter__"):
-                    async for chunk in result:
+                    async for chunk in self._as_json_event(result):
                         yield chunk
                 else:
-                    yield str(result)
+                    yield self._make_json_event(str(result))
 
             elif intent == ChatIntent.CURRICULUM_PLAN:
                 self._enrich_curriculum_context(context, normalized)
                 context["user_message"] = normalized
                 result = self.curriculum_agent.process(context)
                 if hasattr(result, "__aiter__"):
-                    async for chunk in result:
+                    async for chunk in self._as_json_event(result):
                         yield chunk
                 else:
-                    yield str(result)
+                    yield self._make_json_event(str(result))
 
             elif intent == ChatIntent.CONTENT_RETRIEVAL:
-                async for chunk in self._handle_content_retrieval(normalized, context):
+                async for chunk in self._as_json_event(
+                    self._handle_content_retrieval(normalized, context)
+                ):
                     yield chunk
 
             else:
-                async for chunk in self._handle_chat_fallback(normalized, context):
+                async for chunk in self._as_json_event(
+                    self._handle_chat_fallback(normalized, context)
+                ):
                     yield chunk
 
         except Exception as e:
             logger.error(f"Orchestrator dispatch failed: {e}", exc_info=True)
-            yield "عذرًا، حدث خطأ غير متوقع أثناء معالجة طلبك."
+            yield self._make_json_event("عذرًا، حدث خطأ غير متوقع أثناء معالجة طلبك.")
+
+    def _make_json_event(self, text: str) -> str:
+        return json.dumps({"type": "assistant_delta", "payload": {"content": text}}) + "\n"
+
+    async def _as_json_event(self, generator: AsyncGenerator[str, None]) -> AsyncGenerator[str, None]:
+        async for chunk in generator:
+            yield self._make_json_event(chunk)
 
     async def _capture_memory_intent(self, question: str, intent: ChatIntent) -> None:
         if not self.memory_agent:

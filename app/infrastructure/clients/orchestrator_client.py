@@ -6,6 +6,7 @@ Decouples the Monolith from the Overmind Orchestration Logic.
 
 from __future__ import annotations
 
+import json
 import logging
 from collections.abc import AsyncGenerator
 from typing import Any, Final
@@ -126,9 +127,11 @@ class OrchestratorClient:
         conversation_id: int | None = None,
         history_messages: list[dict[str, str]] | None = None,
         context: dict[str, Any] | None = None,
-    ) -> AsyncGenerator[str, None]:
+    ) -> AsyncGenerator[dict | str, None]:
         """
         Chat with the Orchestrator Agent (Microservice).
+        Expects NDJSON stream from the service.
+        Yields either structured event dictionaries or fallback strings.
         """
         url = f"{self.base_url}/agent/chat"
         payload = {
@@ -143,11 +146,21 @@ class OrchestratorClient:
         try:
             async with client.stream("POST", url, json=payload) as response:
                 response.raise_for_status()
-                async for chunk in response.aiter_text():
-                    yield chunk
+                async for line in response.aiter_lines():
+                    if not line.strip():
+                        continue
+                    try:
+                        yield json.loads(line)
+                    except json.JSONDecodeError:
+                        logger.warning(f"Received non-JSON line from agent: {line[:50]}...")
+                        # Fallback for raw text if Microservice isn't fully migrated
+                        yield {"type": "assistant_delta", "payload": {"content": line}}
         except Exception as e:
             logger.error(f"Failed to chat with agent: {e}", exc_info=True)
-            yield f"Error connecting to agent: {e}"
+            yield {
+                "type": "assistant_error",
+                "payload": {"content": f"Error connecting to agent: {e}"},
+            }
 
 
 # Singleton

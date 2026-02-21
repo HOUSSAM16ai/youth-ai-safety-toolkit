@@ -69,6 +69,10 @@ class ChatOrchestrator:
         semantic_cache: SemanticCache | None = None,
     ) -> None:
         """يبني المنسق مع دعم حقن مكونات الكشف والمعالجة والذاكرة."""
+        logger.warning(
+            "DEPRECATION WARNING: ChatOrchestrator is deprecated. "
+            "Use orchestrator_service microservice instead."
+        )
         self._intent_detector = intent_detector or IntentDetector()
         self._handlers = registry or StrategyRegistry[ChatContext, AsyncGenerator[str, None]]()
         self._semantic_cache = semantic_cache or SemanticCache()
