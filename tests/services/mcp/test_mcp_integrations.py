@@ -11,13 +11,12 @@
 - حالة جميع التكاملات
 """
 
-import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 # Mock heavy dependencies at module level before imports
-sys.modules["dspy"] = MagicMock()
+# sys.modules["dspy"] = MagicMock()
 
 
 class TestMCPIntegrationsLangGraph:
@@ -138,6 +137,7 @@ class TestMCPIntegrationsDSPy:
         """حالة DSPy نشطة."""
         # DSPy is mocked at module level
         status = integrations.get_dspy_status()
+        # Since dspy is installed in the test environment, it should be active
         assert status["status"] == "active"
 
 
