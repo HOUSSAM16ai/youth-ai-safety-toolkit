@@ -56,10 +56,14 @@ def create_app(settings: UserServiceSettings | None = None) -> FastAPI:
     # For now, we assume verify_service_token checks that it comes from Gateway.
 
     # Auth Router (Login/Register - Public access via Gateway)
-    app.include_router(auth_router.router, prefix="/api/v1/auth", dependencies=[Depends(verify_service_token)])
+    app.include_router(
+        auth_router.router, prefix="/api/v1/auth", dependencies=[Depends(verify_service_token)]
+    )
 
     # UMS Router (Protected by User Auth)
-    app.include_router(ums_router.router, prefix="/api/v1", dependencies=[Depends(verify_service_token)])
+    app.include_router(
+        ums_router.router, prefix="/api/v1", dependencies=[Depends(verify_service_token)]
+    )
 
     return app
 

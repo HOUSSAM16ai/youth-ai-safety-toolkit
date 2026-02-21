@@ -104,9 +104,7 @@ class Role(SQLModel, table=True):
     users: list[User] = Relationship(
         back_populates="roles",
         link_model="UserRole",
-        sa_relationship=relationship(
-            "User", secondary="user_roles", back_populates="roles"
-        ),
+        sa_relationship=relationship("User", secondary="user_roles", back_populates="roles"),
     )
     permissions: list[Permission] = Relationship(
         back_populates="roles",
@@ -189,9 +187,7 @@ class RefreshToken(SQLModel, table=True):
         sa_column=Column(DateTime(timezone=True), server_default=func.now()),
     )
 
-    user: User = Relationship(
-        sa_relationship=relationship("User", back_populates="refresh_tokens")
-    )
+    user: User = Relationship(sa_relationship=relationship("User", back_populates="refresh_tokens"))
 
     def revoke(self, *, revoked_at: datetime | None = None, replaced_by: str | None = None) -> None:
         self.revoked_at = revoked_at or utc_now()
@@ -229,9 +225,7 @@ class PasswordResetToken(SQLModel, table=True):
     )
 
     user: User = Relationship(
-        sa_relationship=relationship(
-            "User", back_populates="password_reset_tokens"
-        )
+        sa_relationship=relationship("User", back_populates="password_reset_tokens")
     )
 
     def is_active(self, *, now: datetime | None = None) -> bool:

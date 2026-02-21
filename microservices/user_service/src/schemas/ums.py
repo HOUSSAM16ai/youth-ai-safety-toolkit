@@ -11,6 +11,7 @@ from microservices.user_service.src.core.common import CaseInsensitiveEnum
 
 class UserStatus(CaseInsensitiveEnum):
     """User Lifecycle Status."""
+
     ACTIVE = "active"
     SUSPENDED = "suspended"
     PENDING = "pending"

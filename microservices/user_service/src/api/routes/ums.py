@@ -113,7 +113,9 @@ async def reset_password(
 # --- Admin Routes ---
 
 
-@router.get("/admin/users", response_model=list[UserOut], dependencies=[Depends(require_role(ADMIN_ROLE))])
+@router.get(
+    "/admin/users", response_model=list[UserOut], dependencies=[Depends(require_role(ADMIN_ROLE))]
+)
 async def list_users_admin(
     service: AuthService = Depends(get_auth_service),
 ) -> list[UserOut]:
@@ -122,7 +124,6 @@ async def list_users_admin(
     # Accessing session directly for read logic is acceptable in CQRS-lite.
     from sqlalchemy import select
 
-
     result = await service.session.execute(select(User))
     users = result.scalars().all()
 
@@ -130,18 +131,22 @@ async def list_users_admin(
     output = []
     for u in users:
         roles = await service.rbac.user_roles(u.id)
-        output.append(UserOut(
-            id=u.id,
-            email=u.email,
-            full_name=u.full_name,
-            is_active=u.is_active,
-            status=u.status,
-            roles=roles
-        ))
+        output.append(
+            UserOut(
+                id=u.id,
+                email=u.email,
+                full_name=u.full_name,
+                is_active=u.is_active,
+                status=u.status,
+                roles=roles,
+            )
+        )
     return output
 
 
-@router.post("/admin/users", response_model=UserOut, dependencies=[Depends(require_role(ADMIN_ROLE))])
+@router.post(
+    "/admin/users", response_model=UserOut, dependencies=[Depends(require_role(ADMIN_ROLE))]
+)
 async def create_user_admin(
     payload: AdminCreateUserRequest,
     request: Request,
@@ -168,7 +173,11 @@ async def create_user_admin(
     )
 
 
-@router.patch("/admin/users/{user_id}/status", response_model=UserOut, dependencies=[Depends(require_role(ADMIN_ROLE))])
+@router.patch(
+    "/admin/users/{user_id}/status",
+    response_model=UserOut,
+    dependencies=[Depends(require_role(ADMIN_ROLE))],
+)
 async def update_user_status(
     user_id: int,
     payload: StatusUpdateRequest,
@@ -177,10 +186,11 @@ async def update_user_status(
     user = await service.session.get(User, user_id)
     if not user:
         from fastapi import HTTPException
+
         raise HTTPException(status_code=404, detail="User not found")
 
     user.status = payload.status
-    user.is_active = (payload.status == "active") # Simple logic
+    user.is_active = payload.status == "active"  # Simple logic
     await service.session.commit()
 
     roles = await service.rbac.user_roles(user.id)
@@ -194,7 +204,11 @@ async def update_user_status(
     )
 
 
-@router.post("/admin/users/{user_id}/roles", response_model=UserOut, dependencies=[Depends(require_role(ADMIN_ROLE))])
+@router.post(
+    "/admin/users/{user_id}/roles",
+    response_model=UserOut,
+    dependencies=[Depends(require_role(ADMIN_ROLE))],
+)
 async def assign_role(
     user_id: int,
     payload: RoleAssignmentRequest,
@@ -203,6 +217,7 @@ async def assign_role(
     user = await service.session.get(User, user_id)
     if not user:
         from fastapi import HTTPException
+
         raise HTTPException(status_code=404, detail="User not found")
 
     if payload.role_name == ADMIN_ROLE:
