@@ -19,7 +19,6 @@ from app.services.chat.graph.components.intent_detector import RegexIntentDetect
 from app.services.chat.graph.domain import WriterIntent
 from app.services.chat.intent_detector import ChatIntent, IntentDetector
 from app.services.chat.tools import ToolRegistry
-from app.services.overmind.agents.memory import MemoryAgent
 from app.services.overmind.domain.context import InMemoryCollaborationContext
 
 logger = logging.getLogger("orchestrator-agent")
@@ -82,7 +81,7 @@ class OrchestratorAgent:
         self.admin_agent = AdminAgent(tools, ai_client=ai_client)
         self.analytics_agent = AnalyticsAgent(tools, ai_client)
         self.curriculum_agent = CurriculumAgent(tools)
-        self.memory_agent = MemoryAgent()
+        self.memory_agent = None  # Legacy memory agent removed
         self.education_council = EducationCouncil(tools)
 
     @property
