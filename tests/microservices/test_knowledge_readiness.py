@@ -2,9 +2,6 @@ from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 
-from microservices.memory_agent.main import create_app
-from microservices.memory_agent.security import verify_service_token
-
 
 def mock_verify_token():
     return True
@@ -12,6 +9,10 @@ def mock_verify_token():
 
 @patch("microservices.memory_agent.main.init_db", new_callable=AsyncMock)
 def test_readiness_endpoint(mock_init_db):
+    # Move imports inside test function to avoid collection-time side effects
+    from microservices.memory_agent.main import create_app
+    from microservices.memory_agent.security import verify_service_token
+
     app = create_app()
     app.dependency_overrides[verify_service_token] = mock_verify_token
 
