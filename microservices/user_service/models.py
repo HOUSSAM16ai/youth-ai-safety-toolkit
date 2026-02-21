@@ -61,16 +61,26 @@ class User(SQLModel, table=True):
     roles: list[Role] = Relationship(
         back_populates="users",
         link_model="UserRole",
-        sa_relationship=relationship("Role", secondary="user_roles", back_populates="users"),
+        sa_relationship=relationship(
+            "microservices.user_service.models.Role",
+            secondary="user_roles",
+            back_populates="users",
+        ),
     )
     refresh_tokens: list[RefreshToken] = Relationship(
-        sa_relationship=relationship("RefreshToken", back_populates="user"),
+        sa_relationship=relationship(
+            "microservices.user_service.models.RefreshToken", back_populates="user"
+        ),
     )
     password_reset_tokens: list[PasswordResetToken] = Relationship(
-        sa_relationship=relationship("PasswordResetToken", back_populates="user"),
+        sa_relationship=relationship(
+            "microservices.user_service.models.PasswordResetToken", back_populates="user"
+        ),
     )
     audit_logs: list[AuditLog] = Relationship(
-        sa_relationship=relationship("AuditLog", back_populates="actor"),
+        sa_relationship=relationship(
+            "microservices.user_service.models.AuditLog", back_populates="actor"
+        ),
     )
 
     def set_password(self, password: str) -> None:
@@ -107,13 +117,19 @@ class Role(SQLModel, table=True):
     users: list[User] = Relationship(
         back_populates="roles",
         link_model="UserRole",
-        sa_relationship=relationship("User", secondary="user_roles", back_populates="roles"),
+        sa_relationship=relationship(
+            "microservices.user_service.models.User",
+            secondary="user_roles",
+            back_populates="roles",
+        ),
     )
     permissions: list[Permission] = Relationship(
         back_populates="roles",
         link_model="RolePermission",
         sa_relationship=relationship(
-            "Permission", secondary="role_permissions", back_populates="roles"
+            "microservices.user_service.models.Permission",
+            secondary="role_permissions",
+            back_populates="roles",
         ),
     )
 
@@ -138,7 +154,9 @@ class Permission(SQLModel, table=True):
         back_populates="permissions",
         link_model="RolePermission",
         sa_relationship=relationship(
-            "Role", secondary="role_permissions", back_populates="permissions"
+            "microservices.user_service.models.Role",
+            secondary="role_permissions",
+            back_populates="permissions",
         ),
     )
 
@@ -194,7 +212,11 @@ class RefreshToken(SQLModel, table=True):
         sa_column=Column(DateTime(timezone=True), server_default=func.now()),
     )
 
-    user: User = Relationship(sa_relationship=relationship("User", back_populates="refresh_tokens"))
+    user: User = Relationship(
+        sa_relationship=relationship(
+            "microservices.user_service.models.User", back_populates="refresh_tokens"
+        )
+    )
 
     def revoke(self, *, revoked_at: datetime | None = None, replaced_by: str | None = None) -> None:
         self.revoked_at = revoked_at or utc_now()
@@ -233,7 +255,9 @@ class PasswordResetToken(SQLModel, table=True):
     )
 
     user: User = Relationship(
-        sa_relationship=relationship("User", back_populates="password_reset_tokens")
+        sa_relationship=relationship(
+            "microservices.user_service.models.User", back_populates="password_reset_tokens"
+        )
     )
 
     def is_active(self, *, now: datetime | None = None) -> bool:
@@ -269,5 +293,7 @@ class AuditLog(SQLModel, table=True):
     )
 
     actor: User | None = Relationship(
-        sa_relationship=relationship("User", back_populates="audit_logs")
+        sa_relationship=relationship(
+            "microservices.user_service.models.User", back_populates="audit_logs"
+        )
     )
