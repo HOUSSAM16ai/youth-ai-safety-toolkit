@@ -14,7 +14,7 @@ async def test_get_aiops_metrics_transformation():
             "total_anomalies": 5.0,
             "successful_healings": 3,
             "active_forecasts": 2,
-            "capacity_plans": 1
+            "capacity_plans": 1,
         }
     }
     mock_response.raise_for_status = Mock()

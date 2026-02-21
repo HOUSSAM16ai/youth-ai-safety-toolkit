@@ -42,8 +42,8 @@ class ObservabilityServiceClient:
             "self_healing_events": int(metrics.get("successful_healings", 0)),
             "predictions": {
                 "active_forecasts": metrics.get("active_forecasts", 0),
-                "capacity_plans": metrics.get("capacity_plans", 0)
-            }
+                "capacity_plans": metrics.get("capacity_plans", 0),
+            },
         }
 
     async def get_service_health(self, service_name: str) -> dict:
