@@ -69,7 +69,9 @@ class User(SQLModel, table=True):
     roles: list[Role] = Relationship(
         back_populates="users",
         link_model="UserRole",  # type: ignore[arg-type]
-        sa_relationship=relationship("Role", secondary="user_roles", back_populates="users"),
+        sa_relationship=relationship(
+            "app.core.domain.user.Role", secondary="user_roles", back_populates="users"
+        ),
     )
     refresh_tokens: list[RefreshToken] = Relationship(
         sa_relationship=relationship("RefreshToken", back_populates="user"),
@@ -122,7 +124,9 @@ class Role(SQLModel, table=True):
         back_populates="roles",
         link_model="RolePermission",  # type: ignore[arg-type]
         sa_relationship=relationship(
-            "Permission", secondary="role_permissions", back_populates="roles"
+            "app.core.domain.user.Permission",
+            secondary="role_permissions",
+            back_populates="roles",
         ),
     )
 
@@ -146,7 +150,9 @@ class Permission(SQLModel, table=True):
         back_populates="permissions",
         link_model="RolePermission",  # type: ignore[arg-type]
         sa_relationship=relationship(
-            "Role", secondary="role_permissions", back_populates="permissions"
+            "app.core.domain.user.Role",
+            secondary="role_permissions",
+            back_populates="permissions",
         ),
     )
 
