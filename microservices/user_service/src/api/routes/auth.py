@@ -2,14 +2,17 @@
 Auth Routes for User Service.
 """
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from microservices.user_service.security import get_auth_service, get_current_user
+from microservices.user_service.settings import get_settings
 from microservices.user_service.src.schemas.auth import (
     AuthResponse,
     LoginRequest,
     RegisterRequest,
     RegisterResponse,
+    TokenGenerateResponse,
+    TokenRequest,
     TokenVerifyRequest,
     TokenVerifyResponse,
     UserResponse,
@@ -78,3 +81,19 @@ async def verify_token(
         return TokenVerifyResponse(status="success", data={"valid": True})
     except Exception as e:
         return TokenVerifyResponse(status="error", data={"valid": False, "error": str(e)})
+
+
+@router.post("/token/generate", response_model=TokenGenerateResponse)
+async def generate_token(payload: TokenRequest) -> TokenGenerateResponse:
+    settings = get_settings()
+    if settings.ENVIRONMENT in ("production", "staging"):
+        raise HTTPException(status_code=404, detail="Endpoint not available")
+
+    if not payload.user_id:
+        raise HTTPException(status_code=400, detail="user_id required")
+
+    return TokenGenerateResponse(
+        access_token="mock_token",
+        refresh_token="mock_refresh",
+        token_type="Bearer",
+    )

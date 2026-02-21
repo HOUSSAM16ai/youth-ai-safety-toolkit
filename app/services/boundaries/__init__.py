@@ -21,13 +21,11 @@ Standards Applied:
 """
 
 from app.services.boundaries.admin_chat_boundary_service import AdminChatBoundaryService
-from app.services.boundaries.auth_boundary_service import AuthBoundaryService
 from app.services.boundaries.customer_chat_boundary_service import CustomerChatBoundaryService
 from app.services.boundaries.observability_boundary_service import ObservabilityBoundaryService
 
 __all__ = [
     "AdminChatBoundaryService",
-    "AuthBoundaryService",
     "CustomerChatBoundaryService",
     "ObservabilityBoundaryService",
 ]

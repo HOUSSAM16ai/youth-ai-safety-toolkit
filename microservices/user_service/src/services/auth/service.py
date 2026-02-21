@@ -4,6 +4,7 @@ Auth Service Facade for User Service.
 
 from __future__ import annotations
 
+import asyncio
 from typing import TypedDict
 
 from fastapi import HTTPException, status
@@ -11,6 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from microservices.user_service.models import RefreshToken, User, UserStatus
+from microservices.user_service.src.core.chrono_shield import chrono_shield
 from microservices.user_service.src.core.security import pwd_context
 from microservices.user_service.src.services.audit import AuditService
 from microservices.user_service.src.services.auth.crypto import AuthCrypto
@@ -74,10 +76,29 @@ class AuthService:
     ) -> User:
         await self.rbac.ensure_seed()
         normalized_email = email.lower().strip()
+
+        # 0. Chrono-Kinetic Shield Check
+        await chrono_shield.check_allowance(ip or "unknown", normalized_email)
+
         result = await self.session.execute(select(User).where(User.email == normalized_email))
         user = result.scalar_one_or_none()
 
-        if not user or not user.password_hash or not user.check_password(password):
+        is_valid = False
+        if user and user.password_hash:
+            try:
+                loop = asyncio.get_running_loop()
+                is_valid = await loop.run_in_executor(None, user.check_password, password)
+            except Exception:
+                is_valid = False
+        else:
+            # Phantom Verification for Timing Protection
+            await chrono_shield.phantom_verify(password)
+            is_valid = False
+
+        if not is_valid:
+            # Record Failure in Shield
+            chrono_shield.record_failure(ip or "unknown", normalized_email)
+
             await self.audit.record(
                 actor_user_id=None,
                 action="AUTH_FAILED",
@@ -90,6 +111,9 @@ class AuthService:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
             )
+
+        # Reset Shield on Success
+        chrono_shield.reset_target(normalized_email)
 
         if not user.is_active or user.status in {UserStatus.SUSPENDED, UserStatus.DISABLED}:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account disabled")

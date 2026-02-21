@@ -5,7 +5,6 @@ from . import (
     customer_chat,
     data_mesh,
     observability,
-    security,
     ums,
 )
 
@@ -14,6 +13,5 @@ __all__ = [
     "customer_chat",
     "data_mesh",
     "observability",
-    "security",
     "ums",
 ]

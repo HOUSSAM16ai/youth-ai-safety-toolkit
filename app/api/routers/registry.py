@@ -9,7 +9,6 @@ from app.api.routers import (
     content,
     customer_chat,
     data_mesh,
-    security,
     system,
     ums,
 )
@@ -25,7 +24,6 @@ def base_router_registry() -> list[RouterSpec]:
         (system.root_router, ""),
         (system.router, ""),
         (admin.router, ""),
-        (security.router, "/api/security"),
         (data_mesh.router, "/api/v1/data-mesh"),
         (ums.router, "/api/v1"),
         (customer_chat.router, ""),
