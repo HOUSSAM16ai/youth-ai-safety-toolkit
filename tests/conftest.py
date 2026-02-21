@@ -205,9 +205,7 @@ def static_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
 
 
 @pytest.fixture(autouse=True)
-def db_lifecycle(
-    event_loop: asyncio.AbstractEventLoop, request: pytest.FixtureRequest
-) -> None:
+def db_lifecycle(event_loop: asyncio.AbstractEventLoop, request: pytest.FixtureRequest) -> None:
     """إدارة دورة حياة قاعدة البيانات (تنظيف + تهيئة) قبل كل اختبار."""
     if _should_skip_db_fixtures():
         yield
@@ -241,10 +239,7 @@ def db_lifecycle(
                 from app.core.domain import audit, chat, user  # noqa: F401
 
             # Conditionally import mission to avoid conflict with microservices tests
-            if (
-                "missions" not in SQLModel.metadata.tables
-                and "users" in SQLModel.metadata.tables
-            ):
+            if "missions" not in SQLModel.metadata.tables and "users" in SQLModel.metadata.tables:
                 # Only import mission (monolith) if users table exists (monolith dependency)
                 from app.core.domain import mission  # noqa: F401
 
