@@ -228,12 +228,12 @@ def db_lifecycle(
         )
 
         if is_microservice_test:
-            try:
+            from contextlib import suppress
+
+            with suppress(ImportError):
                 # Import microservice models explicitly to ensure schema is correct
                 # This ensures that even if Monolith models aren't loaded, these are.
                 import microservices.user_service.models  # noqa: F401
-            except ImportError:
-                pass
         else:
             # Monolith models
             # Conditionally import user/audit/chat to avoid conflict with microservices tests
