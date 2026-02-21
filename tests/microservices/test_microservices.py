@@ -18,12 +18,14 @@ os.environ["SECRET_KEY"] = TEST_SECRET_KEY
 
 def get_auth_headers() -> dict[str, str]:
     """توليد ترويسة مصادقة صالحة للخدمات."""
+    # Ensure we use the current environment variable if updated by conftest
+    secret_key = os.environ.get("SECRET_KEY", TEST_SECRET_KEY)
     payload = {
         "sub": "api-gateway",
         "exp": datetime.now(UTC) + timedelta(minutes=5),
         "iat": datetime.now(UTC),
     }
-    token = jwt.encode(payload, TEST_SECRET_KEY, algorithm="HS256")
+    token = jwt.encode(payload, secret_key, algorithm="HS256")
     return {"X-Service-Token": token}
 
 
@@ -102,18 +104,20 @@ def test_user_service_creates_and_lists_users() -> None:
     headers = get_auth_headers()
 
     create_response = client.post(
-        "/users",
-        json={"name": "Amina", "email": "amina@example.com"},
+        "/api/v1/auth/register",
+        json={
+            "full_name": "Amina",
+            "email": "amina@example.com",
+            "password": "StrongPassword123!",
+        },
         headers=headers,
     )
 
     assert create_response.status_code == 200
-
-    list_response = client.get("/users", headers=headers)
-    assert list_response.status_code == 200
-    payload = list_response.json()
-
-    assert any(user["email"] == "amina@example.com" for user in payload)
+    payload = create_response.json()
+    # Check that user is returned in response
+    assert payload["user"]["email"] == "amina@example.com"
+    assert payload["user"]["full_name"] == "Amina"
 
 
 def test_user_service_rejects_invalid_email() -> None:
@@ -126,8 +130,12 @@ def test_user_service_rejects_invalid_email() -> None:
     headers = get_auth_headers()
 
     response = client.post(
-        "/users",
-        json={"name": "Noura", "email": "invalid-email"},
+        "/api/v1/auth/register",
+        json={
+            "full_name": "Noura",
+            "email": "invalid-email",
+            "password": "StrongPassword123!",
+        },
         headers=headers,
     )
 

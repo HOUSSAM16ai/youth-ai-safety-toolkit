@@ -62,6 +62,16 @@ async def init_db() -> None:
 
     if settings.ENVIRONMENT not in ("development", "testing"):
         return
+
+    # Deduplicate indexes to handle potential accumulation from multiple test runs
+    for table in SQLModel.metadata.tables.values():
+        unique_indexes = {}
+        if hasattr(table, "indexes"):
+            for index in table.indexes:
+                if index.name not in unique_indexes:
+                    unique_indexes[index.name] = index
+            table.indexes = set(unique_indexes.values())
+
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
 

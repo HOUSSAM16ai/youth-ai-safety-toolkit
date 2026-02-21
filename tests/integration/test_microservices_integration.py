@@ -19,17 +19,17 @@ from httpx import ASGITransport, AsyncClient
 
 from app.core.event_bus_impl import Event, EventBus
 
-TEST_SECRET_KEY = os.environ.get("SECRET_KEY", "super_secret_key_change_in_production")
-
 
 def get_auth_headers() -> dict[str, str]:
     """توليد ترويسة مصادقة صالحة للخدمات."""
+    # Fetch SECRET_KEY dynamically to ensure it picks up the value set by conftest.py
+    secret_key = os.environ.get("SECRET_KEY", "super_secret_key_change_in_production")
     payload = {
         "sub": "api-gateway",
         "exp": datetime.now(UTC) + timedelta(minutes=5),
         "iat": datetime.now(UTC),
     }
-    token = jwt.encode(payload, TEST_SECRET_KEY, algorithm="HS256")
+    token = jwt.encode(payload, secret_key, algorithm="HS256")
     return {"X-Service-Token": token}
 
 

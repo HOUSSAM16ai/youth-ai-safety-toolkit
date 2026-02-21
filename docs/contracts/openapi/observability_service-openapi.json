@@ -2,19 +2,26 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Observability Service",
+    "description": "\u062e\u062f\u0645\u0629 \u0645\u0633\u062a\u0642\u0644\u0629 \u0644\u062a\u062d\u0644\u064a\u0644 \u0627\u0644\u0642\u064a\u0627\u0633\u0627\u062a",
     "version": "1.0.0"
   },
   "paths": {
     "/health": {
       "get": {
+        "tags": [
+          "System"
+        ],
         "summary": "Health Check",
+        "description": "\u064a\u0641\u062d\u0635 \u062c\u0627\u0647\u0632\u064a\u0629 \u062e\u062f\u0645\u0629 \u0627\u0644\u0645\u0631\u0627\u0642\u0628\u0629.",
         "operationId": "health_check_health_get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
               }
             }
           }
@@ -23,14 +30,20 @@
     },
     "/": {
       "get": {
+        "tags": [
+          "System"
+        ],
         "summary": "Root",
+        "description": "\u0631\u0633\u0627\u0644\u0629 \u0627\u0644\u062c\u0630\u0631 \u0644\u062e\u062f\u0645\u0629 \u0627\u0644\u0645\u0631\u0627\u0642\u0628\u0629.",
         "operationId": "root__get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/RootResponse"
+                }
               }
             }
           }
@@ -39,24 +52,48 @@
     },
     "/telemetry": {
       "post": {
-        "summary": "Collect Telemetry",
+        "tags": [
+          "Telemetry"
+        ],
+        "summary": "\u0627\u0633\u062a\u0642\u0628\u0627\u0644 \u0642\u064a\u0627\u0633 \u062c\u062f\u064a\u062f",
+        "description": "\u062a\u062c\u0645\u064a\u0639 \u0642\u064a\u0627\u0633\u0627\u062a \u0648\u0627\u0631\u062f\u0629 \u0645\u0646 \u0627\u0644\u062e\u062f\u0645\u0627\u062a \u0627\u0644\u0623\u062e\u0631\u0649.",
         "operationId": "collect_telemetry_telemetry_post",
+        "parameters": [
+          {
+            "name": "X-Service-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/TelemetryRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetryResponse"
+                }
               }
             }
           },
@@ -75,14 +112,48 @@
     },
     "/metrics": {
       "get": {
-        "summary": "Get Metrics",
+        "tags": [
+          "Telemetry"
+        ],
+        "summary": "\u0639\u0631\u0636 \u0645\u0624\u0634\u0631\u0627\u062a \u0627\u0644\u062e\u062f\u0645\u0629",
+        "description": "\u0625\u0631\u062c\u0627\u0639 \u0645\u0624\u0634\u0631\u0627\u062a \u0627\u0644\u0645\u0631\u0627\u0642\u0628\u0629 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a\u0629.",
         "operationId": "get_metrics_metrics_get",
+        "parameters": [
+          {
+            "name": "X-Service-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/MetricsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -91,7 +162,11 @@
     },
     "/health/{service_name}": {
       "get": {
-        "summary": "Get Service Health",
+        "tags": [
+          "Telemetry"
+        ],
+        "summary": "\u0641\u062d\u0635 \u0635\u062d\u0629 \u062e\u062f\u0645\u0629 \u0645\u062d\u062f\u062f\u0629",
+        "description": "\u0642\u064a\u0627\u0633 \u0635\u062d\u0629 \u062e\u062f\u0645\u0629 \u0645\u062d\u062f\u062f\u0629.",
         "operationId": "get_service_health_health__service_name__get",
         "parameters": [
           {
@@ -102,6 +177,22 @@
               "type": "string",
               "title": "Service Name"
             }
+          },
+          {
+            "name": "X-Service-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
           }
         ],
         "responses": {
@@ -109,7 +200,11 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Service Health Health  Service Name  Get"
+                }
               }
             }
           },
@@ -128,24 +223,48 @@
     },
     "/forecast": {
       "post": {
-        "summary": "Forecast Load",
+        "tags": [
+          "Forecast"
+        ],
+        "summary": "\u062a\u0648\u0644\u064a\u062f \u062a\u0648\u0642\u0639\u0627\u062a \u0627\u0644\u062d\u0645\u0644",
+        "description": "\u062a\u0648\u0644\u064a\u062f \u062a\u0648\u0642\u0639 \u0644\u0644\u062d\u0645\u0644 \u0627\u0644\u0645\u0633\u062a\u0642\u0628\u0644\u064a.",
         "operationId": "forecast_load_forecast_post",
+        "parameters": [
+          {
+            "name": "X-Service-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ForecastRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ForecastResponse"
+                }
               }
             }
           },
@@ -164,24 +283,48 @@
     },
     "/capacity": {
       "post": {
-        "summary": "Generate Capacity Plan",
+        "tags": [
+          "Forecast"
+        ],
+        "summary": "\u062a\u0648\u0644\u064a\u062f \u062e\u0637\u0629 \u0627\u0644\u0633\u0639\u0629",
+        "description": "\u0625\u0646\u0634\u0627\u0621 \u062e\u0637\u0629 \u0633\u0639\u0629 \u0628\u0646\u0627\u0621\u064b \u0639\u0644\u0649 \u0627\u0644\u062a\u0648\u0642\u0639\u0627\u062a.",
         "operationId": "generate_capacity_plan_capacity_post",
+        "parameters": [
+          {
+            "name": "X-Service-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/CapacityPlanRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/CapacityPlanResponse"
+                }
               }
             }
           },
@@ -200,7 +343,11 @@
     },
     "/anomalies/{anomaly_id}/root_cause": {
       "get": {
-        "summary": "Analyze Root Cause",
+        "tags": [
+          "Anomalies"
+        ],
+        "summary": "\u062a\u062d\u0644\u064a\u0644 \u0627\u0644\u0633\u0628\u0628 \u0627\u0644\u062c\u0630\u0631\u064a \u0644\u0644\u0634\u0630\u0648\u0630",
+        "description": "\u062a\u062d\u0644\u064a\u0644 \u0627\u0644\u0633\u0628\u0628 \u0627\u0644\u062c\u0630\u0631\u064a \u0644\u0634\u0630\u0648\u0630 \u0645\u062d\u062f\u062f.",
         "operationId": "analyze_root_cause_anomalies__anomaly_id__root_cause_get",
         "parameters": [
           {
@@ -211,6 +358,22 @@
               "type": "string",
               "title": "Anomaly Id"
             }
+          },
+          {
+            "name": "X-Service-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
           }
         ],
         "responses": {
@@ -218,7 +381,11 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Analyze Root Cause Anomalies  Anomaly Id  Root Cause Get"
+                }
               }
             }
           },
@@ -238,6 +405,55 @@
   },
   "components": {
     "schemas": {
+      "CapacityPlanPayload": {
+        "properties": {
+          "plan_id": {
+            "type": "string",
+            "title": "Plan Id"
+          },
+          "service_name": {
+            "type": "string",
+            "title": "Service Name"
+          },
+          "current_capacity": {
+            "type": "number",
+            "title": "Current Capacity"
+          },
+          "recommended_capacity": {
+            "type": "number",
+            "title": "Recommended Capacity"
+          },
+          "forecast_horizon_hours": {
+            "type": "integer",
+            "title": "Forecast Horizon Hours"
+          },
+          "expected_peak_load": {
+            "type": "number",
+            "title": "Expected Peak Load"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "plan_id",
+          "service_name",
+          "current_capacity",
+          "recommended_capacity",
+          "forecast_horizon_hours",
+          "expected_peak_load",
+          "confidence",
+          "created_at"
+        ],
+        "title": "CapacityPlanPayload",
+        "description": "\u062a\u0641\u0627\u0635\u064a\u0644 \u062e\u0637\u0629 \u0627\u0644\u0633\u0639\u0629 \u0627\u0644\u0646\u0627\u062a\u062c\u0629 \u0639\u0646 \u0627\u0644\u062a\u062d\u0644\u064a\u0644."
+      },
       "CapacityPlanRequest": {
         "properties": {
           "service_name": {
@@ -254,7 +470,21 @@
         "required": [
           "service_name"
         ],
-        "title": "CapacityPlanRequest"
+        "title": "CapacityPlanRequest",
+        "description": "\u0637\u0644\u0628 \u0625\u0646\u0634\u0627\u0621 \u062e\u0637\u0629 \u0633\u0639\u0629 \u0645\u0633\u062a\u0642\u0628\u0644\u064a\u0629."
+      },
+      "CapacityPlanResponse": {
+        "properties": {
+          "plan": {
+            "$ref": "#/components/schemas/CapacityPlanPayload"
+          }
+        },
+        "type": "object",
+        "required": [
+          "plan"
+        ],
+        "title": "CapacityPlanResponse",
+        "description": "\u0627\u0633\u062a\u062c\u0627\u0628\u0629 \u062e\u0637\u0629 \u0627\u0644\u0633\u0639\u0629 \u0628\u0639\u062f \u0627\u0644\u062a\u0648\u0644\u064a\u062f."
       },
       "ForecastRequest": {
         "properties": {
@@ -276,7 +506,42 @@
           "service_name",
           "metric_type"
         ],
-        "title": "ForecastRequest"
+        "title": "ForecastRequest",
+        "description": "\u0637\u0644\u0628 \u062a\u0648\u0642\u0639 \u0627\u0644\u062d\u0645\u0644 \u0627\u0644\u0645\u0633\u062a\u0642\u0628\u0644\u064a."
+      },
+      "ForecastResponse": {
+        "properties": {
+          "forecast_id": {
+            "type": "string",
+            "title": "Forecast Id"
+          },
+          "predicted_load": {
+            "type": "number",
+            "title": "Predicted Load"
+          },
+          "confidence_interval": {
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array",
+            "maxItems": 2,
+            "minItems": 2,
+            "title": "Confidence Interval"
+          }
+        },
+        "type": "object",
+        "required": [
+          "forecast_id",
+          "predicted_load",
+          "confidence_interval"
+        ],
+        "title": "ForecastResponse",
+        "description": "\u0627\u0633\u062a\u062c\u0627\u0628\u0629 \u062a\u0648\u0642\u0639 \u0627\u0644\u062d\u0645\u0644 \u0645\u0639 \u0641\u0627\u0635\u0644 \u0627\u0644\u062b\u0642\u0629."
       },
       "HTTPValidationError": {
         "properties": {
@@ -291,6 +556,36 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "HealthResponse": {
+        "properties": {
+          "service": {
+            "type": "string",
+            "title": "Service"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "database": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Database"
+          }
+        },
+        "type": "object",
+        "required": [
+          "service",
+          "status"
+        ],
+        "title": "HealthResponse",
+        "description": "\u0627\u0633\u062a\u062c\u0627\u0628\u0629 \u0635\u062d\u0629 \u0642\u064a\u0627\u0633\u064a\u0629 \u0644\u062e\u062f\u0645\u0629 \u0627\u0644\u0645\u0631\u0627\u0642\u0628\u0629."
+      },
       "MetricType": {
         "type": "string",
         "enum": [
@@ -304,6 +599,44 @@
         ],
         "title": "MetricType",
         "description": "\u0623\u0646\u0648\u0627\u0639 \u0627\u0644\u0645\u0642\u0627\u064a\u064a\u0633 \u0627\u0644\u0645\u0633\u062a\u062e\u062f\u0645\u0629 \u0641\u064a \u0646\u0642\u0627\u0637 \u0627\u0644\u0642\u064a\u0627\u0633 \u0627\u0644\u062a\u0634\u063a\u064a\u0644\u064a\u0629."
+      },
+      "MetricsResponse": {
+        "properties": {
+          "metrics": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Metrics"
+          }
+        },
+        "type": "object",
+        "required": [
+          "metrics"
+        ],
+        "title": "MetricsResponse",
+        "description": "\u0627\u0633\u062a\u062c\u0627\u0628\u0629 \u0627\u0644\u0645\u0642\u0627\u064a\u064a\u0633 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a\u0629."
+      },
+      "RootResponse": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "RootResponse",
+        "description": "\u0631\u0633\u0627\u0644\u0629 \u0627\u0644\u062c\u0630\u0631 \u0644\u062e\u062f\u0645\u0629 \u0627\u0644\u0645\u0631\u0627\u0642\u0628\u0629."
       },
       "TelemetryRequest": {
         "properties": {
@@ -332,8 +665,7 @@
               "type": "string"
             },
             "type": "object",
-            "title": "Labels",
-            "default": {}
+            "title": "Labels"
           },
           "unit": {
             "type": "string",
@@ -348,7 +680,27 @@
           "metric_type",
           "value"
         ],
-        "title": "TelemetryRequest"
+        "title": "TelemetryRequest",
+        "description": "\u062d\u0645\u0648\u0644\u0629 \u0642\u064a\u0627\u0633 \u0642\u0627\u062f\u0645\u0629 \u0645\u0646 \u062e\u062f\u0645\u0629 \u0645\u0631\u0627\u0642\u0628\u0629."
+      },
+      "TelemetryResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "metric_id": {
+            "type": "string",
+            "title": "Metric Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "metric_id"
+        ],
+        "title": "TelemetryResponse",
+        "description": "\u0627\u0633\u062a\u062c\u0627\u0628\u0629 \u0627\u0633\u062a\u0642\u0628\u0627\u0644 \u0627\u0644\u0642\u064a\u0627\u0633."
       },
       "ValidationError": {
         "properties": {
