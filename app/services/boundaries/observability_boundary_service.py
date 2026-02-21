@@ -54,9 +54,9 @@ class ObservabilityBoundaryService:
         except Exception:
             # Fallback or return empty if service is down, to avoid breaking the monolith UI
             return {
-                "error": "Observability Service Unavailable",
-                "total_anomalies": 0,
-                "active_healing_decisions": 0,
+                "anomaly_score": 0.0,
+                "self_healing_events": 0,
+                "predictions": None,
             }
 
     async def get_performance_snapshot(self) -> dict[str, object]:

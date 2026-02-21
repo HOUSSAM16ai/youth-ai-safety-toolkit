@@ -3,7 +3,7 @@ from __future__ import annotations
 import httpx
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from app.services.observability.aiops.models import (
+from app.services.boundaries.schemas import (
     TelemetryData,
 )
 
@@ -31,7 +31,20 @@ class ObservabilityServiceClient:
     async def get_aiops_metrics(self) -> dict:
         response = await self.client.get("/metrics")
         response.raise_for_status()
-        return response.json()
+        data = response.json()
+
+        # Microservice returns MetricsResponse(metrics={...})
+        metrics = data.get("metrics", {})
+
+        # Transform to match AIOpsMetricsResponse
+        return {
+            "anomaly_score": float(metrics.get("total_anomalies", 0.0)),
+            "self_healing_events": int(metrics.get("successful_healings", 0)),
+            "predictions": {
+                "active_forecasts": metrics.get("active_forecasts", 0),
+                "capacity_plans": metrics.get("capacity_plans", 0)
+            }
+        }
 
     async def get_service_health(self, service_name: str) -> dict:
         response = await self.client.get(f"/health/{service_name}")

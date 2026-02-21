@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from app.services.observability.aiops.logic import HealingPlan, determine_healing_plan
-from app.services.observability.aiops.models import (
+from microservices.observability_service.logic import HealingPlan, determine_healing_plan
+from microservices.observability_service.models import (
     AnomalyDetection,
     AnomalySeverity,
     AnomalyType,
     CapacityPlan,
     HealingAction,
 )
-from app.services.observability.aiops.service import AIOpsService
+from microservices.observability_service.service import AIOpsService
 
 
 def _build_anomaly(metric_value: float, expected_value: float = 0.1) -> AnomalyDetection:
