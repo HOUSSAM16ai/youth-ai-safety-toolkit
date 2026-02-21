@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import TypedDict
 
 from fastapi import HTTPException, status
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from microservices.user_service.models import RefreshToken, User, UserStatus

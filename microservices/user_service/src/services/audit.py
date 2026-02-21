@@ -5,11 +5,10 @@ Provides high-precision logging for sensitive operations.
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from collections.abc import Mapping
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from microservices.user_service.models import AuditLog

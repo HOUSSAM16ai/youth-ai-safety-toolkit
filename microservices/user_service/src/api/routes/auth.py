@@ -10,8 +10,6 @@ from microservices.user_service.src.schemas.auth import (
     LoginRequest,
     RegisterRequest,
     RegisterResponse,
-    TokenGenerateResponse,
-    TokenRequest,
     TokenVerifyRequest,
     TokenVerifyResponse,
     UserResponse,

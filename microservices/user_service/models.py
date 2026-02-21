@@ -7,13 +7,17 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
 
 from sqlalchemy import Column, DateTime, String, func
 from sqlalchemy.orm import relationship
 from sqlmodel import Field, Relationship, SQLModel
 
-from microservices.user_service.src.core.common import CaseInsensitiveEnum, FlexibleEnum, JSONText, utc_now
+from microservices.user_service.src.core.common import (
+    CaseInsensitiveEnum,
+    FlexibleEnum,
+    JSONText,
+    utc_now,
+)
 from microservices.user_service.src.core.security import pwd_context
 
 

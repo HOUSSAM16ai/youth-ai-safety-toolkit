@@ -50,12 +50,12 @@ async def get_current_user(
     try:
         payload = service.verify_access_token(token)
         user_id = int(payload["sub"])
-    except (KeyError, ValueError):
+    except (KeyError, ValueError) as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token payload",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from e
     except HTTPException as e:
         raise e
 

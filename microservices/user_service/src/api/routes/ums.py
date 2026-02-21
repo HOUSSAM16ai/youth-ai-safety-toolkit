@@ -121,7 +121,7 @@ async def list_users_admin(
     # For cleanliness, let's query DB using session, but ideally AuthService should expose this.
     # Accessing session directly for read logic is acceptable in CQRS-lite.
     from sqlalchemy import select
-    from microservices.user_service.models import Role, UserRole
+
 
     result = await service.session.execute(select(User))
     users = result.scalars().all()

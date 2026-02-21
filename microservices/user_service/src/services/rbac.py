@@ -4,7 +4,6 @@ RBAC Service for User Service.
 
 from __future__ import annotations
 
-from collections.abc import Iterable
 from typing import Final
 
 from sqlalchemy import delete, select
