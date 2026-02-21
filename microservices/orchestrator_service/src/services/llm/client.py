@@ -51,12 +51,11 @@ class AIClient:
             messages = [{"role": "user", "content": kwargs.get("prompt", "")}]
 
         try:
-            response = await self.client.chat.completions.create(
+            return await self.client.chat.completions.create(
                 model=target_model,
                 messages=messages,
                 **kwargs,
             )
-            return response
         except Exception as e:
             logger.error(f"AI Generation failed: {e}")
             raise

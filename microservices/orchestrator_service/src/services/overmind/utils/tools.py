@@ -3,7 +3,8 @@ Tool Registry Adapter.
 Wraps the microservice's tool registry to provide the interface expected by Monolith agents.
 """
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from microservices.orchestrator_service.src.core.logging import get_logger
 from microservices.orchestrator_service.src.services.tools.registry import get_registry
@@ -31,8 +32,7 @@ class ToolRegistry:
             # Ensure params are passed correctly (kwargs unpacking)
             if params:
                 return await func(**params)
-            else:
-                return await func()
+            return await func()
         except Exception as e:
             logger.error(f"Tool execution failed: {tool_name}: {e}", exc_info=True)
             return None
