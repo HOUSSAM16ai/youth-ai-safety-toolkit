@@ -208,7 +208,16 @@ async def missions_path_proxy(path: str, request: Request) -> StreamingResponse:
     include_in_schema=False,
 )
 async def admin_proxy(path: str, request: Request) -> StreamingResponse:
-    return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"admin/{path}")
+    """
+    Proxy Admin routes to User Service (UMS).
+    Rewrite: /admin/{path} -> /api/v1/admin/{path}
+    """
+    return await proxy_handler.forward(
+        request,
+        settings.USER_SERVICE_URL,
+        f"api/v1/admin/{path}",
+        service_token=create_service_token(),
+    )
 
 
 @app.api_route(
@@ -217,7 +226,16 @@ async def admin_proxy(path: str, request: Request) -> StreamingResponse:
     include_in_schema=False,
 )
 async def security_proxy(path: str, request: Request) -> StreamingResponse:
-    return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"api/security/{path}")
+    """
+    Proxy Security routes to User Service (Auth).
+    Rewrite: /api/security/{path} -> /api/v1/auth/{path}
+    """
+    return await proxy_handler.forward(
+        request,
+        settings.USER_SERVICE_URL,
+        f"api/v1/auth/{path}",
+        service_token=create_service_token(),
+    )
 
 
 @app.api_route(
