@@ -99,9 +99,7 @@ class KnowledgeService:
         is_ready = len(missing) == 0 and readiness_score >= self.MINIMUM_MASTERY
 
         # بناء التوصية
-        recommendation = self._build_recommendation(
-            concept.name_ar, missing, weak, readiness_score
-        )
+        recommendation = self._build_recommendation(concept.name_ar, missing, weak, readiness_score)
 
         return ReadinessResponse(
             concept_id=concept_id,

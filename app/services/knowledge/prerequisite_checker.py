@@ -45,8 +45,7 @@ class PrerequisiteChecker:
         """
         # بناء خريطة الإتقان
         mastery_levels = {
-            topic_id: entry.mastery_score
-            for topic_id, entry in profile.topic_mastery.items()
+            topic_id: entry.mastery_score for topic_id, entry in profile.topic_mastery.items()
         }
 
         # استدعاء الخدمة المصغرة
