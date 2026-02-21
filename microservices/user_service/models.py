@@ -32,6 +32,8 @@ class UserStatus(CaseInsensitiveEnum):
 
 class User(SQLModel, table=True):
     __tablename__ = "users"
+    __table_args__ = {"extend_existing": True}
+
     id: int | None = Field(default=None, primary_key=True)
     external_id: str = Field(
         default_factory=lambda: str(uuid.uuid4()),
@@ -88,6 +90,7 @@ class User(SQLModel, table=True):
 
 class Role(SQLModel, table=True):
     __tablename__ = "roles"
+    __table_args__ = {"extend_existing": True}
 
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(max_length=100, sa_column=Column(String(100), unique=True))
@@ -117,6 +120,7 @@ class Role(SQLModel, table=True):
 
 class Permission(SQLModel, table=True):
     __tablename__ = "permissions"
+    __table_args__ = {"extend_existing": True}
 
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(max_length=100, sa_column=Column(String(100), unique=True))
@@ -141,6 +145,7 @@ class Permission(SQLModel, table=True):
 
 class UserRole(SQLModel, table=True):
     __tablename__ = "user_roles"
+    __table_args__ = {"extend_existing": True}
 
     user_id: int = Field(foreign_key="users.id", primary_key=True, index=True)
     role_id: int = Field(foreign_key="roles.id", primary_key=True, index=True)
@@ -152,6 +157,7 @@ class UserRole(SQLModel, table=True):
 
 class RolePermission(SQLModel, table=True):
     __tablename__ = "role_permissions"
+    __table_args__ = {"extend_existing": True}
 
     role_id: int = Field(foreign_key="roles.id", primary_key=True, index=True)
     permission_id: int = Field(foreign_key="permissions.id", primary_key=True, index=True)
@@ -163,6 +169,7 @@ class RolePermission(SQLModel, table=True):
 
 class RefreshToken(SQLModel, table=True):
     __tablename__ = "refresh_tokens"
+    __table_args__ = {"extend_existing": True}
 
     id: int | None = Field(default=None, primary_key=True)
     token_id: str = Field(
@@ -207,6 +214,7 @@ class RefreshToken(SQLModel, table=True):
 
 class PasswordResetToken(SQLModel, table=True):
     __tablename__ = "password_resets"
+    __table_args__ = {"extend_existing": True}
 
     id: int | None = Field(default=None, primary_key=True)
     token_id: str = Field(
@@ -245,6 +253,7 @@ class PasswordResetToken(SQLModel, table=True):
 
 class AuditLog(SQLModel, table=True):
     __tablename__ = "audit_logs"
+    __table_args__ = {"extend_existing": True}
 
     id: int | None = Field(default=None, primary_key=True)
     actor_user_id: int | None = Field(default=None, foreign_key="users.id", index=True)
