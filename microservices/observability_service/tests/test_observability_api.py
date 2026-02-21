@@ -18,12 +18,14 @@ from microservices.observability_service.settings import get_settings
 
 def get_auth_headers() -> dict[str, str]:
     """توليد ترويسة مصادقة صالحة للخدمات."""
+    # Ensure we use the current environment variable if updated by conftest
+    secret_key = os.environ.get("SECRET_KEY", TEST_SECRET_KEY)
     payload = {
         "sub": "api-gateway",
         "exp": datetime.now(UTC) + timedelta(minutes=5),
         "iat": datetime.now(UTC),
     }
-    token = jwt.encode(payload, TEST_SECRET_KEY, algorithm="HS256")
+    token = jwt.encode(payload, secret_key, algorithm="HS256")
     return {"X-Service-Token": token}
 
 
