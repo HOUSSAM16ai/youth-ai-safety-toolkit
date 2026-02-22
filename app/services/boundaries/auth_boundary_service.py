@@ -8,6 +8,7 @@
 - CS50 2025: توثيق عربي احترافي، صرامة في الأنواع.
 - SOLID: فصل المسؤوليات (Separation of Concerns).
 - Security First: تكامل مع درع الدفاع الزمني (Chrono-Kinetic Defense Shield).
+- Microservices First: استخدام خدمة المستخدمين (User Service) مع خطة طوارئ (Fallback).
 """
 
 from __future__ import annotations
@@ -15,11 +16,13 @@ from __future__ import annotations
 import datetime
 import logging
 
+import httpx
 import jwt
 from fastapi import HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
+from app.infrastructure.clients.user_client import user_service_client
 from app.security.chrono_shield import chrono_shield
 from app.services.rbac import STANDARD_ROLE, RBACService
 from app.services.security.auth_persistence import AuthPersistence
@@ -37,6 +40,7 @@ class AuthBoundaryService:
     - تنسيق عمليات تسجيل الدخول والتسجيل.
     - إدارة الرموز المميزة (JWT Management).
     - حماية النظام باستخدام درع كرونو (Chrono Shield Integration).
+    - الوكيل (Proxy) لخدمة المستخدمين المصغرة (User Service).
     """
 
     def __init__(self, db: AsyncSession) -> None:
@@ -54,15 +58,13 @@ class AuthBoundaryService:
         """
         تسجيل مستخدم جديد في النظام.
 
-        الخطوات:
-        1. التحقق من عدم وجود البريد الإلكتروني مسبقاً.
-        2. إنشاء المستخدم عبر طبقة البيانات.
-        3. إرجاع استجابة نجاح مهيئة.
+        يحاول استخدام خدمة المستخدمين (User Service) أولاً.
+        في حال فشل الاتصال، يعود لاستخدام النظام المحلي (Monolith).
 
         Args:
             full_name (str): الاسم الكامل.
             email (str): البريد الإلكتروني.
-            password (str): كلمة المرور (سيتم تجزئتها).
+            password (str): كلمة المرور.
 
         Returns:
             dict[str, object]: تفاصيل العملية والمستخدم المسجل.
@@ -70,11 +72,38 @@ class AuthBoundaryService:
         Raises:
             HTTPException: في حال وجود البريد الإلكتروني مسبقاً (400).
         """
-        # التحقق من وجود المستخدم
+        # محاولة التسجيل عبر الخدمة المصغرة (Microservice)
+        try:
+            response = await user_service_client.register_user(full_name, email, password)
+            # تحويل استجابة الخدمة إلى التنسيق المتوقع محلياً
+            # response format: {"user": {...}, "message": "..."}
+            user_data = response.get("user", {})
+            return {
+                "status": "success",
+                "message": response.get("message", "User registered successfully"),
+                "user": {
+                    "id": user_data.get("id"),
+                    "full_name": user_data.get("full_name"),
+                    "email": user_data.get("email"),
+                    "is_admin": user_data.get("is_admin", False),
+                },
+            }
+        except httpx.HTTPStatusError as e:
+            # إذا رفضت الخدمة الطلب (مثلاً البريد موجود)، نرفع الخطأ كما هو
+            logger.warning(f"User Service rejected registration: {e}")
+            if e.response.status_code == 400:
+                raise HTTPException(status_code=400, detail="Email already registered")
+            raise HTTPException(status_code=e.response.status_code, detail=str(e))
+        except (httpx.RequestError, httpx.TimeoutException, Exception) as e:
+            # في حال فشل الاتصال، نستخدم الخطة البديلة (Local Fallback)
+            logger.error(f"User Service unreachable for registration ({e}), using local fallback.")
+
+        # ==============================================================================
+        # Local Fallback (Monolith Logic)
+        # ==============================================================================
         if await self.persistence.user_exists(email):
             raise HTTPException(status_code=400, detail="Email already registered")
 
-        # إنشاء مستخدم جديد (الافتراضي: ليس مسؤولاً)
         new_user = await self.persistence.create_user(
             full_name=full_name,
             email=email,
@@ -102,26 +131,61 @@ class AuthBoundaryService:
         """
         المصادقة على المستخدم وإصدار رمز الدخول (JWT).
 
-        هذه العملية محمية بواسطة درع الدفاع الزمني (Chrono-Kinetic Shield) لمنع هجمات التخمين.
+        محاولة المصادقة عبر User Service أولاً، ثم العودة للنظام المحلي.
 
         Args:
             email (str): البريد الإلكتروني.
             password (str): كلمة المرور.
-            request (Request): كائن الطلب الحالي (لأغراض التتبع الأمني).
+            request (Request): كائن الطلب الحالي.
 
         Returns:
             dict[str, object]: رمز الدخول (Access Token) وتفاصيل المستخدم.
-
-        Raises:
-            HTTPException: عند فشل المصادقة (401).
         """
-        # 0. تفعيل درع الدفاع الزمني (فحص السماحية)
+        ip = request.client.host if request.client else None
+        user_agent = request.headers.get("User-Agent")
+
+        # محاولة المصادقة عبر الخدمة المصغرة
+        try:
+            response = await user_service_client.login_user(
+                email=email, password=password, ip=ip, user_agent=user_agent
+            )
+            # response format: {"access_token": "...", "user": {...}, "status": "..."}
+            user_data = response.get("user", {})
+            is_admin = user_data.get("is_admin", False)
+            landing_path = "/admin" if is_admin else "/app/chat"
+
+            return {
+                "access_token": response.get("access_token"),
+                "token_type": "Bearer",
+                "user": {
+                    "id": user_data.get("id"),
+                    "name": user_data.get("full_name"),
+                    "email": user_data.get("email"),
+                    "is_admin": is_admin,
+                },
+                "status": "success",
+                "landing_path": landing_path,
+            }
+        except httpx.HTTPStatusError as e:
+            # إذا رفضت الخدمة (كلمة مرور خطأ)، نرفع الخطأ
+            # لكن مهلاً! ماذا لو كان المستخدم موجوداً محلياً فقط (لم يتم ترحيله)؟
+            # إذا قالت الخدمة 401، قد يكون المستخدم غير موجود هناك أصلاً.
+            # لذا يجب أن نتحقق محلياً أيضاً إذا قالت الخدمة "Invalid credentials" أو "User not found".
+            logger.warning(f"User Service rejected login: {e}")
+            pass  # ننتقل للخطة البديلة للتأكد
+        except (httpx.RequestError, httpx.TimeoutException, Exception) as e:
+            logger.error(f"User Service unreachable for login ({e}), using local fallback.")
+
+        # ==============================================================================
+        # Local Fallback (Monolith Logic with ChronoShield)
+        # ==============================================================================
+        # 0. تفعيل درع الدفاع الزمني
         await chrono_shield.check_allowance(request, email)
 
         # 1. جلب بيانات المستخدم
         user = await self.persistence.get_user_by_email(email)
 
-        # 2. التحقق من كلمة المرور (مع الحماية من هجمات التوقيت)
+        # 2. التحقق من كلمة المرور
         is_valid = False
         if user:
             try:
@@ -130,17 +194,14 @@ class AuthBoundaryService:
                 logger.error(f"Password verification error for user {user.id}: {e}")
                 is_valid = False
         else:
-            # التحقق الشبحي: استهلاك موارد المعالج لإخفاء حقيقة عدم وجود المستخدم
             chrono_shield.phantom_verify(password)
             is_valid = False
 
         if not is_valid:
-            # تسجيل الأثر الحركي للفشل (Kinetic Impact)
             chrono_shield.record_failure(request, email)
             logger.warning(f"Failed login attempt for {email}")
             raise HTTPException(status_code=401, detail="Invalid email or password")
 
-        # نجاح: إعادة تعيين مستوى التهديد لهذا الهدف
         chrono_shield.reset_target(email)
 
         # 3. توليد رمز JWT
@@ -173,15 +234,32 @@ class AuthBoundaryService:
         """
         جلب بيانات المستخدم الحالي من رمز JWT.
 
+        يحاول التحقق عبر User Service أولاً.
+
         Args:
             token (str): رمز JWT الخام.
 
         Returns:
             dict[str, object]: تفاصيل المستخدم.
-
-        Raises:
-            HTTPException: إذا كان الرمز غير صالح أو المستخدم غير موجود.
         """
+        # محاولة التحقق عبر الخدمة المصغرة
+        try:
+            user_data = await user_service_client.get_me(token)
+            return {
+                "id": user_data.get("id"),
+                "name": user_data.get("full_name"),
+                "email": user_data.get("email"),
+                "is_admin": user_data.get("is_admin", False),
+            }
+        except httpx.HTTPStatusError:
+            # الرمز غير صالح بالنسبة للخدمة، أو المستخدم غير موجود هناك
+            pass
+        except (httpx.RequestError, httpx.TimeoutException, Exception) as e:
+            logger.error(f"User Service unreachable for get_me ({e}), using local fallback.")
+
+        # ==============================================================================
+        # Local Fallback
+        # ==============================================================================
         try:
             payload = jwt.decode(token, self.settings.SECRET_KEY, algorithms=["HS256"])
             user_id = payload.get("sub")
@@ -206,16 +284,7 @@ class AuthBoundaryService:
     @staticmethod
     def extract_token_from_request(request: Request) -> str:
         """
-        استخراج رمز JWT من ترويسة التفويض (Authorization Header).
-
-        Args:
-            request (Request): طلب HTTP الوارد.
-
-        Returns:
-            str: الرمز المستخرج.
-
-        Raises:
-            HTTPException: إذا كانت الترويسة مفقودة أو التنسيق غير صحيح.
+        استخراج رمز JWT من ترويسة التفويض.
         """
         auth_header = request.headers.get("Authorization")
         if not auth_header:
