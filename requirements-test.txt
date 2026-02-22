@@ -33,4 +33,4 @@ pyee==13.0.0
 attrs==25.4.0
 
 # LlamaIndex (Required for tests using namespace packages)
-llama-index
+# llama-index
