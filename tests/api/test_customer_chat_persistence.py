@@ -6,10 +6,10 @@ from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
 
-from app.core.domain.chat import CustomerConversation
-from app.core.domain.user import User
-from app.core.domain.models import CustomerMessage, MessageRole
 from app.core.database import get_db
+from app.core.domain.chat import CustomerConversation
+from app.core.domain.models import CustomerMessage, MessageRole
+from app.core.domain.user import User
 from app.infrastructure.clients.orchestrator_client import orchestrator_client
 
 
