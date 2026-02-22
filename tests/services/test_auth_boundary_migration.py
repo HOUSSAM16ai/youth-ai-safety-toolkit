@@ -30,15 +30,17 @@ async def test_register_user_success_remote(service):
     """
     # Mock User Service Client
     with patch("app.services.boundaries.auth_boundary_service.user_service_client") as mock_client:
-        mock_client.register_user = AsyncMock(return_value={
-            "user": {
-                "id": 100,
-                "full_name": "Remote User",
-                "email": "remote@test.com",
-                "is_admin": False
-            },
-            "message": "Remote success"
-        })
+        mock_client.register_user = AsyncMock(
+            return_value={
+                "user": {
+                    "id": 100,
+                    "full_name": "Remote User",
+                    "email": "remote@test.com",
+                    "is_admin": False,
+                },
+                "message": "Remote success",
+            }
+        )
 
         # Mock Local Persistence (should NOT be called)
         service.persistence.user_exists = AsyncMock()
@@ -51,7 +53,9 @@ async def test_register_user_success_remote(service):
         assert result["user"]["id"] == 100
 
         # Verify calls
-        mock_client.register_user.assert_called_once_with("Remote User", "remote@test.com", "password")
+        mock_client.register_user.assert_called_once_with(
+            "Remote User", "remote@test.com", "password"
+        )
         service.persistence.user_exists.assert_not_called()
         service.persistence.create_user.assert_not_called()
 
@@ -102,7 +106,9 @@ async def test_register_user_failure_logical_400(service):
     with patch("app.services.boundaries.auth_boundary_service.user_service_client") as mock_client:
         # Simulate 400 Error (e.g. Email exists remote)
         response = httpx.Response(400, json={"detail": "Email already registered"})
-        mock_client.register_user.side_effect = httpx.HTTPStatusError("400 Bad Request", request=None, response=response)
+        mock_client.register_user.side_effect = httpx.HTTPStatusError(
+            "400 Bad Request", request=None, response=response
+        )
 
         # Mock Local Persistence (should NOT be called)
         service.persistence.user_exists = AsyncMock()
@@ -120,17 +126,19 @@ async def test_authenticate_user_success_remote(service):
     Test successful login via User Service.
     """
     with patch("app.services.boundaries.auth_boundary_service.user_service_client") as mock_client:
-        mock_client.login_user = AsyncMock(return_value={
-            "access_token": "remote_token",
-            "token_type": "Bearer",
-            "user": {
-                "id": 200,
-                "full_name": "Remote Login",
-                "email": "login@test.com",
-                "is_admin": False
-            },
-            "status": "success"
-        })
+        mock_client.login_user = AsyncMock(
+            return_value={
+                "access_token": "remote_token",
+                "token_type": "Bearer",
+                "user": {
+                    "id": 200,
+                    "full_name": "Remote Login",
+                    "email": "login@test.com",
+                    "is_admin": False,
+                },
+                "status": "success",
+            }
+        )
 
         mock_request = MagicMock()
         mock_request.client.host = "127.0.0.1"
@@ -156,7 +164,9 @@ async def test_authenticate_user_fallback_on_401(service):
     with patch("app.services.boundaries.auth_boundary_service.user_service_client") as mock_client:
         # Simulate 401 from Remote (e.g. User not found remote)
         response = httpx.Response(401, json={"detail": "Invalid credentials"})
-        mock_client.login_user.side_effect = httpx.HTTPStatusError("401 Unauthorized", request=None, response=response)
+        mock_client.login_user.side_effect = httpx.HTTPStatusError(
+            "401 Unauthorized", request=None, response=response
+        )
 
         # Mock Local Persistence (SHOULD be called for fallback)
         mock_user = MagicMock()
@@ -182,7 +192,9 @@ async def test_authenticate_user_fallback_on_401(service):
 
                 mock_request = MagicMock()
 
-                result = await service.authenticate_user("local_only@test.com", "password", mock_request)
+                result = await service.authenticate_user(
+                    "local_only@test.com", "password", mock_request
+                )
 
                 assert result["access_token"] == "local_token"
                 assert result["user"]["id"] == 2
@@ -197,12 +209,14 @@ async def test_get_current_user_success_remote(service):
     Test successful get_current_user via User Service.
     """
     with patch("app.services.boundaries.auth_boundary_service.user_service_client") as mock_client:
-        mock_client.get_me = AsyncMock(return_value={
-            "id": 300,
-            "full_name": "Remote Me",
-            "email": "me@test.com",
-            "is_admin": True
-        })
+        mock_client.get_me = AsyncMock(
+            return_value={
+                "id": 300,
+                "full_name": "Remote Me",
+                "email": "me@test.com",
+                "is_admin": True,
+            }
+        )
 
         service.persistence.get_user_by_id = AsyncMock()
 

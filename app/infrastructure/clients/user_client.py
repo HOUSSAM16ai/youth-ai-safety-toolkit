@@ -52,9 +52,7 @@ class UserServiceClient:
         }
         return jwt.encode(payload, self.secret_key, algorithm="HS256")
 
-    async def register_user(
-        self, full_name: str, email: str, password: str
-    ) -> dict[str, Any]:
+    async def register_user(self, full_name: str, email: str, password: str) -> dict[str, Any]:
         """
         Register a new user via the User Service.
         """
@@ -169,6 +167,7 @@ class UserServiceClient:
         except Exception as e:
             logger.error(f"Failed to get user count: {e}")
             raise
+
 
 # Singleton
 user_service_client = UserServiceClient()
