@@ -48,7 +48,9 @@ async def test_tool_access_block_returns_fallback_event(test_app, db_session) ->
 
     transport = ASGITransport(app=test_app)
     try:
-        with patch.object(orchestrator_client, "chat_with_agent", side_effect=mock_chat_with_agent) as mocked_chat:
+        with patch.object(
+            orchestrator_client, "chat_with_agent", side_effect=mock_chat_with_agent
+        ) as mocked_chat:
             async with AsyncClient(transport=transport, base_url="http://test") as ac:
                 token = await _register_and_login(ac, "tool-block@example.com")
 

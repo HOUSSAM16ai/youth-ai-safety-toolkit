@@ -282,7 +282,9 @@ class StructuralCodeIntelligence:
 
         allowed_suffixes = {".py", ".js", ".jsx", ".ts", ".tsx"}
         excluded_directories = {
-            pattern for pattern in self.exclude_patterns if "." not in pattern and "_" not in pattern
+            pattern
+            for pattern in self.exclude_patterns
+            if "." not in pattern and "_" not in pattern
         }
 
         source_files: list[Path] = []
