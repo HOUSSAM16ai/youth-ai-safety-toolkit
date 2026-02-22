@@ -19,7 +19,6 @@ from httpx import ASGITransport, AsyncClient
 
 from app.core.event_bus_impl import Event, EventBus
 
-
 SERVICE_TEST_SECRET_KEY = "test-secret-key-for-ci-pipeline"
 
 
