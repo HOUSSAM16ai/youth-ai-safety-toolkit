@@ -174,16 +174,12 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     }
 
     violations = [
-        message
-        for key, message in forbidden_outcomes.items()
-        if terminal_reporter.stats.get(key)
+        message for key, message in forbidden_outcomes.items() if terminal_reporter.stats.get(key)
     ]
 
     if violations:
         joined_violations = "، ".join(violations)
-        terminal_reporter.write_line(
-            f"[tests-policy] فشل سياسة الجودة: {joined_violations}."
-        )
+        terminal_reporter.write_line(f"[tests-policy] فشل سياسة الجودة: {joined_violations}.")
         session.exitstatus = pytest.ExitCode.TESTS_FAILED
 
 
