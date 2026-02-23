@@ -68,11 +68,6 @@ class ComponentAnalyzer:
         yield KeyFileSpec("app/core/ai_gateway.py", "AI Gateway", "Neural routing mesh for AI")
         yield KeyFileSpec("app/core/prompts.py", "System Prompts", "OVERMIND identity and context")
         yield KeyFileSpec(
-            "app/services/overmind/orchestrator.py",
-            "Overmind Orchestrator",
-            "Mission orchestration",
-        )
-        yield KeyFileSpec(
             "app/services/agent_tools/__init__.py",
             "Agent Tools",
             "File ops, search, reasoning",
