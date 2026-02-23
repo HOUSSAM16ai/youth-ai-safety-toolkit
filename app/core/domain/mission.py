@@ -8,7 +8,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, Text, func
+from sqlalchemy import Column, DateTime, Integer, Text, func
 from sqlalchemy.orm import relationship
 from sqlmodel import Field, Relationship, SQLModel
 
