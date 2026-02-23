@@ -50,9 +50,7 @@ def test_create_mission_endpoint():
     from sqlalchemy.orm import sessionmaker
 
     # Fix N806: Use lowercase variable name
-    test_session_maker = sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
+    test_session_maker = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async def override_get_db():
         async with test_session_maker() as session:

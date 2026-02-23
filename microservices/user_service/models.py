@@ -9,6 +9,7 @@ class UserRole(SQLModel, table=True):
     user_id: int = Field(foreign_key="users.id", primary_key=True)
     role_id: int = Field(foreign_key="roles.id", primary_key=True)
 
+
 class Role(SQLModel, table=True):
     __tablename__ = "roles"
     id: int | None = Field(default=None, primary_key=True)
@@ -18,6 +19,7 @@ class Role(SQLModel, table=True):
     users: list["User"] = Relationship(
         sa_relationship=relationship("User", secondary="user_roles", back_populates="roles")
     )
+
 
 class User(SQLModel, table=True):
     __tablename__ = "users"
