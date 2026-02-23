@@ -160,6 +160,33 @@ def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line("markers", "asyncio: تشغيل اختبارات غير متزامنة")
 
 
+def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
+    """يفرض نجاحًا كاملًا عبر فشل الجلسة عند وجود تخطٍ أو تحذيرات اختبارية."""
+    terminal_reporter = session.config.pluginmanager.get_plugin("terminalreporter")
+    if terminal_reporter is None:
+        return
+
+    forbidden_outcomes = {
+        "skipped": "توجد اختبارات مُتخطاة",
+        "xfailed": "توجد اختبارات xfailed",
+        "xpassed": "توجد اختبارات xpassed",
+        "warnings": "توجد تحذيرات أثناء التشغيل",
+    }
+
+    violations = [
+        message
+        for key, message in forbidden_outcomes.items()
+        if terminal_reporter.stats.get(key)
+    ]
+
+    if violations:
+        joined_violations = "، ".join(violations)
+        terminal_reporter.write_line(
+            f"[tests-policy] فشل سياسة الجودة: {joined_violations}."
+        )
+        session.exitstatus = pytest.ExitCode.TESTS_FAILED
+
+
 def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> bool | None:
     """تشغيل الاختبارات غير المتزامنة بدون الاعتماد على pytest-asyncio."""
     if asyncio.iscoroutinefunction(pyfuncitem.obj):
