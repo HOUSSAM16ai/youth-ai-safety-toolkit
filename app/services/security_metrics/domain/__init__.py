@@ -7,14 +7,18 @@ from .models import (
 )
 from .ports import (
     AnomalyDetectorPort,
+    FindingsRepositoryPort,
     MetricsCalculatorPort,
+    MetricsRepositoryPort,
     PredictiveAnalyticsPort,
     RiskCalculatorPort,
 )
 
 __all__ = [
     "AnomalyDetectorPort",
+    "FindingsRepositoryPort",
     "MetricsCalculatorPort",
+    "MetricsRepositoryPort",
     "PredictiveAnalyticsPort",
     "RiskCalculatorPort",
     "RiskPrediction",

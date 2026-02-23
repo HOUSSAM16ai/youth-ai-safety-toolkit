@@ -8,14 +8,20 @@ from .domain.models import (
     Severity,
     TrendDirection,
 )
+from .domain.ports import (
+    FindingsRepositoryPort,
+    MetricsRepositoryPort,
+)
 
 MetricsCalculator = ComprehensiveMetricsCalculator
 
 __all__ = [
     "AdvancedRiskCalculator",
     "ComprehensiveMetricsCalculator",
+    "FindingsRepositoryPort",
     "LinearRegressionPredictor",
     "MetricsCalculator",
+    "MetricsRepositoryPort",
     "RiskPrediction",
     "SecurityFinding",
     "SecurityMetrics",

@@ -401,10 +401,260 @@
           }
         }
       }
+    },
+    "/security/metrics/calculate": {
+      "post": {
+        "tags": [
+          "Security Metrics"
+        ],
+        "summary": "Calculate Metrics",
+        "description": "Calculate comprehensive security metrics from findings",
+        "operationId": "calculate_metrics_security_metrics_calculate_post",
+        "parameters": [
+          {
+            "name": "X-Service-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalculateMetricsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityMetricsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/security/risk/predict": {
+      "post": {
+        "tags": [
+          "Security Metrics"
+        ],
+        "summary": "Predict Risk",
+        "description": "Predict future risk based on historical metrics",
+        "operationId": "predict_risk_security_risk_predict_post",
+        "parameters": [
+          {
+            "name": "X-Service-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RiskPredictionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskPredictionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/security/risk/score": {
+      "post": {
+        "tags": [
+          "Security Metrics"
+        ],
+        "summary": "Calculate Risk",
+        "description": "Calculate advanced risk score from findings",
+        "operationId": "calculate_risk_security_risk_score_post",
+        "parameters": [
+          {
+            "name": "X-Service-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalculateRiskRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalculateRiskResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "CalculateMetricsRequest": {
+        "properties": {
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/SecurityFindingSchema"
+            },
+            "type": "array",
+            "title": "Findings"
+          },
+          "code_metrics": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code Metrics"
+          }
+        },
+        "type": "object",
+        "required": [
+          "findings"
+        ],
+        "title": "CalculateMetricsRequest",
+        "description": "Request to calculate security metrics"
+      },
+      "CalculateRiskRequest": {
+        "properties": {
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/SecurityFindingSchema"
+            },
+            "type": "array",
+            "title": "Findings"
+          },
+          "code_metrics": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code Metrics"
+          }
+        },
+        "type": "object",
+        "required": [
+          "findings"
+        ],
+        "title": "CalculateRiskRequest",
+        "description": "Request to calculate risk score"
+      },
+      "CalculateRiskResponse": {
+        "properties": {
+          "risk_score": {
+            "type": "number",
+            "title": "Risk Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "risk_score"
+        ],
+        "title": "CalculateRiskResponse",
+        "description": "Response containing risk score"
+      },
       "CapacityPlanPayload": {
         "properties": {
           "plan_id": {
@@ -624,6 +874,62 @@
         "title": "MetricsResponse",
         "description": "\u0627\u0633\u062a\u062c\u0627\u0628\u0629 \u0627\u0644\u0645\u0642\u0627\u064a\u064a\u0633 \u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a\u0629."
       },
+      "RiskPredictionRequest": {
+        "properties": {
+          "historical_metrics": {
+            "items": {
+              "$ref": "#/components/schemas/SecurityMetricsResponse"
+            },
+            "type": "array",
+            "title": "Historical Metrics"
+          },
+          "days_ahead": {
+            "type": "integer",
+            "title": "Days Ahead",
+            "default": 30
+          }
+        },
+        "type": "object",
+        "required": [
+          "historical_metrics"
+        ],
+        "title": "RiskPredictionRequest",
+        "description": "Request to predict future risk"
+      },
+      "RiskPredictionResponse": {
+        "properties": {
+          "predicted_risk": {
+            "type": "number",
+            "title": "Predicted Risk"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence"
+          },
+          "trend": {
+            "type": "string",
+            "title": "Trend"
+          },
+          "slope": {
+            "type": "number",
+            "title": "Slope"
+          },
+          "current_risk": {
+            "type": "number",
+            "title": "Current Risk"
+          }
+        },
+        "type": "object",
+        "required": [
+          "predicted_risk",
+          "confidence",
+          "trend",
+          "slope",
+          "current_risk"
+        ],
+        "title": "RiskPredictionResponse",
+        "description": "Response containing risk prediction"
+      },
       "RootResponse": {
         "properties": {
           "message": {
@@ -637,6 +943,224 @@
         ],
         "title": "RootResponse",
         "description": "\u0631\u0633\u0627\u0644\u0629 \u0627\u0644\u062c\u0630\u0631 \u0644\u062e\u062f\u0645\u0629 \u0627\u0644\u0645\u0631\u0627\u0642\u0628\u0629."
+      },
+      "SecurityFindingSchema": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "rule_id": {
+            "type": "string",
+            "title": "Rule Id"
+          },
+          "file_path": {
+            "type": "string",
+            "title": "File Path"
+          },
+          "line_number": {
+            "type": "integer",
+            "title": "Line Number"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "cwe_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cwe Id"
+          },
+          "owasp_category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owasp Category"
+          },
+          "first_seen": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Seen"
+          },
+          "last_seen": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Seen"
+          },
+          "false_positive": {
+            "type": "boolean",
+            "title": "False Positive",
+            "default": false
+          },
+          "fixed": {
+            "type": "boolean",
+            "title": "Fixed",
+            "default": false
+          },
+          "fix_time_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fix Time Hours"
+          },
+          "developer_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Developer Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "severity",
+          "rule_id",
+          "file_path",
+          "line_number",
+          "message"
+        ],
+        "title": "SecurityFindingSchema",
+        "description": "Schema for a security finding"
+      },
+      "SecurityMetricsResponse": {
+        "properties": {
+          "total_findings": {
+            "type": "integer",
+            "title": "Total Findings"
+          },
+          "critical_count": {
+            "type": "integer",
+            "title": "Critical Count"
+          },
+          "high_count": {
+            "type": "integer",
+            "title": "High Count"
+          },
+          "medium_count": {
+            "type": "integer",
+            "title": "Medium Count"
+          },
+          "low_count": {
+            "type": "integer",
+            "title": "Low Count"
+          },
+          "findings_per_1000_loc": {
+            "type": "number",
+            "title": "Findings Per 1000 Loc"
+          },
+          "new_findings_last_24h": {
+            "type": "integer",
+            "title": "New Findings Last 24H"
+          },
+          "fixed_findings_last_24h": {
+            "type": "integer",
+            "title": "Fixed Findings Last 24H"
+          },
+          "false_positive_rate": {
+            "type": "number",
+            "title": "False Positive Rate"
+          },
+          "mean_time_to_detect": {
+            "type": "number",
+            "title": "Mean Time To Detect"
+          },
+          "mean_time_to_fix": {
+            "type": "number",
+            "title": "Mean Time To Fix"
+          },
+          "overall_risk_score": {
+            "type": "number",
+            "title": "Overall Risk Score"
+          },
+          "security_debt_score": {
+            "type": "number",
+            "title": "Security Debt Score"
+          },
+          "trend_direction": {
+            "type": "string",
+            "title": "Trend Direction"
+          },
+          "findings_per_developer": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Findings Per Developer"
+          },
+          "fix_rate_per_developer": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Fix Rate Per Developer"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_findings",
+          "critical_count",
+          "high_count",
+          "medium_count",
+          "low_count",
+          "findings_per_1000_loc",
+          "new_findings_last_24h",
+          "fixed_findings_last_24h",
+          "false_positive_rate",
+          "mean_time_to_detect",
+          "mean_time_to_fix",
+          "overall_risk_score",
+          "security_debt_score",
+          "trend_direction",
+          "findings_per_developer",
+          "fix_rate_per_developer",
+          "timestamp"
+        ],
+        "title": "SecurityMetricsResponse",
+        "description": "Response containing calculated security metrics"
       },
       "TelemetryRequest": {
         "properties": {

@@ -35,7 +35,7 @@ class SecurityFindingSchema(BaseModel):
     """Schema for a security finding"""
 
     id: str
-    severity: str
+    severity: Severity
     rule_id: str
     file_path: str
     line_number: int
@@ -118,7 +118,7 @@ def _map_finding_schema_to_domain(schema: SecurityFindingSchema) -> SecurityFind
     """Map Pydantic schema to Domain entity"""
     return SecurityFinding(
         id=schema.id,
-        severity=Severity(schema.severity),
+        severity=schema.severity,
         rule_id=schema.rule_id,
         file_path=schema.file_path,
         line_number=schema.line_number,
