@@ -103,6 +103,7 @@ class MissionEventType(CaseInsensitiveEnum):
 
 class Mission(SQLModel, table=True):
     __tablename__ = "missions"
+    __table_args__ = {"extend_existing": True}
     id: int | None = Field(default=None, primary_key=True)
     objective: str = Field(sa_column=Column(Text))
     status: MissionStatus = Field(

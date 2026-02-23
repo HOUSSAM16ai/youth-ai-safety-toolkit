@@ -3,6 +3,7 @@ import os
 from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
+from sqlmodel import SQLModel
 
 
 def mock_verify_token():
@@ -18,43 +19,60 @@ def test_create_mission_endpoint():
     os.environ["ORCHESTRATOR_DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
 
     # Import modules to ensure they are loaded before patching
-    # We clear SQLModel metadata to avoid "Table 'missions' is already defined" error
-    # This happens because conftest might load monolith models, and then we import microservice models
-    # which try to define the same table name 'missions'.
-    from sqlmodel import SQLModel
 
     # Clear metadata to allow re-definition of tables for the microservice context
     SQLModel.metadata.clear()
 
-    import microservices.orchestrator_service.src.core.database  # noqa: F401
-
-    from microservices.orchestrator_service.main import app
-    from microservices.orchestrator_service.src.core.database import get_db
-    from tests.conftest import _ensure_schema, _get_session_factory, _run_async
-
     # Setup DB override using the shared test session factory (SQLite in-memory)
-    # This ensures we use the test database schema
+    # We DO NOT call _ensure_schema() because it loads Monolith models!
+    # Instead we manually create the schema for the models we just loaded/cleared.
+    # We need to make sure the engine is bound to the metadata?
+    # SQLModel.metadata.create_all(engine) should work if engine is configured.
+    # We need to make sure we use the same engine as the session factory?
+    # _get_session_factory creates an engine.
+    # Let's verify if we need to reload models?
+    # If they were loaded by previous tests, they are in sys.modules.
+    # clearing metadata removes them from metadata.
+    # We need to re-register them?
+    # Only way is to reload the module.
+    import importlib
+
+    import microservices.orchestrator_service.src.core.database
+    import microservices.orchestrator_service.src.models.mission
+    from microservices.orchestrator_service.main import app
+    from microservices.orchestrator_service.src.core.database import engine, get_db
+    importlib.reload(microservices.orchestrator_service.src.models.mission)
+
+    # Now Mission is in metadata.
+
+    # We need an event loop for async engine
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
-    # We need to ensure schema is created AFTER we cleared metadata and imported microservice models?
-    # Actually, importing `main` -> `routes` -> `...` -> `models` registers them.
-    # So we should clear metadata BEFORE importing main.
+    async def init_tables():
+        # Use the engine from core.database which is used by the app
+        async with engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all)
 
-    # Re-run schema creation for the new metadata
-    # We need to bind the engine to this new metadata or just use create_all
+    loop.run_until_complete(init_tables())
 
-    # We can reuse _get_session_factory but we need to make sure the tables are created.
-    # _ensure_schema in conftest does create_all.
+    # Reuse session factory from conftest but bind to our engine?
+    # Actually core.database.engine is what we want.
+    # But get_db uses session_factory from conftest?
+    # app.dependency_overrides[get_db] needs to yield a session.
 
-    _run_async(loop, _ensure_schema())
-    session_factory = _get_session_factory()
+    from sqlalchemy.ext.asyncio import AsyncSession
+    from sqlalchemy.orm import sessionmaker
+
+    TestSession = sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
 
     async def override_get_db():
-        async with session_factory() as session:
+        async with TestSession() as session:
             yield session
 
     app.dependency_overrides[get_db] = override_get_db
