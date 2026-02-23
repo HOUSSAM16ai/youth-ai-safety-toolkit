@@ -141,14 +141,11 @@ class MicroMission(SQLModel, table=True):
         sa_relationship=relationship(
             "MicroMissionPlan",
             back_populates="mission",
-            foreign_keys="[MicroMissionPlan.mission_id]"
+            foreign_keys="[MicroMissionPlan.mission_id]",
         )
     )
     events: list[MicroMissionEvent] = Relationship(
-        sa_relationship=relationship(
-            "MicroMissionEvent",
-            back_populates="mission"
-        )
+        sa_relationship=relationship("MicroMissionEvent", back_populates="mission")
     )
 
 
@@ -177,14 +174,11 @@ class MicroMissionPlan(SQLModel, table=True):
         sa_relationship=relationship(
             "MicroMission",
             back_populates="mission_plans",
-            foreign_keys="[MicroMissionPlan.mission_id]"
+            foreign_keys="[MicroMissionPlan.mission_id]",
         )
     )
     tasks: list[MicroTask] = Relationship(
-        sa_relationship=relationship(
-            "MicroTask",
-            back_populates="plan"
-        )
+        sa_relationship=relationship("MicroTask", back_populates="plan")
     )
 
 
@@ -253,10 +247,7 @@ class MicroMissionEvent(SQLModel, table=True):
 
     # Relationships
     mission: MicroMission = Relationship(
-        sa_relationship=relationship(
-            "MicroMission",
-            back_populates="events"
-        )
+        sa_relationship=relationship("MicroMission", back_populates="events")
     )
 
 

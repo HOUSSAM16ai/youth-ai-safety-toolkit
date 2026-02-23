@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-import json
 import uuid
 from datetime import datetime
 from enum import Enum, StrEnum
 
-from sqlalchemy import Column, DateTime, String, func, JSON
+from sqlalchemy import JSON, Column, DateTime, String, func
 from sqlalchemy.orm import relationship
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -16,6 +15,7 @@ def utc_now():
 
 class CaseInsensitiveEnum(StrEnum):
     """Case insensitive enum mixin."""
+
     @classmethod
     def _missing_(cls, value):
         for member in cls:
@@ -30,6 +30,7 @@ class FlexibleEnum(Enum):
 
 class UserStatus(CaseInsensitiveEnum):
     """User Lifecycle Status."""
+
     ACTIVE = "active"
     SUSPENDED = "suspended"
     PENDING = "pending"
@@ -50,11 +51,13 @@ class MicroRole(SQLModel, table=True):
     name: str = Field(index=True, unique=True)
     description: str | None = None
 
-    users: list["MicroUser"] = Relationship(
+    users: list[MicroUser] = Relationship(
         sa_relationship=relationship("MicroUser", secondary="user_roles", back_populates="roles")
     )
     permissions: list[MicroPermission] = Relationship(
-        sa_relationship=relationship("MicroPermission", secondary="role_permissions", back_populates="roles")
+        sa_relationship=relationship(
+            "MicroPermission", secondary="role_permissions", back_populates="roles"
+        )
     )
 
 
@@ -66,7 +69,9 @@ class MicroPermission(SQLModel, table=True):
     description: str | None = None
 
     roles: list[MicroRole] = Relationship(
-        sa_relationship=relationship("MicroRole", secondary="role_permissions", back_populates="permissions")
+        sa_relationship=relationship(
+            "MicroRole", secondary="role_permissions", back_populates="permissions"
+        )
     )
 
 
@@ -220,6 +225,7 @@ class MicroUser(SQLModel, table=True):
     @hashed_password.setter
     def hashed_password(self, value):
         self.password_hash = value
+
 
 # Aliases for compatibility with existing imports
 User = MicroUser

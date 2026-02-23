@@ -27,15 +27,15 @@ if str(project_root) not in sys.path:
 
 warnings.filterwarnings("ignore", category=PendingDeprecationWarning)
 
-import pytest
-
 # Pre-load Monolith domain models to ensure they claim the Table definitions first.
 # This prevents "Table already defined" errors when Microservice models (with extend_existing=True)
 # are loaded later in the same process.
-try:
+from contextlib import suppress
+
+import pytest
+
+with suppress(ImportError):
     from app.core.domain import audit, chat, mission, user  # noqa: F401
-except ImportError:
-    pass
 
 if TYPE_CHECKING:
     from fastapi import FastAPI

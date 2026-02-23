@@ -1,6 +1,6 @@
 import asyncio
 import os
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from fastapi.testclient import TestClient
 from sqlmodel import SQLModel
@@ -17,10 +17,6 @@ def test_create_mission_endpoint():
     """
     os.environ["ORCHESTRATOR_DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
 
-    import importlib
-
-    import microservices.orchestrator_service.src.core.database
-    import microservices.orchestrator_service.src.models.mission
     from microservices.orchestrator_service.main import app
     from microservices.orchestrator_service.src.core.database import engine, get_db
 
@@ -48,9 +44,7 @@ def test_create_mission_endpoint():
     from sqlalchemy.ext.asyncio import AsyncSession
     from sqlalchemy.orm import sessionmaker
 
-    test_session_maker = sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
+    test_session_maker = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async def override_get_db():
         async with test_session_maker() as session:
@@ -78,17 +72,19 @@ def test_create_mission_endpoint():
     mock_redis_client.close = AsyncMock()
 
     # Patch redis.asyncio.from_url
-    with patch(
-        "microservices.orchestrator_service.src.core.database.init_db",
-        new_callable=AsyncMock,
-    ) as _, \
-    patch(
-        "microservices.orchestrator_service.src.core.event_bus.event_bus",
-        mock_event_bus,
-    ), \
-    patch(
-        "redis.asyncio.from_url",
-        return_value=mock_redis_client,
+    with (
+        patch(
+            "microservices.orchestrator_service.src.core.database.init_db",
+            new_callable=AsyncMock,
+        ) as _,
+        patch(
+            "microservices.orchestrator_service.src.core.event_bus.event_bus",
+            mock_event_bus,
+        ),
+        patch(
+            "redis.asyncio.from_url",
+            return_value=mock_redis_client,
+        ),
     ):
         with TestClient(app) as client:
             payload = {
