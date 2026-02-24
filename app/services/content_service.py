@@ -18,7 +18,9 @@ class ContentService:
     async def search_content(
         self, q: str | None, level: str | None, subject: str | None, limit: int = 50
     ) -> list[dict[str, Any]]:
-        query_str = "SELECT id, type, title, level, subject, year, lang FROM content_items WHERE 1=1"
+        query_str = (
+            "SELECT id, type, title, level, subject, year, lang FROM content_items WHERE 1=1"
+        )
         params = {}
 
         if level:

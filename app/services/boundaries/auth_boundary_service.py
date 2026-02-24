@@ -443,8 +443,6 @@ class AuthBoundaryService:
             from app.services.auth.service import AuthService
 
             local_service = AuthService(self.db, self.settings)
-            await local_service.logout(
-                refresh_token=refresh_token, ip=ip, user_agent=user_agent
-            )
+            await local_service.logout(refresh_token=refresh_token, ip=ip, user_agent=user_agent)
         except Exception:
             pass

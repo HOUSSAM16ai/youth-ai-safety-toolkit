@@ -156,22 +156,21 @@ async def update_me(
     token = AuthBoundaryService.extract_token_from_request(request)
 
     result = await auth_service.update_profile(
-        token=token,
-        full_name=payload.full_name,
-        email=payload.email
+        token=token, full_name=payload.full_name, email=payload.email
     )
 
     # Construct UserOut from result dict
     # Microservice result has 'roles' in it.
     roles = result.get("roles", [])
     if not roles:
-         # Fallback fetch if missing
+        # Fallback fetch if missing
         from app.services.rbac import RBACService
+
         rbac = RBACService(auth_service.db)
         roles = await rbac.user_roles(current.user.id)
 
     return UserOut(
-        id=int(result["id"]), # type: ignore
+        id=int(result["id"]),  # type: ignore
         email=str(result["email"]),
         full_name=str(result.get("full_name") or result.get("name")),
         is_active=bool(result.get("is_active", True)),
@@ -190,9 +189,7 @@ async def change_password(
     """Change password via Microservice."""
     token = AuthBoundaryService.extract_token_from_request(request)
     await auth_service.change_password(
-        token=token,
-        current_password=payload.current_password,
-        new_password=payload.new_password
+        token=token, current_password=payload.current_password, new_password=payload.new_password
     )
     return {"status": "password_changed"}
 
@@ -225,10 +222,7 @@ async def reauth(
 ) -> ReauthResponse:
     client_ip, user_agent = _audit_context(request)
     token, expires_in = await auth_service.issue_reauth_proof(
-        user_id=current.user.id,
-        password=payload.password,
-        ip=client_ip,
-        user_agent=user_agent
+        user_id=current.user.id, password=payload.password, ip=client_ip, user_agent=user_agent
     )
     return ReauthResponse(reauth_token=token, expires_in=expires_in)
 
@@ -278,7 +272,7 @@ async def request_password_reset(
     # result keys might be reset_token, expires_in
     return PasswordResetResponse(
         reset_token=str(result.get("reset_token")) if result.get("reset_token") else None,
-        expires_in=int(result.get("expires_in")) if result.get("expires_in") else None
+        expires_in=int(result.get("expires_in")) if result.get("expires_in") else None,
     )
 
 
@@ -312,14 +306,16 @@ async def list_users(
     output = []
     for u_dict in users_data:
         # Microservice returns UserOut structure with roles
-        output.append(UserOut(
-            id=int(u_dict["id"]), # type: ignore
-            email=str(u_dict["email"]),
-            full_name=str(u_dict.get("full_name") or u_dict.get("name")),
-            is_active=bool(u_dict.get("is_active", True)),
-            status=UserStatus(u_dict.get("status", "active")),
-            roles=u_dict.get("roles", []) # type: ignore
-        ))
+        output.append(
+            UserOut(
+                id=int(u_dict["id"]),  # type: ignore
+                email=str(u_dict["email"]),
+                full_name=str(u_dict.get("full_name") or u_dict.get("name")),
+                is_active=bool(u_dict.get("is_active", True)),
+                status=UserStatus(u_dict.get("status", "active")),
+                roles=u_dict.get("roles", []),  # type: ignore
+            )
+        )
     return output
 
 
@@ -346,16 +342,16 @@ async def create_user_admin(
         full_name=payload.full_name,
         email=payload.email,
         password=payload.password,
-        is_admin=payload.is_admin
+        is_admin=payload.is_admin,
     )
 
     return UserOut(
-        id=int(result["id"]), # type: ignore
+        id=int(result["id"]),  # type: ignore
         email=str(result["email"]),
         full_name=str(result.get("full_name") or result.get("name")),
         is_active=bool(result.get("is_active", True)),
         status=UserStatus(result.get("status", "active")),
-        roles=result.get("roles", []), # type: ignore
+        roles=result.get("roles", []),  # type: ignore
     )
 
 
@@ -370,18 +366,16 @@ async def update_user_status(
     token = AuthBoundaryService.extract_token_from_request(request)
 
     result = await auth_service.update_user_status(
-        token=token,
-        user_id=user_id,
-        status=payload.status.value
+        token=token, user_id=user_id, status=payload.status.value
     )
 
     return UserOut(
-        id=int(result["id"]), # type: ignore
+        id=int(result["id"]),  # type: ignore
         email=str(result["email"]),
         full_name=str(result.get("full_name") or result.get("name")),
         is_active=bool(result.get("is_active", True)),
         status=UserStatus(result.get("status", "active")),
-        roles=result.get("roles", []), # type: ignore
+        roles=result.get("roles", []),  # type: ignore
     )
 
 
@@ -410,18 +404,16 @@ async def assign_role(
             )
 
     result = await auth_service.assign_role(
-        token=token,
-        user_id=user_id,
-        role_name=payload.role_name
+        token=token, user_id=user_id, role_name=payload.role_name
     )
 
     return UserOut(
-        id=int(result["id"]), # type: ignore
+        id=int(result["id"]),  # type: ignore
         email=str(result["email"]),
         full_name=str(result.get("full_name") or result.get("name")),
         is_active=bool(result.get("is_active", True)),
         status=UserStatus(result.get("status", "active")),
-        roles=result.get("roles", []), # type: ignore
+        roles=result.get("roles", []),  # type: ignore
     )
 
 
