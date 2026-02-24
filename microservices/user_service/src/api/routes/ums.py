@@ -2,9 +2,10 @@
 UMS Routes for User Service.
 """
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy import desc, select
 
-from microservices.user_service.models import User
+from microservices.user_service.models import AuditLog, User
 from microservices.user_service.security import get_auth_service, get_current_user, require_role
 from microservices.user_service.src.schemas.ums import (
     AdminCreateUserRequest,
@@ -119,15 +120,9 @@ async def reset_password(
 async def list_users_admin(
     service: AuthService = Depends(get_auth_service),
 ) -> list[UserOut]:
-    # Need to implement list users in AuthService or just query DB directly here?
-    # For cleanliness, let's query DB using session, but ideally AuthService should expose this.
-    # Accessing session directly for read logic is acceptable in CQRS-lite.
-    from sqlalchemy import select
-
     result = await service.session.execute(select(User))
     users = result.scalars().all()
 
-    # Inefficient N+1, but fine for migration start.
     output = []
     for u in users:
         roles = await service.rbac.user_roles(u.id)
@@ -185,12 +180,10 @@ async def update_user_status(
 ) -> UserOut:
     user = await service.session.get(User, user_id)
     if not user:
-        from fastapi import HTTPException
-
         raise HTTPException(status_code=404, detail="User not found")
 
     user.status = payload.status
-    user.is_active = payload.status == "active"  # Simple logic
+    user.is_active = payload.status == "active"
     await service.session.commit()
 
     roles = await service.rbac.user_roles(user.id)
@@ -216,8 +209,6 @@ async def assign_role(
 ) -> UserOut:
     user = await service.session.get(User, user_id)
     if not user:
-        from fastapi import HTTPException
-
         raise HTTPException(status_code=404, detail="User not found")
 
     if payload.role_name == ADMIN_ROLE:
@@ -234,3 +225,25 @@ async def assign_role(
         status=user.status,
         roles=roles,
     )
+
+
+@router.get(
+    "/admin/audit",
+    response_model=list[dict],
+    dependencies=[Depends(require_role(ADMIN_ROLE))],
+)
+async def list_audit(
+    service: AuthService = Depends(get_auth_service),
+    limit: int = 100,
+    offset: int = 0,
+) -> list[dict]:
+    if limit < 1 or limit > 500:
+        raise HTTPException(status_code=400, detail="limit out of range")
+    if offset < 0:
+        raise HTTPException(status_code=400, detail="offset out of range")
+
+    result = await service.session.execute(
+        select(AuditLog).order_by(desc(AuditLog.timestamp)).limit(limit).offset(offset)
+    )
+    rows = result.scalars().all()
+    return [row.model_dump() for row in rows]

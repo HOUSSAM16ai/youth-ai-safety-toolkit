@@ -221,6 +221,21 @@ async def missions_path_proxy(path: str, request: Request) -> StreamingResponse:
 
 
 @app.api_route(
+    "/admin/ai-config",
+    methods=["GET", "PUT", "OPTIONS", "HEAD"],
+    include_in_schema=False,
+)
+async def admin_ai_config_proxy(request: Request) -> StreamingResponse:
+    """
+    Strangler Fig: Route AI Config to Monolith.
+    This feature has not been migrated to User Service yet.
+    """
+    return await proxy_handler.forward(
+        request, settings.CORE_KERNEL_URL, "api/v1/admin/ai-config"
+    )
+
+
+@app.api_route(
     "/admin/{path:path}",
     methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
     include_in_schema=False,
