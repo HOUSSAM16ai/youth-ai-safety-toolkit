@@ -31,7 +31,8 @@ async def test_refresh_token(client: AsyncClient, session: AsyncSession):
     data = response.json()
     assert "access_token" in data
     assert "refresh_token" in data
-    assert data["refresh_token"] != refresh_token # New token issued
+    assert data["refresh_token"] != refresh_token  # New token issued
+
 
 @pytest.mark.asyncio
 async def test_logout(client: AsyncClient, session: AsyncSession):
@@ -59,11 +60,13 @@ async def test_logout(client: AsyncClient, session: AsyncSession):
 
     # Verify token is invalid
     from fastapi import HTTPException
+
     try:
         await service.refresh_session(refresh_token=refresh_token)
         pytest.fail("Should raise Unauthorized")
     except HTTPException as e:
         assert e.status_code == 401
+
 
 @pytest.mark.asyncio
 async def test_reauth(client: AsyncClient, session: AsyncSession):
@@ -91,6 +94,7 @@ async def test_reauth(client: AsyncClient, session: AsyncSession):
     data = response.json()
     assert "reauth_token" in data
     assert "expires_in" in data
+
 
 @pytest.mark.asyncio
 async def test_admin_audit(client: AsyncClient, session: AsyncSession, admin_token: str):

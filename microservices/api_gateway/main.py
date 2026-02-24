@@ -230,9 +230,7 @@ async def admin_ai_config_proxy(request: Request) -> StreamingResponse:
     Strangler Fig: Route AI Config to Monolith.
     This feature has not been migrated to User Service yet.
     """
-    return await proxy_handler.forward(
-        request, settings.CORE_KERNEL_URL, "api/v1/admin/ai-config"
-    )
+    return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, "api/v1/admin/ai-config")
 
 
 @app.api_route(
