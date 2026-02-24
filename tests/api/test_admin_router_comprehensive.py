@@ -95,6 +95,7 @@ def test_chat_stream_ws_not_admin(app):
 
     # Expect immediate disconnection with code 4403
     from starlette.websockets import WebSocketDisconnect
+
     with pytest.raises(WebSocketDisconnect) as exc:
         with client.websocket_connect("/admin/api/chat/ws") as websocket:
             websocket.receive_json()
