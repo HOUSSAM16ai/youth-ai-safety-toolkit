@@ -7,11 +7,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 
 from app.api.routers.admin import (
-    get_ai_client,
-    get_chat_dispatcher,
     get_current_user_id,
     get_db,
-    get_session_factory,
     router,
 )
 from app.core.domain.user import User
@@ -121,29 +118,83 @@ def test_chat_stream_ws_orchestrator_error(app):
     mock_actor = MagicMock(spec=User)
     mock_actor.is_active = True
     mock_actor.is_admin = True
+    mock_actor.id = 1
 
     mock_db = AsyncMock()
     mock_db.get.return_value = mock_actor
 
     app.dependency_overrides[get_db] = lambda: mock_db
 
-    def mock_dependency_factory():
-        return MagicMock()
+    with patch(
+        "app.api.routers.admin.extract_websocket_auth", return_value=("valid_token", "json")
+    ):
+        with patch("app.api.routers.admin.decode_user_id", return_value=1):
+            # Patch the orchestrator_client.chat_with_agent method
+            with patch(
+                "app.api.routers.admin.orchestrator_client.chat_with_agent",
+                side_effect=Exception("Connection failed"),
+            ):
+                with client.websocket_connect("/admin/api/chat/ws") as websocket:
+                    websocket.send_json({"question": "test"})
+                    # Receive status first (200)
+                    status_data = websocket.receive_json()
+                    assert status_data["type"] == "status"
+                    assert status_data["payload"]["status_code"] == 200
 
-    app.dependency_overrides[get_ai_client] = mock_dependency_factory
-    app.dependency_overrides[get_chat_dispatcher] = mock_dependency_factory
-    app.dependency_overrides[get_session_factory] = lambda: AsyncMock
+                    data = websocket.receive_json()
+                    # Expecting sanitized error response due to exception
+                    assert data["type"] == "error"
+                    assert "Service unavailable" in data["payload"]["details"]
+
+
+async def mock_chat_stream(*args, **kwargs):
+    yield {"type": "assistant_delta", "payload": {"content": "Hello"}}
+    yield {"type": "assistant_final", "payload": {"content": "Hello"}}
+
+
+def test_chat_stream_ws_success(app):
+    client = TestClient(app)
+    mock_actor = MagicMock(spec=User)
+    mock_actor.is_active = True
+    mock_actor.is_admin = True
+    mock_actor.id = 1
+
+    mock_db = AsyncMock()
+    mock_db.get.return_value = mock_actor
+
+    app.dependency_overrides[get_db] = lambda: mock_db
 
     with patch(
         "app.api.routers.admin.extract_websocket_auth", return_value=("valid_token", "json")
     ):
         with patch("app.api.routers.admin.decode_user_id", return_value=1):
             with patch(
-                "app.services.chat.orchestrator.ChatOrchestrator.dispatch",
-                side_effect=HTTPException(status_code=400, detail="Orchestrator error"),
-            ):
+                "app.api.routers.admin.orchestrator_client.chat_with_agent",
+                side_effect=mock_chat_stream,
+            ) as mock_chat:
                 with client.websocket_connect("/admin/api/chat/ws") as websocket:
-                    websocket.send_json({"question": "test"})
-                    data = websocket.receive_json()
-                    assert data["type"] == "error"
-                    assert "Orchestrator error" in data["payload"]["details"]
+                    websocket.send_json(
+                        {"question": "Hello", "mission_type": "mission_complex", "conversation_id": 123}
+                    )
+
+                    # Receive status first (200)
+                    status_data = websocket.receive_json()
+                    assert status_data["type"] == "status"
+                    assert status_data["payload"]["status_code"] == 200
+
+                    # Receive delta
+                    data1 = websocket.receive_json()
+                    assert data1["type"] == "assistant_delta"
+                    assert data1["payload"]["content"] == "Hello"
+
+                    # Receive final
+                    data2 = websocket.receive_json()
+                    assert data2["type"] == "assistant_final"
+
+                    # Verify call arguments
+                    mock_chat.assert_called_once()
+                    call_args = mock_chat.call_args
+                    assert call_args.kwargs["question"] == "Hello"
+                    assert call_args.kwargs["user_id"] == 1
+                    assert call_args.kwargs["conversation_id"] == 123
+                    assert call_args.kwargs["context"] == {"role": "admin", "intent": "mission_complex"}
