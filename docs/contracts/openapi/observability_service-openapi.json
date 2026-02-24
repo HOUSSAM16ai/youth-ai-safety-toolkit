@@ -631,6 +631,149 @@
           }
         }
       }
+    },
+    "/golden-signals": {
+      "get": {
+        "summary": "إشارات ذهبية (SRE)",
+        "description": "استرجاع الإشارات الذهبية للتوافق مع المونوليث.",
+        "operationId": "get_golden_signals_golden_signals_get",
+        "parameters": [
+          {
+            "name": "X-Service-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoldenSignalsResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Telemetry"
+        ]
+      }
+    },
+    "/performance": {
+      "get": {
+        "summary": "لقطة الأداء",
+        "description": "استرجاع لقطة الأداء الحالية.",
+        "operationId": "get_performance_snapshot_performance_get",
+        "parameters": [
+          {
+            "name": "X-Service-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PerformanceSnapshotResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Telemetry"
+        ]
+      }
+    },
+    "/analytics/{path}": {
+      "get": {
+        "summary": "تحليلات نقطة النهاية",
+        "description": "استرجاع تحليلات لنقطة نهاية محددة.",
+        "operationId": "get_endpoint_analytics_analytics__path__get",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path"
+            }
+          },
+          {
+            "name": "X-Service-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Service-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EndpointAnalyticsResponse"
+                  },
+                  "title": "Response Get Endpoint Analytics Analytics  Path  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Telemetry"
+        ]
+      }
     }
   },
   "components": {
@@ -681,6 +824,227 @@
         ],
         "title": "AlertItem",
         "description": "عنصر تنبيه واحد."
+      },
+      "LatencyMetrics": {
+        "properties": {
+          "p50": {
+            "type": "number",
+            "title": "P50",
+            "description": "الوسيط"
+          },
+          "p95": {
+            "type": "number",
+            "title": "P95",
+            "description": "النسبة المئوية 95"
+          },
+          "p99": {
+            "type": "number",
+            "title": "P99",
+            "description": "النسبة المئوية 99"
+          },
+          "p99.9": {
+            "type": "number",
+            "title": "P99.9",
+            "description": "النسبة المئوية 99.9"
+          },
+          "avg": {
+            "type": "number",
+            "title": "Avg",
+            "description": "المتوسط العام"
+          }
+        },
+        "type": "object",
+        "required": [
+          "p50",
+          "p95",
+          "p99",
+          "p99.9",
+          "avg"
+        ],
+        "title": "LatencyMetrics",
+        "description": "مقاييس زمن الاستجابة للمسارات الساخنة."
+      },
+      "TrafficMetrics": {
+        "properties": {
+          "requests_per_second": {
+            "type": "number",
+            "title": "Requests Per Second",
+            "description": "عدد الطلبات في الثانية"
+          },
+          "total_requests": {
+            "type": "integer",
+            "title": "Total Requests",
+            "description": "إجمالي الطلبات في النافذة الزمنية"
+          }
+        },
+        "type": "object",
+        "required": [
+          "requests_per_second",
+          "total_requests"
+        ],
+        "title": "TrafficMetrics",
+        "description": "إحصاءات حركة المرور على مستوى الخدمة."
+      },
+      "ErrorMetrics": {
+        "properties": {
+          "error_rate": {
+            "type": "number",
+            "title": "Error Rate",
+            "description": "معدل الأخطاء بالنسبة المئوية"
+          },
+          "error_count": {
+            "type": "integer",
+            "title": "Error Count",
+            "description": "عدد الأخطاء الملاحظة"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error_rate",
+          "error_count"
+        ],
+        "title": "ErrorMetrics",
+        "description": "مقاييس الأخطاء ونسبة فشل الطلبات."
+      },
+      "SaturationMetrics": {
+        "properties": {
+          "active_requests": {
+            "type": "integer",
+            "title": "Active Requests",
+            "description": "عدد الطلبات النشطة"
+          },
+          "queue_depth": {
+            "type": "integer",
+            "title": "Queue Depth",
+            "description": "عمق طابور التنفيذ"
+          },
+          "active_spans": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Spans",
+            "description": "عدد المقاطع التتبعية الفعّالة"
+          },
+          "resource_utilization": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Utilization",
+            "description": "نسبة استهلاك الموارد"
+          }
+        },
+        "type": "object",
+        "required": [
+          "active_requests",
+          "queue_depth"
+        ],
+        "title": "SaturationMetrics",
+        "description": "مؤشرات التشبع واستهلاك الموارد."
+      },
+      "GoldenSignalsResponse": {
+        "properties": {
+          "latency": {
+            "$ref": "#/components/schemas/LatencyMetrics",
+            "description": "مقاييس زمن الاستجابة"
+          },
+          "traffic": {
+            "$ref": "#/components/schemas/TrafficMetrics",
+            "description": "حركة المرور"
+          },
+          "errors": {
+            "$ref": "#/components/schemas/ErrorMetrics",
+            "description": "نسبة الأخطاء"
+          },
+          "saturation": {
+            "$ref": "#/components/schemas/SaturationMetrics",
+            "description": "مؤشرات التشبع"
+          }
+        },
+        "type": "object",
+        "required": [
+          "latency",
+          "traffic",
+          "errors",
+          "saturation"
+        ],
+        "title": "GoldenSignalsResponse",
+        "description": "نموذج الإشارات الذهبية (SRE Golden Signals)."
+      },
+      "PerformanceSnapshotResponse": {
+        "properties": {
+          "cpu_usage": {
+            "type": "number",
+            "title": "Cpu Usage",
+            "description": "استهلاك المعالج (%)"
+          },
+          "memory_usage": {
+            "type": "number",
+            "title": "Memory Usage",
+            "description": "استهلاك الذاكرة (%)"
+          },
+          "active_requests": {
+            "type": "integer",
+            "title": "Active Requests",
+            "description": "عدد الطلبات النشطة"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cpu_usage",
+          "memory_usage",
+          "active_requests"
+        ],
+        "title": "PerformanceSnapshotResponse",
+        "description": "نموذج لقطة الأداء."
+      },
+      "EndpointAnalyticsResponse": {
+        "properties": {
+          "path": {
+            "type": "string",
+            "title": "Path",
+            "description": "مسار نقطة النهاية"
+          },
+          "avg_latency": {
+            "type": "number",
+            "title": "Avg Latency",
+            "description": "متوسط زمن الاستجابة"
+          },
+          "p95_latency": {
+            "type": "number",
+            "title": "P95 Latency",
+            "description": "P95 Latency"
+          },
+          "error_count": {
+            "type": "integer",
+            "title": "Error Count",
+            "description": "عدد الأخطاء",
+            "default": 0
+          },
+          "total_calls": {
+            "type": "integer",
+            "title": "Total Calls",
+            "description": "إجمالي الاستدعاءات",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "path",
+          "avg_latency",
+          "p95_latency"
+        ],
+        "title": "EndpointAnalyticsResponse",
+        "description": "نموذج تحليلات نقطة النهاية."
       },
       "AlertsResponse": {
         "properties": {
