@@ -10,15 +10,12 @@ from collections.abc import Callable
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.routers.ws_auth import extract_websocket_auth
 from app.api.schemas.customer_chat import CustomerConversationDetails, CustomerConversationSummary
-from app.core.config import get_settings
 from app.core.database import async_session_factory, get_db
 from app.core.di import get_logger
 from app.core.domain.user import User
 from app.deps.auth import CurrentUser, require_permissions
 from app.infrastructure.clients.orchestrator_client import orchestrator_client
-from app.services.auth.token_decoder import decode_user_id
 from app.services.boundaries.customer_chat_boundary_service import CustomerChatBoundaryService
 from app.services.chat.dispatcher import ChatRoleDispatcher, build_chat_dispatcher
 from app.services.rbac import QA_SUBMIT
@@ -78,41 +75,20 @@ def get_chat_dispatcher(db: AsyncSession = Depends(get_db)) -> ChatRoleDispatche
 @router.websocket("/ws")
 async def chat_stream_ws(
     websocket: WebSocket,
-    db: AsyncSession = Depends(get_db),
+    service: CustomerChatBoundaryService = Depends(get_customer_service),
 ) -> None:
     """
     قناة WebSocket لبث محادثة تعليمية للمستخدم القياسي.
     """
-    token, selected_protocol = extract_websocket_auth(websocket)
-    if not token:
-        await websocket.close(code=4401)
-        return
-
     try:
-        user_id = decode_user_id(token, get_settings().SECRET_KEY)
-    except HTTPException:
-        await websocket.close(code=4401)
-        return
-
-    actor = await db.get(User, user_id)
-    if actor is None or not actor.is_active:
-        await websocket.close(code=4401)
+        actor, selected_protocol = await service.validate_ws_auth(websocket)
+    except HTTPException as e:
+        logger.warning(f"Customer WS Auth failed: {e.detail}")
+        code = 4403 if e.status_code == 403 else 4401
+        await websocket.close(code=code)
         return
 
     await websocket.accept(subprotocol=selected_protocol)
-
-    if actor.is_admin:
-        await websocket.send_json(
-            {
-                "type": "error",
-                "payload": {
-                    "details": "Admin accounts must use the admin chat endpoint.",
-                    "status_code": 403,
-                },
-            }
-        )
-        await websocket.close(code=4403)
-        return
 
     try:
         while True:

@@ -7,6 +7,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 
 from app.api.routers.admin import (
+    get_admin_service,
     get_ai_client,
     get_chat_dispatcher,
     get_current_user_id,
@@ -15,6 +16,7 @@ from app.api.routers.admin import (
     router,
 )
 from app.core.domain.user import User
+from app.services.boundaries.admin_chat_boundary_service import AdminChatBoundaryService
 
 
 @pytest.fixture
@@ -80,19 +82,23 @@ def test_chat_stream_ws_not_admin(app):
     mock_actor.is_active = True
     mock_actor.is_admin = False
 
-    mock_db = AsyncMock()
-    mock_db.get.return_value = mock_actor
+    # Mock the boundary service
+    mock_service = AsyncMock(spec=AdminChatBoundaryService)
+    # validate_ws_auth should raise HTTPException 403 or similar if not admin,
+    # OR return the user and the router checks it.
+    # In my implementation, validate_ws_auth RAISES exception if not admin.
+    mock_service.validate_ws_auth.side_effect = HTTPException(
+        status_code=403, detail="Admin access required"
+    )
 
-    app.dependency_overrides[get_db] = lambda: mock_db
-    # Mock extract_websocket_auth to return a token
-    with patch(
-        "app.api.routers.admin.extract_websocket_auth", return_value=("valid_token", "json")
-    ):
-        with patch("app.api.routers.admin.decode_user_id", return_value=1):
-            with client.websocket_connect("/admin/api/chat/ws") as websocket:
-                data = websocket.receive_json()
-                assert data["type"] == "error"
-                assert "Standard accounts" in data["payload"]["details"]
+    app.dependency_overrides[get_admin_service] = lambda: mock_service
+
+    # Expect immediate disconnection with code 4403
+    from starlette.websockets import WebSocketDisconnect
+    with pytest.raises(WebSocketDisconnect) as exc:
+        with client.websocket_connect("/admin/api/chat/ws") as websocket:
+            websocket.receive_json()
+    assert exc.value.code == 4403
 
 
 def test_chat_stream_ws_empty_question(app):
@@ -101,19 +107,17 @@ def test_chat_stream_ws_empty_question(app):
     mock_actor.is_active = True
     mock_actor.is_admin = True
 
-    mock_db = AsyncMock()
-    mock_db.get.return_value = mock_actor
+    # Mock the boundary service
+    mock_service = AsyncMock(spec=AdminChatBoundaryService)
+    mock_service.validate_ws_auth.return_value = (mock_actor, "json")
 
-    app.dependency_overrides[get_db] = lambda: mock_db
-    with patch(
-        "app.api.routers.admin.extract_websocket_auth", return_value=("valid_token", "json")
-    ):
-        with patch("app.api.routers.admin.decode_user_id", return_value=1):
-            with client.websocket_connect("/admin/api/chat/ws") as websocket:
-                websocket.send_json({"question": ""})
-                data = websocket.receive_json()
-                assert data["type"] == "error"
-                assert "Question is required" in data["payload"]["details"]
+    app.dependency_overrides[get_admin_service] = lambda: mock_service
+
+    with client.websocket_connect("/admin/api/chat/ws") as websocket:
+        websocket.send_json({"question": ""})
+        data = websocket.receive_json()
+        assert data["type"] == "error"
+        assert "Question is required" in data["payload"]["details"]
 
 
 def test_chat_stream_ws_orchestrator_error(app):
@@ -122,10 +126,11 @@ def test_chat_stream_ws_orchestrator_error(app):
     mock_actor.is_active = True
     mock_actor.is_admin = True
 
-    mock_db = AsyncMock()
-    mock_db.get.return_value = mock_actor
+    # Mock the boundary service
+    mock_service = AsyncMock(spec=AdminChatBoundaryService)
+    mock_service.validate_ws_auth.return_value = (mock_actor, "json")
 
-    app.dependency_overrides[get_db] = lambda: mock_db
+    app.dependency_overrides[get_admin_service] = lambda: mock_service
 
     def mock_dependency_factory():
         return MagicMock()
@@ -135,15 +140,11 @@ def test_chat_stream_ws_orchestrator_error(app):
     app.dependency_overrides[get_session_factory] = lambda: AsyncMock
 
     with patch(
-        "app.api.routers.admin.extract_websocket_auth", return_value=("valid_token", "json")
+        "app.services.chat.orchestrator.ChatOrchestrator.dispatch",
+        side_effect=HTTPException(status_code=400, detail="Orchestrator error"),
     ):
-        with patch("app.api.routers.admin.decode_user_id", return_value=1):
-            with patch(
-                "app.services.chat.orchestrator.ChatOrchestrator.dispatch",
-                side_effect=HTTPException(status_code=400, detail="Orchestrator error"),
-            ):
-                with client.websocket_connect("/admin/api/chat/ws") as websocket:
-                    websocket.send_json({"question": "test"})
-                    data = websocket.receive_json()
-                    assert data["type"] == "error"
-                    assert "Orchestrator error" in data["payload"]["details"]
+        with client.websocket_connect("/admin/api/chat/ws") as websocket:
+            websocket.send_json({"question": "test"})
+            data = websocket.receive_json()
+            assert data["type"] == "error"
+            assert "Orchestrator error" in data["payload"]["details"]

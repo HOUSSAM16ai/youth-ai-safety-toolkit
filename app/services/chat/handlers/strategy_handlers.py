@@ -192,7 +192,6 @@ class MissionComplexHandler(IntentHandler):
         """
         # Defer imports to prevent circular dependency
         from app.infrastructure.clients.orchestrator_client import orchestrator_client
-        from app.services.overmind.entrypoint import start_mission
 
         # Global try-except to prevent stream crash
         try:
@@ -220,14 +219,15 @@ class MissionComplexHandler(IntentHandler):
             mission_id = 0
 
             try:
-                # Use Unified Entrypoint (Handles DB Creation, Locking, Execution Trigger)
-                # Note: We pass session=None to enforce decoupling from local Monolith DB
-                mission = await start_mission(
-                    session=None,  # type: ignore
+                # Use Microservice Client to avoid local Monolith execution
+                mission = await orchestrator_client.create_mission(
                     objective=context.question,
-                    initiator_id=context.user_id or 1,
-                    context={"chat_context": True},
-                    force_research=force_research,
+                    context={
+                        "chat_context": True,
+                        "initiator_id": context.user_id or 1,
+                        "force_research": force_research,
+                    },
+                    priority=1,
                 )
                 mission_id = mission.id
 

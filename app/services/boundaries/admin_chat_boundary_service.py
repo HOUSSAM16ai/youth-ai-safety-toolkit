@@ -3,10 +3,11 @@ from __future__ import annotations
 import logging
 from collections.abc import AsyncGenerator, Callable
 
-from fastapi import HTTPException
+from fastapi import HTTPException, WebSocket
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.ai_gateway import AIClient
+from app.services.auth.ws_auth import extract_websocket_auth
 from app.core.config import get_settings
 from app.core.domain.chat import AdminConversation, MessageRole
 from app.core.domain.user import User
@@ -65,6 +66,30 @@ class AdminChatBoundaryService:
         # Validate header existence and format
         token = extract_bearer_token(auth_header)
         return decode_user_id(token, self.settings.SECRET_KEY)
+
+    async def validate_ws_auth(self, websocket: WebSocket) -> tuple[User, str]:
+        """
+        Validate WebSocket authentication and return the user and selected protocol.
+        Ensures strict admin access control.
+        """
+        token, selected_protocol = extract_websocket_auth(websocket)
+        if not token:
+            raise HTTPException(status_code=401, detail="Missing authentication")
+
+        try:
+            user_id = decode_user_id(token, self.settings.SECRET_KEY)
+        except HTTPException as e:
+            # Re-raise authentication errors
+            raise e
+
+        user = await self.db.get(User, user_id)
+        if user is None or not user.is_active:
+            raise HTTPException(status_code=401, detail="User not found or inactive")
+
+        if not user.is_admin:
+            raise HTTPException(status_code=403, detail="Admin access required")
+
+        return user, selected_protocol
 
     async def verify_conversation_access(
         self, user: User, conversation_id: int

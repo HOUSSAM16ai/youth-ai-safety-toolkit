@@ -11,13 +11,16 @@ import logging
 import re
 from collections.abc import AsyncGenerator, Callable
 
-from fastapi import HTTPException
+from fastapi import HTTPException, WebSocket
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.ai_gateway import AIClient
+from app.services.auth.ws_auth import extract_websocket_auth
+from app.core.config import get_settings
 from app.core.domain.chat import CustomerConversation, MessageRole
 from app.core.domain.user import User
 from app.services.audit import AuditService
+from app.services.auth.token_decoder import decode_user_id
 from app.services.chat.contracts import ChatDispatchResult, ChatStreamEvent
 from app.services.chat.education_policy_gate import EducationPolicyDecision, EducationPolicyGate
 from app.services.chat.intent_detector import ChatIntent, IntentDetector
@@ -41,6 +44,31 @@ class CustomerChatBoundaryService:
         self.audit = AuditService(db)
         self.intent_detector = IntentDetector()
         self.tool_router = ToolRouter()
+
+    async def validate_ws_auth(self, websocket: WebSocket) -> tuple[User, str]:
+        """
+        Validate WebSocket authentication and return the user and selected protocol.
+        """
+        token, selected_protocol = extract_websocket_auth(websocket)
+        if not token:
+            raise HTTPException(status_code=401, detail="Missing authentication")
+
+        try:
+            user_id = decode_user_id(token, get_settings().SECRET_KEY)
+        except HTTPException as e:
+            raise e
+
+        # Ensure we use db from self
+        actor = await self.db.get(User, user_id)
+        if actor is None or not actor.is_active:
+            raise HTTPException(status_code=401, detail="User not found or inactive")
+
+        if actor.is_admin:
+            raise HTTPException(
+                status_code=403, detail="Admin accounts must use the admin chat endpoint."
+            )
+
+        return actor, selected_protocol
 
     async def verify_conversation_access(
         self, user: User, conversation_id: int

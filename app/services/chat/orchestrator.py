@@ -205,13 +205,22 @@ class ChatOrchestrator:
         )
 
         # 1. التوجيه الذكي للوكلاء (Smart Dispatching)
-        # تشمل: استعلامات الأدمن، التحليلات، المناهج
+        # تشمل: استعلامات الأدمن، التحليلات، المناهج، والمهام المعقدة
+        # تحديث هام: تفويض جميع النوايا تقريباً للمايكروسيرفس لتقليل الحمل على المونوليث
         is_agent_intent = intent_result.intent in (
             ChatIntent.ADMIN_QUERY,
             ChatIntent.ANALYTICS_REPORT,
             ChatIntent.LEARNING_SUMMARY,
             ChatIntent.CURRICULUM_PLAN,
             ChatIntent.CONTENT_RETRIEVAL,
+            ChatIntent.MISSION_COMPLEX,
+            ChatIntent.CODE_SEARCH,
+            ChatIntent.DEEP_ANALYSIS,
+            ChatIntent.PROJECT_INDEX,
+            ChatIntent.FILE_READ,
+            ChatIntent.FILE_WRITE,
+            ChatIntent.HELP,
+            ChatIntent.DEFAULT,
         )
 
         if is_agent_intent:
@@ -231,6 +240,7 @@ class ChatOrchestrator:
             }
 
             full_response_buffer = []
+            delegation_successful = False
 
             try:
                 # Use the new chat_with_agent method
@@ -244,16 +254,23 @@ class ChatOrchestrator:
                     full_response_buffer.append(chunk)
                     yield chunk
 
+                delegation_successful = True
+
                 # تخزين في الكاش
-                full_response = "".join(full_response_buffer)
-                if full_response:
+                full_response = "".join(
+                    [str(c) for c in full_response_buffer if isinstance(c, str)]
+                )
+                if full_response and intent_result.intent != ChatIntent.MISSION_COMPLEX:
                     await self._semantic_cache.set(question, full_response)
 
             except Exception as e:
                 logger.error(f"Failed to delegate to microservice agent: {e}", exc_info=True)
-                yield "عذرًا، حدث خطأ أثناء الاتصال بالوكيل الذكي."
+                # Fallback handled below implicitly if we return here?
+                # No, if we want fallback, we should continue execution to Step 3.
+                pass
 
-            return
+            if delegation_successful:
+                return
 
         # 2. التحقق من الذاكرة الدلالية (Semantic Cache) - للنوايا العادية
         # Mission Complex MUST bypass cache to ensure deterministic execution
