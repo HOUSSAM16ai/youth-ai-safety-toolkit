@@ -107,20 +107,20 @@ class MicroUser(SQLModel, table=True):
     )
 
     # Relationships - Only Auth related
-    roles: list["MicroRole"] = Relationship(
+    roles: list[MicroRole] = Relationship(
         back_populates="users",
         link_model="MicroUserRole",
         sa_relationship=relationship(
             "MicroRole", secondary="user_roles", back_populates="users"
         ),
     )
-    refresh_tokens: list["MicroRefreshToken"] = Relationship(
+    refresh_tokens: list[MicroRefreshToken] = Relationship(
         sa_relationship=relationship("MicroRefreshToken", back_populates="user"),
     )
-    password_reset_tokens: list["MicroPasswordResetToken"] = Relationship(
+    password_reset_tokens: list[MicroPasswordResetToken] = Relationship(
         sa_relationship=relationship("MicroPasswordResetToken", back_populates="user"),
     )
-    audit_logs: list["MicroAuditLog"] = Relationship(
+    audit_logs: list[MicroAuditLog] = Relationship(
         sa_relationship=relationship("MicroAuditLog", back_populates="actor"),
     )
 
@@ -166,7 +166,7 @@ class MicroRole(SQLModel, table=True):
             "MicroUser", secondary="user_roles", back_populates="roles"
         ),
     )
-    permissions: list["MicroPermission"] = Relationship(
+    permissions: list[MicroPermission] = Relationship(
         back_populates="roles",
         link_model="MicroRolePermission",
         sa_relationship=relationship(

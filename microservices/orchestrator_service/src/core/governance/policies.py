@@ -9,12 +9,12 @@ import logging
 
 from pydantic import Field
 
+# Updated to use microservice model
+from microservices.orchestrator_service.src.models.mission import MissionStatus
+
 from .contracts import GovernanceModel
 from .decision import DecisionRecord, Policy
 from .errors import FailureClass
-
-# Updated to use microservice model
-from microservices.orchestrator_service.src.models.mission import MissionStatus
 
 logger = logging.getLogger(__name__)
 
