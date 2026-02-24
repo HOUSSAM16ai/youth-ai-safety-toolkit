@@ -218,13 +218,19 @@ class RealityKernel:
 
         # Start Redis Event Bridge (Streaming BFF)
         redis_bridge = get_redis_bridge()
-        await redis_bridge.start()
+        try:
+            await redis_bridge.start()
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to start Redis Event Bridge: {e}")
 
         logger.info("✅ System Ready")
         yield
 
         # Shutdown Redis Event Bridge
-        await redis_bridge.stop()
+        try:
+            await redis_bridge.stop()
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to stop Redis Event Bridge: {e}")
 
         # Stop Observability Sync
         try:

@@ -118,6 +118,24 @@ async def user_proxy(path: str, request: Request) -> StreamingResponse:
 
 
 @app.api_route(
+    "/api/v1/auth/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+    dependencies=[Depends(verify_gateway_request)],
+)
+async def auth_proxy(path: str, request: Request) -> StreamingResponse:
+    """
+    Proxy Auth routes (Login/Register) to User Service.
+    Resolves ambiguity between Monolith UMS and Microservice.
+    """
+    return await proxy_handler.forward(
+        request,
+        settings.USER_SERVICE_URL,
+        f"api/v1/auth/{path}",
+        service_token=create_service_token(),
+    )
+
+
+@app.api_route(
     "/api/v1/observability/{path:path}",
     methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
     dependencies=[Depends(verify_gateway_request)],
