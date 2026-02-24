@@ -15,6 +15,7 @@ from .logic import (
     derive_root_causes,
     detect_anomaly,
     determine_healing_plan,
+    percentile,
     predict_load,
     serialize_capacity_plan,
 )
@@ -356,6 +357,130 @@ class AIOpsService:
                 else None
             ),
         }
+
+    # ==================================================================================
+    # MONOLITH COMPATIBILITY (GOLDEN SIGNALS & PERFORMANCE)
+    # ==================================================================================
+
+    def get_golden_signals(self) -> dict[str, JsonValue]:
+        """تجميع الإشارات الذهبية للتوافق مع المونوليث."""
+        # Calculate global metrics across all services or just return aggregate
+        # For simplicity, we aggregate everything.
+        all_metrics = self.telemetry_repo.get_all()
+
+        # Helper to get values for a metric type
+        def get_values(m_type: MetricType) -> list[float]:
+            values = []
+            for q in all_metrics.values():
+                values.extend([d.value for d in q if d.metric_type == m_type])
+            return values
+
+        # Latency
+        latencies = get_values(MetricType.LATENCY)
+        if not latencies:
+            latencies = [0.0]
+
+        latency_metrics = {
+            "p50": percentile(latencies, 50),
+            "p95": percentile(latencies, 95),
+            "p99": percentile(latencies, 99),
+            "p99.9": percentile(latencies, 99.9)
+            if len(latencies) >= 1000
+            else percentile(latencies, 99),
+            "avg": sum(latencies) / len(latencies),
+        }
+
+        # Traffic
+        # Request Rate (RPS) - average of latest rates
+        rates = get_values(MetricType.REQUEST_RATE)
+        avg_rate = sum(rates) / len(rates) if rates else 0.0
+        # Total requests - count of latency points (assuming 1 latency pt per request)
+        total_requests = len(latencies) if latencies != [0.0] else 0
+
+        traffic_metrics = {
+            "requests_per_second": avg_rate,
+            "total_requests": total_requests,
+        }
+
+        # Errors
+        error_rates = get_values(MetricType.ERROR_RATE)
+        avg_error_rate = sum(error_rates) / len(error_rates) if error_rates else 0.0
+        # Estimate count
+        error_count = int(total_requests * avg_error_rate)
+
+        error_metrics = {
+            "error_rate": avg_error_rate,
+            "error_count": error_count,
+        }
+
+        # Saturation
+        # Use active requests (if available) or queue depth proxy
+        # Since we don't strictly store active_requests, we return 0 or mock
+        saturation_metrics = {
+            "active_requests": 0,
+            "queue_depth": 0,
+            "active_spans": None,
+            "resource_utilization": None,
+        }
+
+        return {
+            "latency": latency_metrics,
+            "traffic": traffic_metrics,
+            "errors": error_metrics,
+            "saturation": saturation_metrics,
+        }
+
+    def get_performance_snapshot(self) -> dict[str, JsonValue]:
+        """لقطة الأداء الحالية."""
+        all_metrics = self.telemetry_repo.get_all()
+
+        def get_latest(m_type: MetricType) -> float:
+            latest = 0.0
+            for q in all_metrics.values():
+                relevant = [d for d in q if d.metric_type == m_type]
+                if relevant:
+                    latest = max(latest, relevant[-1].value)  # Max across services
+            return latest
+
+        return {
+            "cpu_usage": get_latest(MetricType.CPU_USAGE),
+            "memory_usage": get_latest(MetricType.MEMORY_USAGE),
+            "active_requests": int(get_latest(MetricType.REQUEST_RATE)),  # Proxy
+        }
+
+    def get_endpoint_analytics(self, path: str) -> list[dict[str, JsonValue]]:
+        """تحليلات نقطة نهاية محددة."""
+        # This requires filtering by path in labels.
+        # Since InMemoryTelemetryRepository is structured by "service:metric", we iterate all.
+        all_metrics = self.telemetry_repo.get_all()
+
+        relevant_latencies = []
+        errors = 0
+
+        for q in all_metrics.values():
+            for d in q:
+                if d.labels.get("path") == path:
+                    if d.metric_type == MetricType.LATENCY:
+                        relevant_latencies.append(d.value)
+                    elif d.metric_type == MetricType.ERROR_RATE and d.value > 0:
+                        errors += 1  # Rough count
+
+        if not relevant_latencies:
+            return []
+
+        avg_lat = sum(relevant_latencies) / len(relevant_latencies)
+        p95_lat = percentile(relevant_latencies, 95)
+
+        # Aggregate into one item per path (since path is unique here)
+        return [
+            {
+                "path": path,
+                "avg_latency": avg_lat,
+                "p95_latency": p95_lat,
+                "error_count": errors,
+                "total_calls": len(relevant_latencies),
+            }
+        ]
 
 
 # Singleton Instance

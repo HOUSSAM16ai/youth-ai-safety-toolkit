@@ -50,7 +50,10 @@ class ObservabilityBoundaryService:
         """
         استرجاع الإشارات الذهبية الخاصة بالموثوقية (زمن الاستجابة، الحركة، الأخطاء، التشبع).
         """
-        return self.telemetry.get_golden_signals()
+        try:
+            return await self.client.get_golden_signals()
+        except Exception:
+            return self.telemetry.get_golden_signals()
 
     async def get_aiops_metrics(self) -> dict[str, object]:
         """
@@ -71,13 +74,19 @@ class ObservabilityBoundaryService:
         """
         الحصول على لقطة شاملة لإحصاءات الأداء.
         """
-        return self.telemetry.get_statistics()
+        try:
+            return await self.client.get_performance_snapshot()
+        except Exception:
+            return self.telemetry.get_statistics()
 
     async def get_endpoint_analytics(self, path: str) -> list[dict[str, object]]:
         """
         تحليل آثار التتبع لمسار واجهة برمجة تطبيقات محدد.
         """
-        return self.telemetry.find_traces_by_criteria(operation_name=path)
+        try:
+            return await self.client.get_endpoint_analytics(path)
+        except Exception:
+            return self.telemetry.find_traces_by_criteria(operation_name=path)
 
     async def get_active_alerts(self) -> list[dict[str, object]]:
         """

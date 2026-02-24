@@ -108,5 +108,23 @@ class ObservabilityServiceClient:
         response.raise_for_status()
         return response.json()["risk_score"]
 
+    async def get_golden_signals(self) -> dict:
+        """Get golden signals from the microservice."""
+        response = await self.client.get("/golden-signals")
+        response.raise_for_status()
+        return response.json()
+
+    async def get_performance_snapshot(self) -> dict:
+        """Get performance snapshot from the microservice."""
+        response = await self.client.get("/performance")
+        response.raise_for_status()
+        return response.json()
+
+    async def get_endpoint_analytics(self, path: str) -> list[dict]:
+        """Get endpoint analytics from the microservice."""
+        response = await self.client.get(f"/analytics/{path}")
+        response.raise_for_status()
+        return response.json()
+
     async def close(self):
         await self.client.aclose()

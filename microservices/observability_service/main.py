@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 
 from fastapi import Depends, FastAPI
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from microservices.observability_service.errors import (
     BadRequestError,
@@ -116,6 +116,74 @@ class CapacityPlanResponse(BaseModel):
     """استجابة خطة السعة بعد التوليد."""
 
     plan: CapacityPlanPayload
+
+
+class LatencyMetrics(BaseModel):
+    """مقاييس زمن الاستجابة للمسارات الساخنة."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    p50: float = Field(..., description="الوسيط")
+    p95: float = Field(..., description="النسبة المئوية 95")
+    p99: float = Field(..., description="النسبة المئوية 99")
+    p99_9: float = Field(..., alias="p99.9", description="النسبة المئوية 99.9")
+    avg: float = Field(..., description="المتوسط العام")
+
+
+class TrafficMetrics(BaseModel):
+    """إحصاءات حركة المرور على مستوى الخدمة."""
+
+    requests_per_second: float = Field(..., description="عدد الطلبات في الثانية")
+    total_requests: int = Field(..., description="إجمالي الطلبات في النافذة الزمنية")
+
+
+class ErrorMetrics(BaseModel):
+    """مقاييس الأخطاء ونسبة فشل الطلبات."""
+
+    error_rate: float = Field(..., description="معدل الأخطاء بالنسبة المئوية")
+    error_count: int = Field(..., description="عدد الأخطاء الملاحظة")
+
+
+class SaturationMetrics(BaseModel):
+    """مؤشرات التشبع واستهلاك الموارد."""
+
+    active_requests: int = Field(..., description="عدد الطلبات النشطة")
+    queue_depth: int = Field(..., description="عمق طابور التنفيذ")
+    active_spans: int | None = Field(None, description="عدد المقاطع التتبعية الفعّالة")
+    resource_utilization: float | None = Field(None, description="نسبة استهلاك الموارد")
+
+
+class GoldenSignalsResponse(BaseModel):
+    """
+    نموذج الإشارات الذهبية (SRE Golden Signals).
+    """
+
+    latency: LatencyMetrics = Field(..., description="مقاييس زمن الاستجابة")
+    traffic: TrafficMetrics = Field(..., description="حركة المرور")
+    errors: ErrorMetrics = Field(..., description="نسبة الأخطاء")
+    saturation: SaturationMetrics = Field(..., description="مؤشرات التشبع")
+
+
+class PerformanceSnapshotResponse(BaseModel):
+    """
+    نموذج لقطة الأداء.
+    """
+
+    cpu_usage: float = Field(..., description="استهلاك المعالج (%)")
+    memory_usage: float = Field(..., description="استهلاك الذاكرة (%)")
+    active_requests: int = Field(..., description="عدد الطلبات النشطة")
+
+
+class EndpointAnalyticsResponse(BaseModel):
+    """
+    نموذج تحليلات نقطة النهاية.
+    """
+
+    path: str = Field(..., description="مسار نقطة النهاية")
+    avg_latency: float = Field(..., description="متوسط زمن الاستجابة")
+    p95_latency: float = Field(..., description="P95 Latency")
+    error_count: int = Field(0, description="عدد الأخطاء")
+    total_calls: int = Field(0, description="إجمالي الاستدعاءات")
 
 
 def _register_routes(app: FastAPI, settings: ObservabilitySettings) -> None:
@@ -258,6 +326,43 @@ def _register_routes(app: FastAPI, settings: ObservabilitySettings) -> None:
         service = get_aiops_service()
         causes = service.analyze_root_cause(anomaly_id)
         return {"anomaly_id": anomaly_id, "root_causes": causes}
+
+    @app.get(
+        "/golden-signals",
+        response_model=GoldenSignalsResponse,
+        tags=["Telemetry"],
+        summary="إشارات ذهبية (SRE)",
+        dependencies=[Depends(verify_service_token)],
+    )
+    async def get_golden_signals() -> GoldenSignalsResponse:
+        """استرجاع الإشارات الذهبية للتوافق مع المونوليث."""
+        service = get_aiops_service()
+        return GoldenSignalsResponse(**service.get_golden_signals())
+
+    @app.get(
+        "/performance",
+        response_model=PerformanceSnapshotResponse,
+        tags=["Telemetry"],
+        summary="لقطة الأداء",
+        dependencies=[Depends(verify_service_token)],
+    )
+    async def get_performance_snapshot() -> PerformanceSnapshotResponse:
+        """استرجاع لقطة الأداء الحالية."""
+        service = get_aiops_service()
+        return PerformanceSnapshotResponse(**service.get_performance_snapshot())
+
+    @app.get(
+        "/analytics/{path:path}",
+        response_model=list[EndpointAnalyticsResponse],
+        tags=["Telemetry"],
+        summary="تحليلات نقطة النهاية",
+        dependencies=[Depends(verify_service_token)],
+    )
+    async def get_endpoint_analytics(path: str) -> list[EndpointAnalyticsResponse]:
+        """استرجاع تحليلات لنقطة نهاية محددة."""
+        service = get_aiops_service()
+        results = service.get_endpoint_analytics(path)
+        return [EndpointAnalyticsResponse(**r) for r in results]
 
 
 @asynccontextmanager
