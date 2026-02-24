@@ -91,7 +91,9 @@ class ObservabilityBoundaryService:
             return [
                 {
                     "id": a.alert_id,
-                    "severity": a.severity.value if hasattr(a.severity, "value") else str(a.severity),
+                    "severity": a.severity.value
+                    if hasattr(a.severity, "value")
+                    else str(a.severity),
                     "message": a.description,
                     "timestamp": datetime.fromtimestamp(a.timestamp, UTC).isoformat(),
                     "status": "resolved" if a.resolved else "active",

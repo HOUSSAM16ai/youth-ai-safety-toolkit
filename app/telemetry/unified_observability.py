@@ -68,6 +68,7 @@ class UnifiedObservabilityService:
         self._stop_event = asyncio.Event()
 
         from app.services.boundaries.observability_client import ObservabilityServiceClient
+
         self.client = ObservabilityServiceClient()
 
     async def start_background_sync(self) -> None:

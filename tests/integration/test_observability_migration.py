@@ -38,6 +38,7 @@ async def test_observability_migration_flush_metrics():
     assert call_args.value == 123.0
     assert call_args.labels["env"] == "test"
 
+
 @pytest.mark.asyncio
 async def test_observability_migration_boundary_alerts():
     # Setup
@@ -54,6 +55,7 @@ async def test_observability_migration_boundary_alerts():
     # Verify
     assert alerts == [{"id": "alert1", "status": "active"}]
     assert mock_client.get_active_alerts.called
+
 
 @pytest.mark.asyncio
 async def test_observability_migration_boundary_fallback():
