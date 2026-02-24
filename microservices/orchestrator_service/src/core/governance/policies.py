@@ -9,9 +9,9 @@ import logging
 
 from pydantic import Field
 
-from app.core.governance.contracts import GovernanceModel
-from app.core.governance.decision import DecisionRecord, Policy
-from app.core.governance.errors import FailureClass
+from .contracts import GovernanceModel
+from .decision import DecisionRecord, Policy
+from .errors import FailureClass
 
 # Updated to use microservice model
 from microservices.orchestrator_service.src.models.mission import MissionStatus

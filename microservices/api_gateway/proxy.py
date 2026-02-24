@@ -1,9 +1,9 @@
 import asyncio
 import logging
 import time
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from enum import StrEnum
-from typing import Any
+from typing import ParamSpec, TypeVar
 
 import httpx
 from fastapi import HTTPException, Request, status
@@ -12,6 +12,9 @@ from fastapi.responses import StreamingResponse
 from microservices.api_gateway.config import settings
 
 logger = logging.getLogger("api_gateway")
+
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 class CircuitState(StrEnum):
@@ -39,7 +42,7 @@ class CircuitBreaker:
         self.failures = 0
         self.last_failure_time = 0.0
 
-    async def execute(self, func: Callable[..., Any], *args, **kwargs) -> Any:
+    async def execute(self, func: Callable[P, Awaitable[R]], *args: P.args, **kwargs: P.kwargs) -> R:
         """
         Executes the given async function with circuit breaker logic.
         """
@@ -125,7 +128,7 @@ class GatewayProxy:
         """
         breaker = self._get_breaker(target_url)
 
-        async def _do_request():
+        async def _do_request() -> httpx.Response:
             url = f"{target_url}/{path}"
 
             # Prepare headers

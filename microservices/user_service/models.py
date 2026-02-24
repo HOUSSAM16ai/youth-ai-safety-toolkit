@@ -1,44 +1,351 @@
-"""واجهة نماذج خدمة المستخدمين.
-
-يوحّد هذا الملف تعريفات النماذج عبر إعادة تصدير نماذج النطاق الأساسية
-بدلاً من إعادة تعريف نفس الجداول مرة أخرى داخل عملية الاختبارات.
-هذا يمنع تضارب المعرّفات (Mapper Conflicts) عند تشغيل اختبارات المونوليث
-واختبارات الخدمة المصغّرة في نفس جلسة Python.
+"""
+User Domain Models (Microservice Version).
+Decoupled from Monolith Core.
 """
 
 from __future__ import annotations
 
+import uuid
 from datetime import UTC, datetime
+from enum import Enum, StrEnum
 
-from sqlmodel import SQLModel
-
-from app.core.domain.audit import AuditLog
-from app.core.domain.user import (
-    PasswordResetToken,
-    Permission,
-    RefreshToken,
-    Role,
-    RolePermission,
-    User,
-    UserRole,
-    UserStatus,
-)
+from sqlalchemy import Column, DateTime, String, func
+from sqlalchemy.orm import relationship
+from sqlmodel import Field, Relationship, SQLModel
 
 
 def utc_now() -> datetime:
-    """إرجاع الوقت الحالي بتوقيت UTC."""
+    """Returns current UTC time."""
     return datetime.now(UTC)
 
 
-# Aliases for compatibility with existing imports
-MicroUser = User
-MicroRole = Role
-MicroPermission = Permission
-MicroUserRole = UserRole
-MicroRolePermission = RolePermission
-MicroRefreshToken = RefreshToken
-MicroPasswordResetToken = PasswordResetToken
-MicroAuditLog = AuditLog
+from sqlalchemy import Text, TypeDecorator
+from sqlalchemy.engine.interfaces import Dialect
+
+
+class FlexibleEnum(TypeDecorator):
+    """
+    Flexible Enum Type Decorator for SQLAlchemy.
+    Stores as TEXT, handles case-insensitivity on retrieval.
+    """
+
+    impl = Text
+    cache_ok = True
+
+    def __init__(self, enum_type: type[Enum], *args: object, **kwargs: object) -> None:
+        super().__init__(*args, **kwargs)
+        self._enum_type = enum_type
+
+    def process_bind_param(self, value: object, dialect: Dialect) -> object:
+        if value is None:
+            return None
+        if isinstance(value, self._enum_type):
+            return value.value
+        if isinstance(value, str):
+            try:
+                return self._enum_type(value).value
+            except ValueError:
+                return value.lower()
+        return value
+
+    def process_result_value(self, value: object, dialect: Dialect) -> object:
+        if value is None:
+            return None
+        if isinstance(value, self._enum_type):
+            return value
+        try:
+            return self._enum_type(value)
+        except Exception:
+            resolved = self._enum_type._missing_(value)
+            return resolved or value
+
+
+class CaseInsensitiveEnum(StrEnum):
+    """Case insensitive enum mixin."""
+
+    @classmethod
+    def _missing_(cls, value):
+        for member in cls:
+            if member.value.lower() == value.lower():
+                return member
+        return None
+
+
+class UserStatus(CaseInsensitiveEnum):
+    """User Lifecycle Status."""
+    ACTIVE = "active"
+    SUSPENDED = "suspended"
+    PENDING = "pending"
+    DISABLED = "disabled"
+
+
+class MicroUser(SQLModel, table=True):
+    __tablename__ = "users"
+    __table_args__ = {"extend_existing": True}
+
+    id: int | None = Field(default=None, primary_key=True)
+    external_id: str = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        sa_column=Column(String(36), unique=True, nullable=True),
+    )
+    full_name: str = Field(max_length=150)
+    email: str = Field(max_length=150, unique=True, index=True)
+    password_hash: str | None = Field(default=None, max_length=256)
+    is_admin: bool = Field(default=False)
+    is_active: bool = Field(default=True)
+    status: UserStatus = Field(
+        sa_column=Column(FlexibleEnum(UserStatus), default=UserStatus.ACTIVE),
+        default=UserStatus.ACTIVE,
+    )
+    created_at: datetime = Field(
+        default_factory=utc_now,
+        sa_column=Column(DateTime(timezone=True), server_default=func.now()),
+    )
+    updated_at: datetime = Field(
+        default_factory=utc_now,
+        sa_column=Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now()),
+    )
+
+    # Relationships - Only Auth related
+    roles: list["MicroRole"] = Relationship(
+        back_populates="users",
+        link_model="MicroUserRole",
+        sa_relationship=relationship(
+            "MicroRole", secondary="user_roles", back_populates="users"
+        ),
+    )
+    refresh_tokens: list["MicroRefreshToken"] = Relationship(
+        sa_relationship=relationship("MicroRefreshToken", back_populates="user"),
+    )
+    password_reset_tokens: list["MicroPasswordResetToken"] = Relationship(
+        sa_relationship=relationship("MicroPasswordResetToken", back_populates="user"),
+    )
+    audit_logs: list["MicroAuditLog"] = Relationship(
+        sa_relationship=relationship("MicroAuditLog", back_populates="actor"),
+    )
+
+    def set_password(self, password: str) -> None:
+        from passlib.context import CryptContext
+        pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+        self.password_hash = pwd_context.hash(password)
+
+    def check_password(self, password: str) -> bool:
+        if not self.password_hash:
+            return False
+        from passlib.context import CryptContext
+        pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+        return pwd_context.verify(password, self.password_hash)
+
+    def verify_password(self, password: str) -> bool:
+        return self.check_password(password)
+
+    def __repr__(self):
+        return f"<MicroUser id={self.id} email={self.email}>"
+
+
+class MicroRole(SQLModel, table=True):
+    __tablename__ = "roles"
+    __table_args__ = {"extend_existing": True}
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(max_length=100, sa_column=Column(String(100), unique=True))
+    description: str | None = Field(default=None, max_length=255)
+    created_at: datetime = Field(
+        default_factory=utc_now,
+        sa_column=Column(DateTime(timezone=True), server_default=func.now()),
+    )
+    updated_at: datetime = Field(
+        default_factory=utc_now,
+        sa_column=Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now()),
+    )
+
+    users: list[MicroUser] = Relationship(
+        back_populates="roles",
+        link_model="MicroUserRole",
+        sa_relationship=relationship(
+            "MicroUser", secondary="user_roles", back_populates="roles"
+        ),
+    )
+    permissions: list["MicroPermission"] = Relationship(
+        back_populates="roles",
+        link_model="MicroRolePermission",
+        sa_relationship=relationship(
+            "MicroPermission",
+            secondary="role_permissions",
+            back_populates="roles",
+        ),
+    )
+
+
+class MicroPermission(SQLModel, table=True):
+    __tablename__ = "permissions"
+    __table_args__ = {"extend_existing": True}
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(max_length=100, sa_column=Column(String(100), unique=True))
+    description: str | None = Field(default=None, max_length=255)
+    created_at: datetime = Field(
+        default_factory=utc_now,
+        sa_column=Column(DateTime(timezone=True), server_default=func.now()),
+    )
+    updated_at: datetime = Field(
+        default_factory=utc_now,
+        sa_column=Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now()),
+    )
+
+    roles: list[MicroRole] = Relationship(
+        back_populates="permissions",
+        link_model="MicroRolePermission",
+        sa_relationship=relationship(
+            "MicroRole",
+            secondary="role_permissions",
+            back_populates="permissions",
+        ),
+    )
+
+
+class MicroUserRole(SQLModel, table=True):
+    __tablename__ = "user_roles"
+    __table_args__ = {"extend_existing": True}
+
+    user_id: int = Field(foreign_key="users.id", primary_key=True, index=True)
+    role_id: int = Field(foreign_key="roles.id", primary_key=True, index=True)
+    created_at: datetime = Field(
+        default_factory=utc_now,
+        sa_column=Column(DateTime(timezone=True), server_default=func.now()),
+    )
+
+
+class MicroRolePermission(SQLModel, table=True):
+    __tablename__ = "role_permissions"
+    __table_args__ = {"extend_existing": True}
+
+    role_id: int = Field(foreign_key="roles.id", primary_key=True, index=True)
+    permission_id: int = Field(foreign_key="permissions.id", primary_key=True, index=True)
+    created_at: datetime = Field(
+        default_factory=utc_now,
+        sa_column=Column(DateTime(timezone=True), server_default=func.now()),
+    )
+
+
+class MicroRefreshToken(SQLModel, table=True):
+    __tablename__ = "refresh_tokens"
+    __table_args__ = {"extend_existing": True}
+
+    id: int | None = Field(default=None, primary_key=True)
+    token_id: str = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        sa_column=Column(String(36), unique=True, nullable=False),
+    )
+    family_id: str = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        sa_column=Column(String(36), index=True, nullable=False),
+    )
+    user_id: int = Field(foreign_key="users.id", index=True)
+    hashed_token: str = Field(max_length=255)
+    expires_at: datetime = Field(sa_column=Column(DateTime(timezone=True), index=True))
+    revoked_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True)))
+    replaced_by_token_id: str | None = Field(
+        default=None, sa_column=Column(String(36), nullable=True, index=True)
+    )
+    created_ip: str | None = Field(default=None, max_length=64)
+    user_agent: str | None = Field(default=None, max_length=255)
+    created_at: datetime = Field(
+        default_factory=utc_now,
+        sa_column=Column(DateTime(timezone=True), server_default=func.now()),
+    )
+
+    user: MicroUser = Relationship(
+        sa_relationship=relationship("MicroUser", back_populates="refresh_tokens")
+    )
+
+    def revoke(self, *, revoked_at: datetime | None = None, replaced_by: str | None = None) -> None:
+        self.revoked_at = revoked_at or utc_now()
+        self.replaced_by_token_id = replaced_by
+
+    def is_active(self, *, now: datetime | None = None) -> bool:
+        current_time = now or utc_now()
+        if current_time.tzinfo is None:
+            current_time = current_time.replace(tzinfo=UTC)
+
+        expiry = self.expires_at
+        if expiry.tzinfo is None:
+            expiry = expiry.replace(tzinfo=UTC)
+
+        return self.revoked_at is None and current_time < expiry
+
+
+class MicroPasswordResetToken(SQLModel, table=True):
+    __tablename__ = "password_resets"
+    __table_args__ = {"extend_existing": True}
+
+    id: int | None = Field(default=None, primary_key=True)
+    token_id: str = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        sa_column=Column(String(36), unique=True, nullable=False),
+    )
+    hashed_token: str = Field(max_length=255, sa_column=Column(String(255), unique=True))
+    user_id: int = Field(foreign_key="users.id", index=True)
+    expires_at: datetime = Field(sa_column=Column(DateTime(timezone=True), index=True))
+    redeemed_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True)))
+    requested_ip: str | None = Field(default=None, max_length=64)
+    user_agent: str | None = Field(default=None, max_length=255)
+    created_at: datetime = Field(
+        default_factory=utc_now,
+        sa_column=Column(DateTime(timezone=True), server_default=func.now()),
+    )
+
+    user: MicroUser = Relationship(
+        sa_relationship=relationship(
+            "MicroUser", back_populates="password_reset_tokens"
+        )
+    )
+
+    def is_active(self, *, now: datetime | None = None) -> bool:
+        moment = now or utc_now()
+        if moment.tzinfo is None:
+            moment = moment.replace(tzinfo=UTC)
+        expiry = self.expires_at
+        if expiry.tzinfo is None:
+            expiry = expiry.replace(tzinfo=UTC)
+        if self.redeemed_at and self.redeemed_at.tzinfo is None:
+            self.redeemed_at = self.redeemed_at.replace(tzinfo=UTC)
+        return self.redeemed_at is None and moment < expiry
+
+    def mark_redeemed(self, *, redeemed_at: datetime | None = None) -> None:
+        self.redeemed_at = redeemed_at or utc_now()
+
+
+class MicroAuditLog(SQLModel, table=True):
+    __tablename__ = "audit_logs"
+    __table_args__ = {"extend_existing": True}
+
+    id: int | None = Field(default=None, primary_key=True)
+    actor_id: int | None = Field(default=None, foreign_key="users.id")
+    action: str = Field(index=True)
+    target_resource: str | None = Field(default=None)
+    target_id: str | None = Field(default=None)
+    ip_address: str | None = Field(default=None)
+    user_agent: str | None = Field(default=None)
+    timestamp: datetime = Field(
+        default_factory=utc_now,
+        sa_column=Column(DateTime(timezone=True), server_default=func.now()),
+    )
+
+    actor: MicroUser | None = Relationship(
+        sa_relationship=relationship("MicroUser", back_populates="audit_logs")
+    )
+
+
+# Aliases for compatibility
+User = MicroUser
+Role = MicroRole
+Permission = MicroPermission
+UserRole = MicroUserRole
+RolePermission = MicroRolePermission
+RefreshToken = MicroRefreshToken
+PasswordResetToken = MicroPasswordResetToken
+AuditLog = MicroAuditLog
 
 __all__ = [
     "AuditLog",
