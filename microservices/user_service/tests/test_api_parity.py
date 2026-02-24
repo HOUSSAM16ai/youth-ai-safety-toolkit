@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from microservices.user_service.src.services.auth.service import AuthService
 
+
 @pytest.mark.asyncio
 async def test_refresh_token(client: AsyncClient, session: AsyncSession):
     # Setup
