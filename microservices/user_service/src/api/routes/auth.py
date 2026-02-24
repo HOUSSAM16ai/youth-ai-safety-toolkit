@@ -8,8 +8,13 @@ from microservices.user_service.security import get_auth_service, get_current_us
 from microservices.user_service.src.schemas.auth import (
     AuthResponse,
     LoginRequest,
+    LogoutRequest,
+    ReauthRequest,
+    ReauthResponse,
+    RefreshRequest,
     RegisterRequest,
     RegisterResponse,
+    TokenGenerateResponse,
     TokenVerifyRequest,
     TokenVerifyResponse,
     UserResponse,
@@ -57,6 +62,54 @@ async def login(
         user=user_response,
         status="success",
     )
+
+
+@router.post("/refresh", response_model=TokenGenerateResponse)
+async def refresh_token(
+    payload: RefreshRequest,
+    request: Request,
+    service: AuthService = Depends(get_auth_service),
+) -> TokenGenerateResponse:
+    tokens = await service.refresh_session(
+        refresh_token=payload.refresh_token,
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("User-Agent"),
+    )
+    return TokenGenerateResponse(
+        access_token=tokens["access_token"],
+        refresh_token=tokens["refresh_token"],
+        token_type=tokens["token_type"],
+    )
+
+
+@router.post("/reauth", response_model=ReauthResponse)
+async def reauth(
+    payload: ReauthRequest,
+    request: Request,
+    user=Depends(get_current_user),
+    service: AuthService = Depends(get_auth_service),
+) -> ReauthResponse:
+    token, expires_in = await service.issue_reauth_proof(
+        user=user,
+        password=payload.password,
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("User-Agent"),
+    )
+    return ReauthResponse(reauth_token=token, expires_in=expires_in)
+
+
+@router.post("/logout")
+async def logout(
+    payload: LogoutRequest,
+    request: Request,
+    service: AuthService = Depends(get_auth_service),
+) -> dict[str, str]:
+    await service.logout(
+        refresh_token=payload.refresh_token,
+        ip=request.client.host if request.client else None,
+        user_agent=request.headers.get("User-Agent"),
+    )
+    return {"status": "logged_out"}
 
 
 @router.get("/user/me", response_model=UserResponse)

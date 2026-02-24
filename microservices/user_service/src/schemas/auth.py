@@ -39,6 +39,23 @@ class TokenVerifyRequest(RobustBaseModel):
     token: str | None = None
 
 
+class ReauthRequest(RobustBaseModel):
+    password: str
+
+
+class ReauthResponse(RobustBaseModel):
+    reauth_token: str
+    expires_in: int
+
+
+class RefreshRequest(RobustBaseModel):
+    refresh_token: str
+
+
+class LogoutRequest(RobustBaseModel):
+    refresh_token: str
+
+
 class UserResponse(RobustBaseModel):
     id: int
     name: str = Field(

@@ -18,50 +18,6 @@ class UserStatus(CaseInsensitiveEnum):
     DISABLED = "disabled"
 
 
-class RegisterRequest(BaseModel):
-    full_name: str
-    email: str
-    password: str
-
-    @field_validator("email")
-    @classmethod
-    def normalize_email(cls, value: str) -> str:
-        return value.lower().strip()
-
-
-class LoginRequest(BaseModel):
-    email: str
-    password: str
-
-    @field_validator("email")
-    @classmethod
-    def normalize_email(cls, value: str) -> str:
-        return value.lower().strip()
-
-
-class TokenPair(BaseModel):
-    access_token: str
-    refresh_token: str
-    token_type: str = "Bearer"
-
-
-class ReauthRequest(BaseModel):
-    password: str
-
-
-class ReauthResponse(BaseModel):
-    reauth_token: str
-    expires_in: int
-
-
-class RefreshRequest(BaseModel):
-    refresh_token: str
-
-
-class LogoutRequest(BaseModel):
-    refresh_token: str
-
-
 class PasswordResetRequest(BaseModel):
     email: str
 
