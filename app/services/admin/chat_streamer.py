@@ -61,6 +61,9 @@ class AdminChatStreamer:
             ChatStreamEvent: أحداث WebSocket منظمة على شكل قاموس.
         """
         # 1. إرسال حدث التهيئة
+        # 1. تحديث التاريخ (لضمان تناسق الحالة في الواجهة)
+        self._update_history_with_question(history, question)
+
         yield self._create_init_event(conversation)
 
         # 2. تنفيذ البث مع الحفظ
@@ -92,6 +95,10 @@ class AdminChatStreamer:
                                 yield self._create_size_limit_error()
                                 break
 
+                    # Compatibility: Map 'assistant_delta' to 'delta' for legacy frontend support
+                    if evt_type == "assistant_delta":
+                        event["type"] = "delta"
+
                     yield event
                 else:
                     # String fallback
@@ -109,6 +116,15 @@ class AdminChatStreamer:
         except Exception as e:
             logger.error(f"🔥 Streaming error: {e}", exc_info=True)
             yield self._create_error_event(str(e))
+
+    def _update_history_with_question(
+        self, history: list[dict[str, object]], question: str
+    ) -> None:
+        """
+        تحديث التاريخ بالسؤال الجديد.
+        """
+        if not history or history[-1].get("content") != question:
+            history.append({"role": "user", "content": question})
 
     def _create_init_event(self, conversation: AdminConversation) -> ChatStreamEvent:
         """

@@ -18,11 +18,12 @@ async def test_chat_stream_has_delta_event_type(test_app, db_session):
     mock_ai_client = MagicMock()
 
     async def mock_process(*args, **kwargs):
-        yield "Hello"
-        yield " World"
+        # Return NDJSON events as dicts or strings
+        yield {"type": "assistant_delta", "payload": {"content": "Hello"}}
+        yield {"type": "assistant_delta", "payload": {"content": " World"}}
 
-    mock_orchestrator = MagicMock()
-    mock_orchestrator.process.side_effect = mock_process
+    mock_orchestrator_client = MagicMock()
+    mock_orchestrator_client.chat_with_agent.side_effect = mock_process
 
     admin_user = User(email="ws-admin@example.com", full_name="Admin", is_admin=True)
     admin_user.set_password("Secret123!")
@@ -45,7 +46,7 @@ async def test_chat_stream_has_delta_event_type(test_app, db_session):
 
     with patch.dict(test_app.dependency_overrides, overrides):
         with patch(
-            "app.services.admin.chat_streamer.get_chat_orchestrator", return_value=mock_orchestrator
+            "app.services.admin.chat_streamer.orchestrator_client", mock_orchestrator_client
         ):
             with TestClient(test_app) as client:
                 with client.websocket_connect(f"/admin/api/chat/ws?token={token}") as websocket:

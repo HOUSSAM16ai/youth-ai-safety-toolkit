@@ -212,17 +212,15 @@ async def test_stream_chat_response_flow(service):
     mock_session_factory = MagicMock()
     mock_session_factory.return_value.__aenter__.return_value = mock_session
 
-    # Mock orchestrator
-    with patch("app.services.admin.chat_streamer.get_chat_orchestrator") as mock_get_orch:
-        mock_orch = MagicMock()
-        mock_get_orch.return_value = mock_orch
+    # Mock orchestrator client
+    with patch("app.services.admin.chat_streamer.orchestrator_client") as mock_client:
+        # The streamer calls orchestrator_client.chat_with_agent, which returns an async generator
+        async def mock_chat(*args, **kwargs):
+            # Simulate NDJSON events
+            yield {"type": "assistant_delta", "payload": {"content": "World"}}
+            yield {"type": "assistant_delta", "payload": {"content": "!"}}
 
-        # The streamer calls orchestrator.process, which returns an async generator of strings
-        async def mock_process(*args, **kwargs):
-            yield "World"
-            yield "!"
-
-        mock_orch.process.side_effect = mock_process
+        mock_client.chat_with_agent.side_effect = mock_chat
 
         generator = service.stream_chat_response(
             actor, conversation, question, history, ai_client, mock_session_factory
@@ -234,24 +232,30 @@ async def test_stream_chat_response_flow(service):
 
         # Verify events
         assert any(event.get("type") == "conversation_init" for event in events)
+        # The new streamer passes through "assistant_delta" events but maps them to "delta"
         assert any(
-            event.get("type") == "delta" and event.get("payload", {}).get("content") == "World"
+            event.get("type") == "delta"
+            and event.get("payload", {}).get("content") == "World"
             for event in events
         )
         assert any(
-            event.get("type") == "delta" and event.get("payload", {}).get("content") == "!"
+            event.get("type") == "delta"
+            and event.get("payload", {}).get("content") == "!"
             for event in events
         )
 
-        # Verify history update
+        # Verify history update (Streamer no longer updates history object in place, it creates clean copy)
+        # But we passed history list reference, check if it was modified?
+        # Actually streamer method `stream_response` calls `_update_history_with_question` at start.
+        # So history reference passed in should be updated.
+        # Let's check `AdminChatStreamer.stream_response` implementation.
+        # Yes, `self._update_history_with_question(history, question)` is called.
         assert history[-1]["content"] == "Hello"
 
-        # Verify persistence - it happens in a shielded task which might run after the generator finishes
-        # We need to ensure the async task has time to complete
+        # Verify persistence
         await asyncio.sleep(0.1)
 
         mock_session.add.assert_called()
-        # Ensure the content saved is "World!"
         args, _ = mock_session.add.call_args
         saved_msg = args[0]
         assert saved_msg.content == "World!"
@@ -272,10 +276,8 @@ async def test_stream_chat_response_error_handling(service):
     mock_session_factory = MagicMock()
     mock_session_factory.return_value.__aenter__.return_value = mock_session
 
-    with patch("app.services.admin.chat_streamer.get_chat_orchestrator") as mock_get_orch:
-        mock_orch = MagicMock()
-        mock_orch.process.side_effect = Exception("Orchestrator Failure")
-        mock_get_orch.return_value = mock_orch
+    with patch("app.services.admin.chat_streamer.orchestrator_client") as mock_client:
+        mock_client.chat_with_agent.side_effect = Exception("Orchestrator Failure")
 
         generator = service.stream_chat_response(
             actor, conversation, question, history, ai_client, mock_session_factory
