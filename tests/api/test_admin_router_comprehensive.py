@@ -174,7 +174,11 @@ def test_chat_stream_ws_success(app):
             ) as mock_chat:
                 with client.websocket_connect("/admin/api/chat/ws") as websocket:
                     websocket.send_json(
-                        {"question": "Hello", "mission_type": "mission_complex", "conversation_id": 123}
+                        {
+                            "question": "Hello",
+                            "mission_type": "mission_complex",
+                            "conversation_id": 123,
+                        }
                     )
 
                     # Receive status first (200)
@@ -197,4 +201,7 @@ def test_chat_stream_ws_success(app):
                     assert call_args.kwargs["question"] == "Hello"
                     assert call_args.kwargs["user_id"] == 1
                     assert call_args.kwargs["conversation_id"] == 123
-                    assert call_args.kwargs["context"] == {"role": "admin", "intent": "mission_complex"}
+                    assert call_args.kwargs["context"] == {
+                        "role": "admin",
+                        "intent": "mission_complex",
+                    }

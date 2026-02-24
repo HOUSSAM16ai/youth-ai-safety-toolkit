@@ -199,9 +199,7 @@ async def chat_stream_ws(
                 context["intent"] = mission_type
 
             # Maintain protocol compatibility: Send explicit status message
-            await websocket.send_json(
-                {"type": "status", "payload": {"status_code": 200}}
-            )
+            await websocket.send_json({"type": "status", "payload": {"status_code": 200}})
 
             content_delivered = False
 
