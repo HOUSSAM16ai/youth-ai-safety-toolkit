@@ -234,13 +234,11 @@ async def test_stream_chat_response_flow(service):
         assert any(event.get("type") == "conversation_init" for event in events)
         # The new streamer passes through "assistant_delta" events but maps them to "delta"
         assert any(
-            event.get("type") == "delta"
-            and event.get("payload", {}).get("content") == "World"
+            event.get("type") == "delta" and event.get("payload", {}).get("content") == "World"
             for event in events
         )
         assert any(
-            event.get("type") == "delta"
-            and event.get("payload", {}).get("content") == "!"
+            event.get("type") == "delta" and event.get("payload", {}).get("content") == "!"
             for event in events
         )
 
