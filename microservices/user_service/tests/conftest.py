@@ -27,12 +27,12 @@ async def fixture_session() -> AsyncGenerator[AsyncSession, None]:
         await conn.run_sync(SQLModel.metadata.create_all)
 
     from sqlalchemy.orm import sessionmaker
-    async_session = sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
+
+    async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async with async_session() as session:
         yield session
+
 
 @pytest.fixture(name="client")
 async def fixture_client(session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
@@ -51,12 +51,11 @@ async def fixture_client(session: AsyncSession) -> AsyncGenerator[AsyncClient, N
     settings.DATABASE_URL = "sqlite+aiosqlite:///:memory:"
     settings.ENVIRONMENT = "testing"
 
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         yield client
 
     app.dependency_overrides.clear()
+
 
 @pytest.fixture
 async def admin_user(session: AsyncSession) -> User:
@@ -71,6 +70,7 @@ async def admin_user(session: AsyncSession) -> User:
     )
     await service.promote_to_admin(user=user)
     return user
+
 
 @pytest.fixture
 async def admin_token(admin_user: User, session: AsyncSession) -> str:
