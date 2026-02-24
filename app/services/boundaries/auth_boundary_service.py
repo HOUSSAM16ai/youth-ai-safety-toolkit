@@ -428,10 +428,9 @@ class AuthBoundaryService:
             # Create a temporary AuthService to handle complex token logic
             # This is a bit hacky but preserves logic without duplicating 100 lines of token code
             local_service = AuthService(self.db, self.settings)
-            result = await local_service.refresh_session(
+            return await local_service.refresh_session(
                 refresh_token=refresh_token, ip=ip, user_agent=user_agent
             )
-            return result
         except Exception as e:
             logger.error(f"Local refresh failed: {e}")
             raise HTTPException(status_code=401, detail="Invalid refresh token") from e

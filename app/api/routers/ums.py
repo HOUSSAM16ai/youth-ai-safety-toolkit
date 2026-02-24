@@ -91,7 +91,7 @@ async def register_user(
     payload: RegisterRequest,
     auth_service: AuthBoundaryService = Depends(get_auth_service),
 ) -> TokenPair:
-    client_ip, user_agent = _audit_context(request)
+    _, _ = _audit_context(request)
 
     # 1. Register via Microservice
     await auth_service.register_user(
@@ -130,6 +130,7 @@ async def get_me(
     # AuthBoundaryService doesn't expose rbac directly, but initialized AuthPersistence with session.
     # We can access auth_service.db
     from app.services.rbac import RBACService
+
     rbac = RBACService(auth_service.db)
     roles = await rbac.user_roles(current.user.id)
 
