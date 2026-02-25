@@ -7,7 +7,6 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import pool, text
 from sqlalchemy.ext.asyncio import create_async_engine
-from sqlmodel import SQLModel
 
 # --- 1. ENVIRONMENT BOOTSTRAP ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -17,6 +16,7 @@ sys.path.append(root_dir)
 # Import Service Specific Models and Settings
 try:
     from microservices.orchestrator_service.src.models.mission import *  # noqa
+    from microservices.orchestrator_service.src.models.mission import OrchestratorSQLModel
     from microservices.orchestrator_service.src.core.config import get_settings
 except ImportError as e:
     print(f"Error importing service modules: {e}")
@@ -33,7 +33,7 @@ if config.config_file_name is not None:
 logger = logging.getLogger("alembic.env")
 
 # --- 3. METADATA CONFIGURATION ---
-target_metadata = SQLModel.metadata
+target_metadata = OrchestratorSQLModel.metadata
 
 # --- 4. SCHEMA CONFIGURATION ---
 target_schema = "orchestrator"

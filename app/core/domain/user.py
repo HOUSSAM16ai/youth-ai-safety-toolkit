@@ -73,8 +73,9 @@ class User(SQLModel, table=True):
     )
     missions: list[Mission] = Relationship(
         sa_relationship=relationship(
-            "Mission",
+            "app.core.domain.mission.Mission",
             back_populates="initiator",
+            foreign_keys="[Mission.initiator_id]",
             viewonly=True,
         )
     )

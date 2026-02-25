@@ -9,7 +9,7 @@ import json
 from datetime import datetime
 from enum import Enum, StrEnum
 
-from sqlalchemy import Column, DateTime, Text, func
+from sqlalchemy import Column, DateTime, MetaData, Text, func
 from sqlalchemy.orm import relationship
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -54,6 +54,13 @@ class JSONText(Text):
 
         return process
 
+
+
+
+class OrchestratorSQLModel(SQLModel):
+    """قاعدة SQLModel مع metadata معزولة لخدمة المنسق."""
+
+    metadata = MetaData()
 
 class MissionStatus(CaseInsensitiveEnum):
     PENDING = "pending"
@@ -101,7 +108,7 @@ class MissionEventType(CaseInsensitiveEnum):
     FINALIZED = "mission_finalized"
 
 
-class MicroMission(SQLModel, table=True):
+class MicroMission(OrchestratorSQLModel, table=True):
     __tablename__ = "missions"
     __table_args__ = {"extend_existing": True}
     id: int | None = Field(default=None, primary_key=True)
@@ -149,7 +156,7 @@ class MicroMission(SQLModel, table=True):
     )
 
 
-class MicroMissionPlan(SQLModel, table=True):
+class MicroMissionPlan(OrchestratorSQLModel, table=True):
     __tablename__ = "mission_plans"
     __table_args__ = {"extend_existing": True}
     id: int | None = Field(default=None, primary_key=True)
@@ -182,7 +189,7 @@ class MicroMissionPlan(SQLModel, table=True):
     )
 
 
-class MicroTask(SQLModel, table=True):
+class MicroTask(OrchestratorSQLModel, table=True):
     __tablename__ = "tasks"
     __table_args__ = {"extend_existing": True}
     id: int | None = Field(default=None, primary_key=True)
@@ -232,7 +239,7 @@ class MicroTask(SQLModel, table=True):
     )
 
 
-class MicroMissionEvent(SQLModel, table=True):
+class MicroMissionEvent(OrchestratorSQLModel, table=True):
     __tablename__ = "mission_events"
     __table_args__ = {"extend_existing": True}
     id: int | None = Field(default=None, primary_key=True)
@@ -251,7 +258,7 @@ class MicroMissionEvent(SQLModel, table=True):
     )
 
 
-class MicroMissionOutbox(SQLModel, table=True):
+class MicroMissionOutbox(OrchestratorSQLModel, table=True):
     """
     Transactional Outbox for Mission Events.
     Ensures that events are published to the Event Bus (Redis) reliably.
