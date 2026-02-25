@@ -10,6 +10,7 @@ from microservices.orchestrator_service.src.api import routes
 from microservices.orchestrator_service.src.core.config import settings
 from microservices.orchestrator_service.src.core.database import init_db
 from microservices.orchestrator_service.src.core.event_bus import event_bus
+from microservices.orchestrator_service.src.services.tools.registry import register_all_tools
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("orchestrator_service")
@@ -19,6 +20,11 @@ logger = logging.getLogger("orchestrator_service")
 async def lifespan(app: FastAPI):
     logger.info("Orchestrator Service Starting...")
     await init_db()
+
+    # Initialize Tools Registry (CRITICAL for Agent Functionality)
+    # This populates the global tool registry used by OrchestratorAgent and TaskExecutor
+    register_all_tools()
+
     yield
     logger.info("Orchestrator Service Shutting Down...")
     await event_bus.close()

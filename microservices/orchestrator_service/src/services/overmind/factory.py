@@ -41,10 +41,9 @@ from microservices.orchestrator_service.src.services.overmind.orchestrator impor
     OvermindOrchestrator,
 )
 from microservices.orchestrator_service.src.services.overmind.state import MissionStateManager
-from microservices.orchestrator_service.src.services.tools.content import register_content_tools
-from microservices.orchestrator_service.src.services.tools.registry import get_registry
-from microservices.orchestrator_service.src.services.tools.retrieval import (
-    search_educational_content,
+from microservices.orchestrator_service.src.services.tools.registry import (
+    get_registry,
+    register_all_tools,
 )
 
 __all__ = ["create_langgraph_service", "create_overmind"]
@@ -60,8 +59,8 @@ def _build_engine_with_components(
     # 1. Execution Layer
     registry = get_registry()
 
-    register_content_tools(registry)
-    registry["search_educational_content"] = search_educational_content
+    # استخدام وظيفة التسجيل المركزية لضمان توحيد الأدوات
+    register_all_tools()
 
     # تم تحديث TaskExecutor ليقبل السجل صراحةً (Dependency Injection)
     executor = TaskExecutor(
