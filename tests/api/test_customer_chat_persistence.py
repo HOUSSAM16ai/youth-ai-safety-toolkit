@@ -65,7 +65,9 @@ def _consume_stream_until_terminal(websocket: object) -> list[dict[str, object]]
 
 
 @pytest.mark.asyncio
-async def test_customer_chat_stream_delivers_final_message(test_app, db_session: AsyncSession) -> None:
+async def test_customer_chat_stream_delivers_final_message(
+    test_app, db_session: AsyncSession
+) -> None:
     async def mock_chat_with_agent(**kwargs: object) -> AsyncGenerator[dict[str, object], None]:
         yield {"type": "assistant_delta", "payload": {"content": "Hello"}}
         yield {"type": "assistant_final", "payload": {"content": "Hello learner"}}

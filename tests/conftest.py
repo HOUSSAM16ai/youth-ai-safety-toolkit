@@ -168,8 +168,6 @@ def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line("markers", "asyncio: تشغيل اختبارات غير متزامنة")
 
 
-
-
 def pytest_collection_modifyitems(
     session: pytest.Session,
     config: pytest.Config,
@@ -183,6 +181,7 @@ def pytest_collection_modifyitems(
         return (1 if is_microservice_test else 0, path_text)
 
     items.sort(key=_priority)
+
 
 def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     """يفرض نجاحًا كاملًا عبر فشل الجلسة عند وجود تخطٍ أو تحذيرات اختبارية."""
