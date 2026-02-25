@@ -5,9 +5,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi.testclient import TestClient
 from sqlmodel import SQLModel
 
-
-def mock_verify_token():
-    return True
+# Force SQLite before any imports
+os.environ["ORCHESTRATOR_DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
+os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
 
 
 def test_create_mission_endpoint():
@@ -15,17 +15,18 @@ def test_create_mission_endpoint():
     Test creating a mission via the Orchestrator Service API.
     Ensures the microservice is correctly wired up and handles requests.
     """
-    os.environ["ORCHESTRATOR_DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
-
-    from microservices.orchestrator_service.main import app
+    # Lazy import to ensure env vars take effect
+    # Rename to avoid conflict with top-level 'app' package
+    from microservices.orchestrator_service.main import app as fastapi_app
     from microservices.orchestrator_service.src.core.database import engine, get_db
 
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+    # IMPORT DOMAIN MODELS TO REGISTER THEM WITH SQLALCHEMY METADATA
+    # This fixes the "NoForeignKeysError" because both Mission and User must be
+    # registered in the same metadata instance before create_all is called.
+    import app.core.domain.user  # noqa: F401
+    import app.core.domain.mission  # noqa: F401
 
+    # Create tables in the SQLite memory DB
     async def init_tables():
         # Deduplicate indexes to handle potential accumulation from multiple test runs
         for table in SQLModel.metadata.tables.values():
@@ -39,6 +40,12 @@ def test_create_mission_endpoint():
         async with engine.begin() as conn:
             await conn.run_sync(SQLModel.metadata.create_all)
 
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
     loop.run_until_complete(init_tables())
 
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -50,12 +57,13 @@ def test_create_mission_endpoint():
         async with test_session_maker() as session:
             yield session
 
-    app.dependency_overrides[get_db] = override_get_db
+    fastapi_app.dependency_overrides[get_db] = override_get_db
 
     # Mock EventBus
     mock_event_bus = AsyncMock()
     mock_event_bus.publish = AsyncMock()
     mock_event_bus.subscribe.return_value = AsyncMock()
+    mock_event_bus.close = AsyncMock()
 
     # Mock Redis Client
     mock_redis_client = AsyncMock()
@@ -85,8 +93,10 @@ def test_create_mission_endpoint():
             "redis.asyncio.from_url",
             return_value=mock_redis_client,
         ),
+        # Ensure we don't try to connect to real Redis during app startup/shutdown events if any
+        patch("microservices.orchestrator_service.main.event_bus", mock_event_bus),
     ):
-        with TestClient(app) as client:
+        with TestClient(fastapi_app) as client:
             payload = {
                 "objective": "Test Mission Objective",
                 "context": {"env": "test"},

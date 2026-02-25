@@ -98,3 +98,4 @@ tavily-python
 firecrawl-py
 redis>=5.0.0
 langgraph-sdk==0.3.6
+argon2-cffi
