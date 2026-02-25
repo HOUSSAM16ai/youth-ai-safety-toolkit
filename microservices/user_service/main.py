@@ -1,12 +1,12 @@
 """
-User Service Main Entrypoint.
+نقطة الدخول الرئيسية لخدمة المستخدمين.
 """
 
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
 
-from microservices.user_service.database import init_db
+from microservices.user_service.database import async_session_factory, init_db
 from microservices.user_service.errors import setup_exception_handlers
 from microservices.user_service.health import HealthResponse, build_health_payload
 from microservices.user_service.logging import get_logger, setup_logging
@@ -14,6 +14,7 @@ from microservices.user_service.security import verify_service_token
 from microservices.user_service.settings import UserServiceSettings, get_settings
 from microservices.user_service.src.api.routes import auth as auth_router
 from microservices.user_service.src.api.routes import ums as ums_router
+from microservices.user_service.src.core.seed import seed_initial_data
 
 logger = get_logger("user-service")
 
@@ -23,6 +24,8 @@ async def lifespan(app: FastAPI):
     setup_logging(get_settings().SERVICE_NAME)
     logger.info("Service Starting...")
     await init_db()
+    async with async_session_factory() as session:
+        await seed_initial_data(session)
     yield
     logger.info("Service Shutting Down...")
 
