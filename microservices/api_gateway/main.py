@@ -177,8 +177,20 @@ async def reasoning_proxy(path: str, request: Request) -> StreamingResponse:
     dependencies=[Depends(verify_gateway_request)],
 )
 async def orchestrator_proxy(path: str, request: Request) -> StreamingResponse:
+    if settings.ENABLE_MICROSERVICE_MISSIONS:
+        return await proxy_handler.forward(
+            request,
+            settings.ORCHESTRATOR_SERVICE_URL,
+            path,
+            service_token=create_service_token(),
+        )
+
+    logger.warning("Routing Overmind traffic to Legacy Monolith (Rollback Active)")
     return await proxy_handler.forward(
-        request, settings.ORCHESTRATOR_SERVICE_URL, path, service_token=create_service_token()
+        request,
+        settings.CORE_KERNEL_URL,
+        f"api/v1/overmind/{path}",
+        service_token=create_service_token(),
     )
 
 
@@ -191,11 +203,21 @@ async def missions_root_proxy(request: Request) -> StreamingResponse:
     """
     Strangler Fig: Route missions root to Orchestrator Service.
     Decouples mission control from the Monolith.
+    Controlled by Feature Flag for Rollback Safety.
     """
+    if settings.ENABLE_MICROSERVICE_MISSIONS:
+        return await proxy_handler.forward(
+            request,
+            settings.ORCHESTRATOR_SERVICE_URL,
+            "missions",
+            service_token=create_service_token(),
+        )
+
+    logger.warning("Routing /missions to Legacy Monolith (Rollback Active)")
     return await proxy_handler.forward(
         request,
-        settings.ORCHESTRATOR_SERVICE_URL,
-        "missions",
+        settings.CORE_KERNEL_URL,
+        "api/v1/missions",
         service_token=create_service_token(),
     )
 
@@ -209,10 +231,19 @@ async def missions_path_proxy(path: str, request: Request) -> StreamingResponse:
     """
     Strangler Fig: Route missions paths to Orchestrator Service.
     """
+    if settings.ENABLE_MICROSERVICE_MISSIONS:
+        return await proxy_handler.forward(
+            request,
+            settings.ORCHESTRATOR_SERVICE_URL,
+            f"missions/{path}",
+            service_token=create_service_token(),
+        )
+
+    logger.warning(f"Routing /missions/{path} to Legacy Monolith (Rollback Active)")
     return await proxy_handler.forward(
         request,
-        settings.ORCHESTRATOR_SERVICE_URL,
-        f"missions/{path}",
+        settings.CORE_KERNEL_URL,
+        f"api/v1/missions/{path}",
         service_token=create_service_token(),
     )
 

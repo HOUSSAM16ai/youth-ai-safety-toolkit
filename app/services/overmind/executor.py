@@ -43,11 +43,22 @@ class TaskExecutor:
         """
         تهيئة المنفذ.
 
+        DEPRECATED: Local execution in Monolith is deprecated.
+        Use Orchestrator Service for mission execution.
+
         Args:
             state_manager (MissionStateManagerProtocol): مدير الحالة (لتسجيل النتائج الجزئية إذا لزم الأمر).
             registry (ToolRegistry): سجل الأدوات المحقون (Dependency Injection).
             tool_timeout_seconds (float): حد زمني افتراضي لتنفيذ كل أداة (بالثواني).
         """
+        import warnings
+
+        warnings.warn(
+            "TaskExecutor in Monolith is deprecated. Use Orchestrator Service.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
         self.state_manager = state_manager
         self.registry = registry
         self.tool_timeout_seconds = tool_timeout_seconds

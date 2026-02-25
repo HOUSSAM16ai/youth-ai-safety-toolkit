@@ -36,6 +36,10 @@ class Settings(BaseSettings):
     MAX_RETRIES: int = 3
     RETRY_BACKOFF_FACTOR: float = 0.5  # Base backoff in seconds
 
+    # Feature Flags (Rollback & Migration)
+    ENABLE_MICROSERVICE_MISSIONS: bool = True  # Default to New Architecture
+    ENABLE_LEGACY_OVERMIND: bool = False  # Failsafe Rollback
+
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=True, extra="ignore"
     )

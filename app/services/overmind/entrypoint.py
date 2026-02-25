@@ -25,7 +25,14 @@ async def start_mission(
 ) -> Mission:
     """
     Unified Entrypoint to Start a Mission via Orchestrator Service.
-    Handles Idempotency and Execution Trigger remotely.
+
+    ARCHITECTURAL NOTE:
+    -------------------
+    This function is a STRICT PROXY to the Orchestrator Service.
+    Local execution of missions within the Monolith (Core Kernel) is FORBIDDEN.
+    The Single Source of Truth for Mission Command and State is the Orchestrator Service.
+
+    Any attempt to bypass this delegation violates the 'Split-Brain' prevention policy.
 
     Args:
         session: The active database session (unused in decoupled mode).
@@ -38,6 +45,8 @@ async def start_mission(
     Returns:
         The created Mission object (Transient/Proxy).
     """
+    logger.info(f"Delegating Mission Execution to Orchestrator Service: {objective[:50]}...")
+
     try:
         # Delegate to Orchestrator Service
         # We wrap the context to match API expected schema
