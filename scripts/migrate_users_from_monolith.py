@@ -17,8 +17,14 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("migration")
 
 # Default to Docker network defaults for internal migration
-SOURCE_DB_URL = os.getenv("SOURCE_DB_URL", "postgresql+asyncpg://postgres:password@postgres-core:5432/core_db")
-DEST_DB_URL = os.getenv("DEST_DB_URL", "postgresql+asyncpg://postgres:password@postgres-user:5432/user_db?options=-c%20search_path%3Duser_service")
+SOURCE_DB_URL = os.getenv(
+    "SOURCE_DB_URL", "postgresql+asyncpg://postgres:password@postgres-core:5432/core_db"
+)
+DEST_DB_URL = os.getenv(
+    "DEST_DB_URL",
+    "postgresql+asyncpg://postgres:password@postgres-user:5432/user_db?options=-c%20search_path%3Duser_service",
+)
+
 
 def get_engine(url_str):
     url = make_url(url_str)
@@ -34,15 +40,16 @@ def get_engine(url_str):
         url = url.set(query=query_dict)
 
         if ssl_mode == "require":
-             connect_args["ssl"] = "require"
+            connect_args["ssl"] = "require"
         elif ssl_mode == "disable":
-             connect_args["ssl"] = False
+            connect_args["ssl"] = False
 
     # If using sqlite, check_same_thread=False
     if "sqlite" in url.drivername:
         connect_args = {"check_same_thread": False}
 
     return create_async_engine(url, connect_args=connect_args)
+
 
 async def migrate():
     logger.info("Starting migration...")
@@ -68,9 +75,16 @@ async def migrate():
 
                     if users:
                         columns = [
-                            "id", "external_id", "full_name", "email",
-                            "password_hash", "is_admin", "is_active", "status",
-                            "created_at", "updated_at"
+                            "id",
+                            "external_id",
+                            "full_name",
+                            "email",
+                            "password_hash",
+                            "is_admin",
+                            "is_active",
+                            "status",
+                            "created_at",
+                            "updated_at",
                         ]
                         keys = users[0].keys()
                         valid_columns = [k for k in columns if k in keys]
@@ -107,7 +121,9 @@ async def migrate():
                         cols_str = ", ".join(valid_columns)
                         vals_str = ", ".join([f":{k}" for k in valid_columns])
 
-                        stmt = text(f"INSERT INTO roles ({cols_str}) VALUES ({vals_str}) ON CONFLICT (id) DO NOTHING")
+                        stmt = text(
+                            f"INSERT INTO roles ({cols_str}) VALUES ({vals_str}) ON CONFLICT (id) DO NOTHING"
+                        )
                         for role in roles:
                             await dest_conn.execute(stmt, {k: role[k] for k in valid_columns})
                         logger.info(f"Migrated {len(roles)} roles.")
@@ -127,7 +143,9 @@ async def migrate():
                         cols_str = ", ".join(valid_columns)
                         vals_str = ", ".join([f":{k}" for k in valid_columns])
 
-                        stmt = text(f"INSERT INTO permissions ({cols_str}) VALUES ({vals_str}) ON CONFLICT (id) DO NOTHING")
+                        stmt = text(
+                            f"INSERT INTO permissions ({cols_str}) VALUES ({vals_str}) ON CONFLICT (id) DO NOTHING"
+                        )
                         for perm in permissions:
                             await dest_conn.execute(stmt, {k: perm[k] for k in valid_columns})
                         logger.info(f"Migrated {len(permissions)} permissions.")
@@ -147,9 +165,11 @@ async def migrate():
                         cols_str = ", ".join(valid_columns)
                         vals_str = ", ".join([f":{k}" for k in valid_columns])
 
-                        stmt = text(f"INSERT INTO user_roles ({cols_str}) VALUES ({vals_str}) ON CONFLICT (user_id, role_id) DO NOTHING")
+                        stmt = text(
+                            f"INSERT INTO user_roles ({cols_str}) VALUES ({vals_str}) ON CONFLICT (user_id, role_id) DO NOTHING"
+                        )
                         for ur in user_roles:
-                             await dest_conn.execute(stmt, {k: ur[k] for k in valid_columns})
+                            await dest_conn.execute(stmt, {k: ur[k] for k in valid_columns})
                         logger.info(f"Migrated {len(user_roles)} user_roles.")
                 except Exception as e:
                     logger.error(f"Error migrating user_roles: {e}")
@@ -167,7 +187,9 @@ async def migrate():
                         cols_str = ", ".join(valid_columns)
                         vals_str = ", ".join([f":{k}" for k in valid_columns])
 
-                        stmt = text(f"INSERT INTO role_permissions ({cols_str}) VALUES ({vals_str}) ON CONFLICT (role_id, permission_id) DO NOTHING")
+                        stmt = text(
+                            f"INSERT INTO role_permissions ({cols_str}) VALUES ({vals_str}) ON CONFLICT (role_id, permission_id) DO NOTHING"
+                        )
                         for rp in role_perms:
                             await dest_conn.execute(stmt, {k: rp[k] for k in valid_columns})
                         logger.info(f"Migrated {len(role_perms)} role_permissions.")
@@ -181,6 +203,7 @@ async def migrate():
     finally:
         await source_engine.dispose()
         await dest_engine.dispose()
+
 
 if __name__ == "__main__":
     asyncio.run(migrate())

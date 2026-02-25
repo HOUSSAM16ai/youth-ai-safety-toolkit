@@ -43,12 +43,10 @@ async def seed_initial_data(session: AsyncSession) -> None:
     try:
         # Create user
         admin_email = "admin@cogniforge.com"
-        admin_pass = "admin" # Default weak password for initial setup
+        admin_pass = "admin"  # Default weak password for initial setup
 
         user = await auth_service.register_user(
-            full_name="System Admin",
-            email=admin_email,
-            password=admin_pass
+            full_name="System Admin", email=admin_email, password=admin_pass
         )
 
         # Make Active (just in case default is pending)
