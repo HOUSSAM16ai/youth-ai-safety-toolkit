@@ -1,7 +1,10 @@
 from unittest.mock import AsyncMock, patch
+
 from fastapi.testclient import TestClient
+
 from microservices.orchestrator_service.main import app
 from microservices.orchestrator_service.src.services.tools.registry import get_registry
+
 
 @patch("microservices.orchestrator_service.main.init_db", new_callable=AsyncMock)
 @patch("microservices.orchestrator_service.main.event_bus.close", new_callable=AsyncMock)
