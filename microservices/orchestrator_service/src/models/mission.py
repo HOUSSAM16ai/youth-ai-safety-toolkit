@@ -55,12 +55,11 @@ class JSONText(Text):
         return process
 
 
-
-
 class OrchestratorSQLModel(SQLModel):
     """قاعدة SQLModel مع metadata معزولة لخدمة المنسق."""
 
     metadata = MetaData()
+
 
 class MissionStatus(CaseInsensitiveEnum):
     PENDING = "pending"
