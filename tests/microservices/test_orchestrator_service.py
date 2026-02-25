@@ -15,16 +15,16 @@ def test_create_mission_endpoint():
     Test creating a mission via the Orchestrator Service API.
     Ensures the microservice is correctly wired up and handles requests.
     """
+    # IMPORT DOMAIN MODELS TO REGISTER THEM WITH SQLALCHEMY METADATA
+    # This fixes the "NoForeignKeysError" because both Mission and User must be
+    # registered in the same metadata instance before create_all is called.
+    import app.core.domain.mission
+    import app.core.domain.user  # noqa: F401
+
     # Lazy import to ensure env vars take effect
     # Rename to avoid conflict with top-level 'app' package
     from microservices.orchestrator_service.main import app as fastapi_app
     from microservices.orchestrator_service.src.core.database import engine, get_db
-
-    # IMPORT DOMAIN MODELS TO REGISTER THEM WITH SQLALCHEMY METADATA
-    # This fixes the "NoForeignKeysError" because both Mission and User must be
-    # registered in the same metadata instance before create_all is called.
-    import app.core.domain.user  # noqa: F401
-    import app.core.domain.mission  # noqa: F401
 
     # Create tables in the SQLite memory DB
     async def init_tables():
