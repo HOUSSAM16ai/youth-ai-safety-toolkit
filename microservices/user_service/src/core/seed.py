@@ -3,12 +3,13 @@
 """
 
 import logging
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from microservices.user_service.models import User, UserStatus
 from microservices.user_service.src.services.auth.service import AuthService
-from microservices.user_service.src.services.rbac import ADMIN_ROLE, RBACService
+from microservices.user_service.src.services.rbac import RBACService
 
 logger = logging.getLogger(__name__)
 
