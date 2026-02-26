@@ -24,9 +24,9 @@ info:
     email: support@cogniforge.ai
 
 servers:
-  - url: http://localhost:8000/gateway
+  - url: http://localhost:8000/gateway/v1
     description: Local Development
-  - url: https://api.cogniforge.ai/gateway
+  - url: https://api.cogniforge.ai/gateway/v1
     description: Production
 
 tags:
@@ -71,6 +71,19 @@ paths:
                         type: number
                         format: float
                         description: نسبة الخدمات الصحية
+              examples:
+                healthy:
+                  value:
+                    gateway: "healthy"
+                    services:
+                      user-service:
+                        healthy: true
+                        response_time_ms: 45.2
+                        last_check: "2024-01-01T12:00:00Z"
+                    summary:
+                      healthy: 1
+                      total: 1
+                      percentage: 100.0
 
   /services:
     get:
@@ -94,8 +107,17 @@ paths:
                   count:
                     type: integer
                     description: عدد الخدمات
+              examples:
+                services_list:
+                  value:
+                    services:
+                      - name: "user-service"
+                        base_url: "http://user-service:8000"
+                        health_path: "/health"
+                        timeout: 5
+                    count: 1
 
-  /{service_name}/{path}:
+  /{service-name}/{path}:
     get:
       summary: توجيه طلب GET
       description: يوجه طلب GET إلى الخدمة المحددة
@@ -103,39 +125,45 @@ paths:
       tags:
         - Gateway
       parameters:
-        - name: service_name
+        - name: service-name
           in: path
           required: true
           schema:
             type: string
-          description: اسم الخدمة المستهدفة
+          description: اسم الخدمة المستهدفة (Target service name)
         - name: path
           in: path
           required: true
           schema:
             type: string
-          description: المسار في الخدمة المستهدفة
+          description: المسار في الخدمة المستهدفة (Path in target service)
       responses:
         '200':
           description: استجابة من الخدمة
         '404':
           description: الخدمة غير موجودة
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                detail: "Service 'unknown-service' not found"
         '502':
           description: فشل الاتصال بالخدمة
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                detail: "Bad Gateway: Failed to connect to service"
         '503':
           description: الخدمة غير متاحة
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                detail: "Service Unavailable"
     
     post:
       summary: توجيه طلب POST
@@ -143,31 +171,51 @@ paths:
       operationId: proxyPostRequest
       tags:
         - Gateway
+      security:
+        - BearerAuth: []
       parameters:
-        - name: service_name
+        - name: service-name
           in: path
           required: true
           schema:
             type: string
+          description: اسم الخدمة المستهدفة (Target service name)
         - name: path
           in: path
           required: true
           schema:
             type: string
+          description: المسار في الخدمة المستهدفة (Path in target service)
       requestBody:
         content:
           application/json:
             schema:
               type: object
+            examples:
+              generic_payload:
+                value:
+                  key: "value"
       responses:
         '200':
           description: استجابة من الخدمة
         '404':
           description: الخدمة غير موجودة
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '502':
           description: فشل الاتصال بالخدمة
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '503':
           description: الخدمة غير متاحة
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
   schemas:
@@ -190,6 +238,11 @@ components:
           type: string
           nullable: true
           description: رسالة الخطأ إن وجدت
+      example:
+        healthy: true
+        response_time_ms: 120.5
+        last_check: "2024-01-01T12:00:00Z"
+        error: null
     
     ServiceInfo:
       type: object
@@ -207,6 +260,11 @@ components:
         timeout:
           type: integer
           description: مهلة الطلب بالثواني
+      example:
+        name: "payment-service"
+        base_url: "http://payment-service:8080"
+        health_path: "/health"
+        timeout: 10
     
     Error:
       type: object
@@ -214,6 +272,8 @@ components:
         detail:
           type: string
           description: تفاصيل الخطأ
+      example:
+        detail: "An unexpected error occurred."
 
   securitySchemes:
     BearerAuth:

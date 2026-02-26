@@ -206,6 +206,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Account'
+              examples:
+                created:
+                  value:
+                    id: "acc_1a2b3c4d"
+                    name: "أحمد محمد"
+                    type: "individual"
+                    status: "active"
+                    balance: 0
+                    currency: "USD"
+                    metadata:
+                      customer_id: "cust_123456"
+                      source: "web"
+                    created_at: "2025-01-15T10:30:00Z"
+                    updated_at: "2025-01-15T10:30:00Z"
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -219,9 +233,9 @@ paths:
         '422':
           $ref: '#/components/responses/ValidationError'
 
-  /accounts/{accountId}:
+  /accounts/{account-id}:
     parameters:
-      - name: accountId
+      - name: account-id
         in: path
         required: true
         description: معرف الحساب (Account identifier)
@@ -232,6 +246,10 @@ paths:
     get:
       tags: [Accounts]
       summary: استرجاع تفاصيل حساب (Get Account)
+      description: |
+        استرجاع التفاصيل الكاملة لحساب معين باستخدام المعرف الخاص به.
+
+        Retrieve full details of a specific account using its unique identifier.
       operationId: getAccount
       parameters:
         - name: If-None-Match
@@ -257,6 +275,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Account'
+              examples:
+                success:
+                  value:
+                    id: "acc_1a2b3c4d"
+                    name: "حساب العميل الأول"
+                    type: "individual"
+                    status: "active"
+                    balance: 10000
+                    currency: "USD"
+                    created_at: "2025-01-15T10:30:00Z"
+                    updated_at: "2025-01-20T14:45:00Z"
         '304':
           description: لم يتم التعديل (Not Modified)
         '404':
@@ -266,6 +295,10 @@ paths:
         - OAuth2: [write]
       tags: [Accounts]
       summary: تحديث حساب جزئياً (Partial Update Account)
+      description: |
+        تحديث بيانات الحساب بشكل جزئي. الحقول التي يتم إرسالها فقط هي التي سيتم تحديثها.
+
+        Partially update account details. Only provided fields will be updated.
       operationId: updateAccount
       parameters:
         - name: If-Match
@@ -279,6 +312,12 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateAccountRequest'
+            examples:
+              update_status:
+                value:
+                  status: "suspended"
+                  metadata:
+                    reason: "suspicious activity"
       responses:
         '200':
           description: تم التحديث بنجاح (Updated successfully)
@@ -286,6 +325,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Account'
+              examples:
+                updated:
+                  value:
+                    id: "acc_1a2b3c4d"
+                    name: "حساب العميل الأول"
+                    type: "individual"
+                    status: "suspended"
+                    balance: 10000
+                    currency: "USD"
+                    metadata:
+                      reason: "suspicious activity"
+                    created_at: "2025-01-15T10:30:00Z"
+                    updated_at: "2025-02-26T12:00:00Z"
         '404':
           $ref: '#/components/responses/NotFound'
         '412':
@@ -295,6 +347,10 @@ paths:
         - OAuth2: [admin]
       tags: [Accounts]
       summary: حذف حساب (Delete Account)
+      description: |
+        حذف حساب نهائياً من النظام. هذه العملية لا يمكن التراجع عنها.
+
+        Permanently delete an account from the system. This action cannot be undone.
       operationId: deleteAccount
       responses:
         '204':
@@ -327,6 +383,15 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreatePaymentRequest'
+            examples:
+              payment:
+                value:
+                  amount: 5000
+                  currency: "USD"
+                  destination_account_id: "acc_1a2b3c4d"
+                  description: "دفعة للخدمات المقدمة"
+                  metadata:
+                    order_id: "ord_987654"
       responses:
         '201':
           description: تم الإنشاء (Created)
@@ -338,6 +403,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Payment'
+              examples:
+                success:
+                  value:
+                    id: "pay_1a2b3c4d"
+                    status: "pending"
+                    amount: 5000
+                    currency: "USD"
+                    destination_account_id: "acc_1a2b3c4d"
+                    metadata:
+                      order_id: "ord_987654"
+                    created_at: "2025-02-26T12:05:00Z"
+                    updated_at: "2025-02-26T12:05:00Z"
         '400':
           $ref: '#/components/responses/BadRequest'
         '409':
@@ -382,8 +459,24 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Account'
+          description: قائمة الحسابات (List of accounts)
         pagination:
           $ref: '#/components/schemas/PaginationInfo'
+          description: معلومات التصفح (Pagination details)
+      example:
+        data:
+          - id: "acc_1a2b3c4d"
+            name: "حساب العميل الأول"
+            status: "active"
+            balance: 10000
+            currency: "USD"
+            created_at: "2025-01-15T10:30:00Z"
+            updated_at: "2025-01-20T14:45:00Z"
+        pagination:
+          next_cursor: "eyJpZCI6MTIzNDU3fQ=="
+          has_more: true
+          count: 50
+          total: 100
 
     PaginationInfo:
       type: object
@@ -407,6 +500,12 @@ components:
           type: integer
           nullable: true
           description: إجمالي العناصر (اختياري) (Total items - optional)
+      example:
+        next_cursor: "eyJpZCI6MTIzNDU3fQ=="
+        previous_cursor: null
+        has_more: true
+        count: 50
+        total: 100
 
     Account:
       type: object
@@ -455,6 +554,17 @@ components:
           type: string
           format: date-time
           description: تاريخ آخر تحديث (Last update timestamp)
+      example:
+        id: "acc_1a2b3c4d"
+        name: "حساب العميل الرئيسي"
+        type: "individual"
+        status: "active"
+        balance: 10000
+        currency: "USD"
+        metadata:
+          source: "web"
+        created_at: "2025-01-15T10:30:00Z"
+        updated_at: "2025-01-20T14:45:00Z"
 
     CreateAccountRequest:
       type: object
@@ -464,19 +574,29 @@ components:
           type: string
           minLength: 1
           maxLength: 200
+          description: اسم الحساب الجديد (New account name)
           example: "أحمد محمد"
         type:
           type: string
           enum: [individual, business]
+          description: نوع الحساب (Account type)
           default: individual
         currency:
           type: string
           pattern: '^[A-Z]{3}$'
+          description: رمز العملة (Currency code)
           example: "USD"
         metadata:
           type: object
           additionalProperties: true
+          description: بيانات وصفية (Metadata)
           maxProperties: 50
+      example:
+        name: "أحمد محمد"
+        type: "individual"
+        currency: "USD"
+        metadata:
+          customer_id: "cust_123456"
 
     UpdateAccountRequest:
       type: object
@@ -485,13 +605,21 @@ components:
           type: string
           minLength: 1
           maxLength: 200
+          description: الاسم الجديد (New name)
         status:
           type: string
           enum: [active, suspended, closed]
+          description: الحالة الجديدة (New status)
         metadata:
           type: object
           additionalProperties: true
+          description: تحديث البيانات الوصفية (Update metadata)
           maxProperties: 50
+      example:
+        name: "أحمد علي"
+        status: "suspended"
+        metadata:
+          reason: "compliance check"
 
     Payment:
       type: object
@@ -500,6 +628,7 @@ components:
         id:
           type: string
           pattern: '^pay_[a-zA-Z0-9]+$'
+          description: معرف الدفعة (Payment ID)
           example: "pay_1a2b3c4d"
         status:
           type: string
@@ -512,19 +641,34 @@ components:
         currency:
           type: string
           pattern: '^[A-Z]{3}$'
+          description: رمز العملة (Currency code)
           example: "USD"
         destination_account_id:
           type: string
           pattern: '^acc_[a-zA-Z0-9]+$'
+          description: معرف الحساب المستفيد (Destination account ID)
         metadata:
           type: object
           additionalProperties: true
+          description: بيانات وصفية (Metadata)
         created_at:
           type: string
           format: date-time
+          description: تاريخ الإنشاء (Created at)
         updated_at:
           type: string
           format: date-time
+          description: تاريخ التحديث (Updated at)
+      example:
+        id: "pay_1a2b3c4d"
+        status: "settled"
+        amount: 5000
+        currency: "USD"
+        destination_account_id: "acc_1a2b3c4d"
+        metadata:
+          order_id: "ord_123"
+        created_at: "2025-01-15T10:30:00Z"
+        updated_at: "2025-01-15T10:35:00Z"
 
     CreatePaymentRequest:
       type: object
@@ -538,19 +682,30 @@ components:
         currency:
           type: string
           pattern: '^[A-Z]{3}$'
+          description: رمز العملة (Currency code)
           example: "USD"
         destination_account_id:
           type: string
           pattern: '^acc_[a-zA-Z0-9]+$'
+          description: معرف الحساب المستفيد (Destination account ID)
           example: "acc_1a2b3c4d"
         description:
           type: string
           maxLength: 500
+          description: وصف الدفعة (Payment description)
           example: "دفعة للخدمات المقدمة"
         metadata:
           type: object
           additionalProperties: true
+          description: بيانات وصفية (Metadata)
           maxProperties: 50
+      example:
+        amount: 5000
+        currency: "USD"
+        destination_account_id: "acc_1a2b3c4d"
+        description: "Services payment"
+        metadata:
+          invoice_id: "inv_123"
 
     ProblemDetails:
       type: object
@@ -587,6 +742,14 @@ components:
           type: string
           format: date-time
           description: وقت حدوث الخطأ (Error occurrence time)
+      example:
+        type: "https://api.cogniforge.com/errors/bad-request"
+        title: "Bad Request"
+        status: 400
+        detail: "الطلب غير صحيح. تحقق من البيانات المرسلة."
+        instance: "https://api.cogniforge.com/v1/accounts/123"
+        request_id: "req_1a2b3c4d"
+        timestamp: "2025-01-15T10:30:00Z"
 
   responses:
     BadRequest:
