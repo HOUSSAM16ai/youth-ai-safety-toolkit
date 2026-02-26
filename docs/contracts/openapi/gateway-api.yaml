@@ -218,7 +218,7 @@ components:
       example:
         healthy: true
         response_time_ms: 0
-        last_check: string
+        last_check: "2024-01-01T12:00:00Z"
         error: string
     ServiceInfo:
       type: object
@@ -238,7 +238,7 @@ components:
           description: مهلة الطلب بالثواني
       example:
         name: string
-        base_url: string
+        base_url: "https://example.com"
         health_path: string
         timeout: 0
     Error:
