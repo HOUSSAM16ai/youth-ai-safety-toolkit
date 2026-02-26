@@ -2,17 +2,23 @@ openapi: 3.1.0
 info:
   title: CogniForge Accounts API
   version: 1.0.0
-  description: |
-    واجهة عقد-أولاً للحسابات. حافظ على التوافق الخلفي. استخدم سياسة إيقاف معلنة وSunset.
-    
+  description: 'واجهة عقد-أولاً للحسابات. حافظ على التوافق الخلفي. استخدم سياسة إيقاف معلنة وSunset.
+
+
     Contract-first accounts API. Maintain backward compatibility. Use explicit deprecation policy and Sunset headers.
-    
+
+
     **التوافق الخلفي (Backward Compatibility):**
+
     - إضافة حقول اختيارية: مسموح
+
     - إزالة حقول: ممنوع (استخدم deprecation)
+
     - تغيير أنواع البيانات: ممنوع
+
     - تغيير السلوك: يتطلب نسخة جديدة
-    
+
+    '
   contact:
     name: CogniForge API Team
     email: benmerahhoussam16@gmail.com
@@ -20,80 +26,90 @@ info:
   license:
     name: Proprietary
     url: https://cogniforge.com/license
-
 servers:
-  - url: https://api.cogniforge.com/v1
-    description: الإنتاج (Production)
-  - url: https://sandbox.api.cogniforge.com/v1
-    description: صندوق الرمل (Sandbox)
-  - url: http://localhost:5000/v1
-    description: التطوير المحلي (Local Development)
-
+- url: https://api.cogniforge.com/v1
+  description: الإنتاج (Production)
+- url: https://sandbox.api.cogniforge.com/v1
+  description: صندوق الرمل (Sandbox)
+- url: http://localhost:5000/v1
+  description: التطوير المحلي (Local Development)
 tags:
-  - name: Accounts
-    description: إدارة الحسابات (Account Management)
-  - name: Payments
-    description: إدارة المدفوعات (Payment Management)
-
+- name: Accounts
+  description: إدارة الحسابات (Account Management)
+- name: Payments
+  description: إدارة المدفوعات (Payment Management)
 security:
-  - OAuth2: [read, write]
-  - BearerAuth: []
-
+- OAuth2:
+  - read
+  - write
+- BearerAuth: []
 paths:
   /accounts:
     get:
-      tags: [Accounts]
+      tags:
+      - Accounts
       summary: استرجاع قائمة الحسابات (List Accounts)
-      description: |
-        استرجاع قائمة الحسابات مع دعم التصفح والترشيح والترتيب
-        
+      description: 'استرجاع قائمة الحسابات مع دعم التصفح والترشيح والترتيب
+
+
         Retrieve paginated list of accounts with filtering and sorting support.
-        
+
+
         **معدل الطلبات (Rate Limiting):**
+
         - 600 طلب/دقيقة لكل مفتاح API
+
         - 10,000 طلب/ساعة لكل مستأجر
-        
+
+        '
       operationId: listAccounts
       parameters:
-        - name: cursor
-          in: query
-          description: مؤشر التصفح للصفحة التالية (Pagination cursor for next page)
-          schema:
-            type: string
-            example: "eyJpZCI6MTIzNDU2fQ=="
-        - name: limit
-          in: query
-          description: عدد العناصر المطلوبة (Number of items to return)
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 200
-            default: 50
-        - name: filter[status]
-          in: query
-          description: تصفية حسب الحالة (Filter by status)
-          schema:
-            type: string
-            enum: [active, suspended, closed]
-        - name: filter[created_after]
-          in: query
-          description: تصفية حسب تاريخ الإنشاء (Filter by creation date)
-          schema:
-            type: string
-            format: date-time
-        - name: sort
-          in: query
-          description: ترتيب النتائج (Sort results)
-          schema:
-            type: string
-            enum: [created_at, -created_at, name, -name]
-            default: -created_at
-        - name: fields
-          in: query
-          description: حقول متناثرة - اختر الحقول المطلوبة فقط (Sparse fieldsets)
-          schema:
-            type: string
-            example: "id,name,status,created_at"
+      - name: cursor
+        in: query
+        description: مؤشر التصفح للصفحة التالية (Pagination cursor for next page)
+        schema:
+          type: string
+          example: eyJpZCI6MTIzNDU2fQ==
+      - name: limit
+        in: query
+        description: عدد العناصر المطلوبة (Number of items to return)
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+      - name: filter[status]
+        in: query
+        description: تصفية حسب الحالة (Filter by status)
+        schema:
+          type: string
+          enum:
+          - active
+          - suspended
+          - closed
+      - name: filter[created_after]
+        in: query
+        description: تصفية حسب تاريخ الإنشاء (Filter by creation date)
+        schema:
+          type: string
+          format: date-time
+      - name: sort
+        in: query
+        description: ترتيب النتائج (Sort results)
+        schema:
+          type: string
+          enum:
+          - created_at
+          - -created_at
+          - name
+          - -name
+          default: -created_at
+      - name: fields
+        in: query
+        description: حقول متناثرة - اختر الحقول المطلوبة فقط (Sparse fieldsets)
+        schema:
+          type: string
+          example: id,name,status,created_at
       responses:
         '200':
           description: نجاح (Success)
@@ -102,7 +118,7 @@ paths:
               description: معرف الطلب الفريد (Unique request identifier)
               schema:
                 type: string
-                example: "req_1a2b3c4d5e6f"
+                example: req_1a2b3c4d5e6f
             X-RateLimit-Limit:
               description: حد المعدل (Rate limit)
               schema:
@@ -119,7 +135,7 @@ paths:
             Cache-Control:
               schema:
                 type: string
-                example: "public, max-age=60"
+                example: public, max-age=60
             ETag:
               description: علامة الكيان للتخزين المؤقت (Entity tag for caching)
               schema:
@@ -132,15 +148,15 @@ paths:
                 success:
                   value:
                     data:
-                      - id: "acc_1a2b3c4d"
-                        name: "حساب العميل الأول"
-                        status: "active"
-                        balance: 10000
-                        currency: "USD"
-                        created_at: "2025-01-15T10:30:00Z"
-                        updated_at: "2025-01-20T14:45:00Z"
+                    - id: acc_1a2b3c4d
+                      name: حساب العميل الأول
+                      status: active
+                      balance: 10000
+                      currency: USD
+                      created_at: '2025-01-15T10:30:00Z'
+                      updated_at: '2025-01-20T14:45:00Z'
                     pagination:
-                      next_cursor: "eyJpZCI6MTIzNDU3fQ=="
+                      next_cursor: eyJpZCI6MTIzNDU3fQ==
                       has_more: true
                       count: 50
         '401':
@@ -153,28 +169,34 @@ paths:
           $ref: '#/components/responses/InternalError'
     post:
       security:
-        - OAuth2: [write]
-      tags: [Accounts]
+      - OAuth2:
+        - write
+      tags:
+      - Accounts
       summary: إنشاء حساب جديد (Create Account)
-      description: |
-        إنشاء حساب جديد مع دعم التماثل (Idempotency)
-        
+      description: 'إنشاء حساب جديد مع دعم التماثل (Idempotency)
+
+
         Create a new account with idempotency support.
-        
+
+
         **التماثل (Idempotency):**
+
         استخدم رأس Idempotency-Key لضمان أن الطلب المكرر لا ينشئ موارد مكررة
+
+        '
       operationId: createAccount
       parameters:
-        - name: Idempotency-Key
-          in: header
-          required: true
-          description: مفتاح التماثل (Idempotency key)
-          schema:
-            type: string
-            minLength: 16
-            maxLength: 64
-            pattern: '^[a-zA-Z0-9_-]+$'
-            example: "idp_1a2b3c4d5e6f7g8h"
+      - name: Idempotency-Key
+        in: header
+        required: true
+        description: مفتاح التماثل (Idempotency key)
+        schema:
+          type: string
+          minLength: 16
+          maxLength: 64
+          pattern: ^[a-zA-Z0-9_-]+$
+          example: idp_1a2b3c4d5e6f7g8h
       requestBody:
         required: true
         content:
@@ -184,12 +206,12 @@ paths:
             examples:
               individual:
                 value:
-                  name: "أحمد محمد"
-                  type: "individual"
-                  currency: "USD"
+                  name: أحمد محمد
+                  type: individual
+                  currency: USD
                   metadata:
-                    customer_id: "cust_123456"
-                    source: "web"
+                    customer_id: cust_123456
+                    source: web
       responses:
         '201':
           description: تم الإنشاء بنجاح (Created successfully)
@@ -201,11 +223,13 @@ paths:
               description: رابط المورد الجديد (New resource location)
               schema:
                 type: string
-                example: "/v1/accounts/acc_1a2b3c4d"
+                example: /v1/accounts/acc_1a2b3c4d
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Account'
+              example:
+                message: مثال لاستجابة
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -216,29 +240,31 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetails'
+              example:
+                message: مثال لاستجابة
         '422':
           $ref: '#/components/responses/ValidationError'
-
   /accounts/{accountId}:
     parameters:
-      - name: accountId
-        in: path
-        required: true
-        description: معرف الحساب (Account identifier)
-        schema:
-          type: string
-          pattern: '^acc_[a-zA-Z0-9]+$'
-          example: "acc_1a2b3c4d"
+    - name: accountId
+      in: path
+      required: true
+      description: معرف الحساب (Account identifier)
+      schema:
+        type: string
+        pattern: ^acc_[a-zA-Z0-9]+$
+        example: acc_1a2b3c4d
     get:
-      tags: [Accounts]
+      tags:
+      - Accounts
       summary: استرجاع تفاصيل حساب (Get Account)
       operationId: getAccount
       parameters:
-        - name: If-None-Match
-          in: header
-          description: ETag للتخزين المؤقت الشرطي (ETag for conditional caching)
-          schema:
-            type: string
+      - name: If-None-Match
+        in: header
+        description: ETag للتخزين المؤقت الشرطي (ETag for conditional caching)
+        schema:
+          type: string
       responses:
         '200':
           description: نجاح (Success)
@@ -252,33 +278,40 @@ paths:
             Cache-Control:
               schema:
                 type: string
-                example: "private, max-age=300"
+                example: private, max-age=300
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Account'
+              example:
+                message: مثال لاستجابة
         '304':
           description: لم يتم التعديل (Not Modified)
         '404':
           $ref: '#/components/responses/NotFound'
+      description: استرجاع تفاصيل حساب (Get Account)
     patch:
       security:
-        - OAuth2: [write]
-      tags: [Accounts]
+      - OAuth2:
+        - write
+      tags:
+      - Accounts
       summary: تحديث حساب جزئياً (Partial Update Account)
       operationId: updateAccount
       parameters:
-        - name: If-Match
-          in: header
-          description: ETag للتحديث الشرطي (ETag for conditional update)
-          schema:
-            type: string
+      - name: If-Match
+        in: header
+        description: ETag للتحديث الشرطي (ETag for conditional update)
+        schema:
+          type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateAccountRequest'
+            example:
+              message: مثال لطلب
       responses:
         '200':
           description: تم التحديث بنجاح (Updated successfully)
@@ -286,14 +319,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Account'
+              example:
+                message: مثال لاستجابة
         '404':
           $ref: '#/components/responses/NotFound'
         '412':
           description: فشل الشرط المسبق (Precondition Failed)
+      description: تحديث حساب جزئياً (Partial Update Account)
     delete:
       security:
-        - OAuth2: [admin]
-      tags: [Accounts]
+      - OAuth2:
+        - admin
+      tags:
+      - Accounts
       summary: حذف حساب (Delete Account)
       operationId: deleteAccount
       responses:
@@ -301,32 +339,38 @@ paths:
           description: تم الحذف بنجاح (Deleted successfully)
         '404':
           $ref: '#/components/responses/NotFound'
-
+      description: حذف حساب (Delete Account)
   /payments:
     post:
-      tags: [Payments]
+      tags:
+      - Payments
       summary: إنشاء دفعة (Create Payment)
-      description: |
-        إنشاء دفعة جديدة مع دعم التماثل
-        
-        **ملاحظة أمنية:** يتطلب نطاق 'payments:write'
+      description: 'إنشاء دفعة جديدة مع دعم التماثل
+
+
+        **ملاحظة أمنية:** يتطلب نطاق ''payments:write''
+
+        '
       operationId: createPayment
       security:
-        - OAuth2: [payments:write]
+      - OAuth2:
+        - payments:write
       parameters:
-        - name: Idempotency-Key
-          in: header
-          required: true
-          description: مفتاح التماثل لمنع تكرار العمليات (Idempotency key)
-          schema:
-            type: string
-            minLength: 16
+      - name: Idempotency-Key
+        in: header
+        required: true
+        description: مفتاح التماثل لمنع تكرار العمليات (Idempotency key)
+        schema:
+          type: string
+          minLength: 16
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/CreatePaymentRequest'
+            example:
+              message: مثال لطلب
       responses:
         '201':
           description: تم الإنشاء (Created)
@@ -338,19 +382,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Payment'
+              example:
+                message: مثال لاستجابة
         '400':
           $ref: '#/components/responses/BadRequest'
         '409':
           description: تضارب مفتاح التماثل (Idempotency key conflict)
-
 components:
   securitySchemes:
     OAuth2:
       type: oauth2
-      description: |
-        OAuth 2.1 authentication
-        
+      description: 'OAuth 2.1 authentication
+
+
         استخدم نطاقات محددة لكل عملية
+
+        '
       flows:
         authorizationCode:
           authorizationUrl: https://auth.cogniforge.com/oauth/authorize
@@ -372,22 +419,29 @@ components:
       scheme: bearer
       bearerFormat: JWT
       description: JWT access token
-
   schemas:
     PaginatedAccounts:
       type: object
-      required: [data, pagination]
+      required:
+      - data
+      - pagination
       properties:
         data:
           type: array
           items:
             $ref: '#/components/schemas/Account'
+          description: يوضح هذا الحقل قيمة data.
         pagination:
           $ref: '#/components/schemas/PaginationInfo'
-
+          description: يوضح هذا الحقل قيمة pagination.
+      example:
+        data: []
+        pagination: value
     PaginationInfo:
       type: object
-      required: [has_more, count]
+      required:
+      - has_more
+      - count
       properties:
         next_cursor:
           type: string
@@ -407,30 +461,47 @@ components:
           type: integer
           nullable: true
           description: إجمالي العناصر (اختياري) (Total items - optional)
-
+      example:
+        next_cursor: string
+        previous_cursor: string
+        has_more: true
+        count: 0
+        total: 0
     Account:
       type: object
-      required: [id, name, status, balance, currency, created_at, updated_at]
+      required:
+      - id
+      - name
+      - status
+      - balance
+      - currency
+      - created_at
+      - updated_at
       properties:
         id:
           type: string
-          pattern: '^acc_[a-zA-Z0-9]+$'
+          pattern: ^acc_[a-zA-Z0-9]+$
           description: معرف الحساب الفريد (Unique account identifier)
-          example: "acc_1a2b3c4d"
+          example: acc_1a2b3c4d
         name:
           type: string
           minLength: 1
           maxLength: 200
           description: اسم الحساب (Account name)
-          example: "حساب العميل الرئيسي"
+          example: حساب العميل الرئيسي
         type:
           type: string
-          enum: [individual, business]
+          enum:
+          - individual
+          - business
           description: نوع الحساب (Account type)
           default: individual
         status:
           type: string
-          enum: [active, suspended, closed]
+          enum:
+          - active
+          - suspended
+          - closed
           description: حالة الحساب (Account status)
           default: active
         balance:
@@ -439,9 +510,9 @@ components:
           example: 10000
         currency:
           type: string
-          pattern: '^[A-Z]{3}$'
+          pattern: ^[A-Z]{3}$
           description: رمز العملة ISO 4217
-          example: "USD"
+          example: USD
         metadata:
           type: object
           additionalProperties: true
@@ -455,29 +526,50 @@ components:
           type: string
           format: date-time
           description: تاريخ آخر تحديث (Last update timestamp)
-
+      example:
+        id: acc_1a2b3c4d
+        name: حساب العميل الرئيسي
+        type: string
+        status: string
+        balance: 10000
+        currency: USD
+        metadata: {}
+        created_at: string
+        updated_at: string
     CreateAccountRequest:
       type: object
-      required: [name, currency]
+      required:
+      - name
+      - currency
       properties:
         name:
           type: string
           minLength: 1
           maxLength: 200
-          example: "أحمد محمد"
+          example: أحمد محمد
+          description: يوضح هذا الحقل قيمة name.
         type:
           type: string
-          enum: [individual, business]
+          enum:
+          - individual
+          - business
           default: individual
+          description: يوضح هذا الحقل قيمة type.
         currency:
           type: string
-          pattern: '^[A-Z]{3}$'
-          example: "USD"
+          pattern: ^[A-Z]{3}$
+          example: USD
+          description: يوضح هذا الحقل قيمة currency.
         metadata:
           type: object
           additionalProperties: true
           maxProperties: 50
-
+          description: يوضح هذا الحقل قيمة metadata.
+      example:
+        name: أحمد محمد
+        type: string
+        currency: USD
+        metadata: {}
     UpdateAccountRequest:
       type: object
       properties:
@@ -485,25 +577,45 @@ components:
           type: string
           minLength: 1
           maxLength: 200
+          description: يوضح هذا الحقل قيمة name.
         status:
           type: string
-          enum: [active, suspended, closed]
+          enum:
+          - active
+          - suspended
+          - closed
+          description: يوضح هذا الحقل قيمة status.
         metadata:
           type: object
           additionalProperties: true
           maxProperties: 50
-
+          description: يوضح هذا الحقل قيمة metadata.
+      example:
+        name: string
+        status: string
+        metadata: {}
     Payment:
       type: object
-      required: [id, status, amount, currency, created_at]
+      required:
+      - id
+      - status
+      - amount
+      - currency
+      - created_at
       properties:
         id:
           type: string
-          pattern: '^pay_[a-zA-Z0-9]+$'
-          example: "pay_1a2b3c4d"
+          pattern: ^pay_[a-zA-Z0-9]+$
+          example: pay_1a2b3c4d
+          description: يوضح هذا الحقل قيمة id.
         status:
           type: string
-          enum: [pending, processing, settled, failed, cancelled]
+          enum:
+          - pending
+          - processing
+          - settled
+          - failed
+          - cancelled
           description: حالة الدفعة (Payment status)
         amount:
           type: integer
@@ -511,24 +623,40 @@ components:
           description: المبلغ بأصغر وحدة (Amount in smallest unit)
         currency:
           type: string
-          pattern: '^[A-Z]{3}$'
-          example: "USD"
+          pattern: ^[A-Z]{3}$
+          example: USD
+          description: يوضح هذا الحقل قيمة currency.
         destination_account_id:
           type: string
-          pattern: '^acc_[a-zA-Z0-9]+$'
+          pattern: ^acc_[a-zA-Z0-9]+$
+          description: يوضح هذا الحقل قيمة destination_account_id.
         metadata:
           type: object
           additionalProperties: true
+          description: يوضح هذا الحقل قيمة metadata.
         created_at:
           type: string
           format: date-time
+          description: يوضح هذا الحقل قيمة created_at.
         updated_at:
           type: string
           format: date-time
-
+          description: يوضح هذا الحقل قيمة updated_at.
+      example:
+        id: pay_1a2b3c4d
+        status: string
+        amount: 0
+        currency: USD
+        destination_account_id: string
+        metadata: {}
+        created_at: string
+        updated_at: string
     CreatePaymentRequest:
       type: object
-      required: [amount, currency, destination_account_id]
+      required:
+      - amount
+      - currency
+      - destination_account_id
       properties:
         amount:
           type: integer
@@ -537,35 +665,47 @@ components:
           example: 5000
         currency:
           type: string
-          pattern: '^[A-Z]{3}$'
-          example: "USD"
+          pattern: ^[A-Z]{3}$
+          example: USD
+          description: يوضح هذا الحقل قيمة currency.
         destination_account_id:
           type: string
-          pattern: '^acc_[a-zA-Z0-9]+$'
-          example: "acc_1a2b3c4d"
+          pattern: ^acc_[a-zA-Z0-9]+$
+          example: acc_1a2b3c4d
+          description: يوضح هذا الحقل قيمة destination_account_id.
         description:
           type: string
           maxLength: 500
-          example: "دفعة للخدمات المقدمة"
+          example: دفعة للخدمات المقدمة
+          description: يوضح هذا الحقل قيمة description.
         metadata:
           type: object
           additionalProperties: true
           maxProperties: 50
-
+          description: يوضح هذا الحقل قيمة metadata.
+      example:
+        amount: 5000
+        currency: USD
+        destination_account_id: acc_1a2b3c4d
+        description: دفعة للخدمات المقدمة
+        metadata: {}
     ProblemDetails:
       type: object
       description: RFC 7807 Problem Details for HTTP APIs
-      required: [type, title, status]
+      required:
+      - type
+      - title
+      - status
       properties:
         type:
           type: string
           format: uri
           description: URI يعرف نوع المشكلة (URI identifying the problem type)
-          example: "https://api.cogniforge.com/errors/rate-limited"
+          example: https://api.cogniforge.com/errors/rate-limited
         title:
           type: string
           description: ملخص قصير للمشكلة (Short summary of the problem)
-          example: "Rate Limited"
+          example: Rate Limited
         status:
           type: integer
           description: رمز حالة HTTP (HTTP status code)
@@ -573,21 +713,28 @@ components:
         detail:
           type: string
           description: شرح مفصل للمشكلة (Detailed explanation)
-          example: "تم تجاوز حد المعدل. الرجاء المحاولة بعد دقيقة."
+          example: تم تجاوز حد المعدل. الرجاء المحاولة بعد دقيقة.
         instance:
           type: string
           format: uri
           description: URI يعرف نسخة محددة من المشكلة (URI for this specific occurrence)
-          example: "https://api.cogniforge.com/v1/accounts?cursor=xyz"
+          example: https://api.cogniforge.com/v1/accounts?cursor=xyz
         request_id:
           type: string
           description: معرف الطلب للمتابعة (Request ID for tracking)
-          example: "req_1a2b3c4d5e6f"
+          example: req_1a2b3c4d5e6f
         timestamp:
           type: string
           format: date-time
           description: وقت حدوث الخطأ (Error occurrence time)
-
+      example:
+        type: https://api.cogniforge.com/errors/rate-limited
+        title: Rate Limited
+        status: 429
+        detail: تم تجاوز حد المعدل. الرجاء المحاولة بعد دقيقة.
+        instance: https://api.cogniforge.com/v1/accounts?cursor=xyz
+        request_id: req_1a2b3c4d5e6f
+        timestamp: string
   responses:
     BadRequest:
       description: طلب غير صحيح (Bad Request)
@@ -596,62 +743,57 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: "https://api.cogniforge.com/errors/bad-request"
-            title: "Bad Request"
+            type: https://api.cogniforge.com/errors/bad-request
+            title: Bad Request
             status: 400
-            detail: "الطلب غير صحيح. تحقق من البيانات المرسلة."
-            request_id: "req_1a2b3c4d"
-
+            detail: الطلب غير صحيح. تحقق من البيانات المرسلة.
+            request_id: req_1a2b3c4d
     Unauthorized:
       description: غير مصرح (Unauthorized)
       headers:
         WWW-Authenticate:
           schema:
             type: string
-            example: 'Bearer realm="CogniForge API", error="invalid_token"'
+            example: Bearer realm="CogniForge API", error="invalid_token"
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: "https://api.cogniforge.com/errors/unauthorized"
-            title: "Unauthorized"
+            type: https://api.cogniforge.com/errors/unauthorized
+            title: Unauthorized
             status: 401
-            detail: "المصادقة مطلوبة. قدم رمز وصول صالح."
-
+            detail: المصادقة مطلوبة. قدم رمز وصول صالح.
     Forbidden:
       description: ممنوع (Forbidden)
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
-
     NotFound:
       description: غير موجود (Not Found)
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
-
     ValidationError:
       description: خطأ في التحقق (Validation Error)
       content:
         application/problem+json:
           schema:
             allOf:
-              - $ref: '#/components/schemas/ProblemDetails'
-              - type: object
-                properties:
-                  errors:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        field:
-                          type: string
-                        message:
-                          type: string
-
+            - $ref: '#/components/schemas/ProblemDetails'
+            - type: object
+              properties:
+                errors:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      field:
+                        type: string
+                      message:
+                        type: string
     RateLimited:
       description: تم تجاوز الحد (Rate Limited)
       headers:
@@ -672,7 +814,6 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
-
     InternalError:
       description: خطأ داخلي في الخادم (Internal Server Error)
       content:

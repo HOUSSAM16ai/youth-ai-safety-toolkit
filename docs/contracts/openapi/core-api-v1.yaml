@@ -1,60 +1,75 @@
 openapi: 3.1.0
 info:
   title: CogniForge Core API
-  description: |
-    # CogniForge API-First Architecture
-    
+  description: '# CogniForge API-First Architecture
+
+
     منصة تعليمية ذكية مدعومة بالذكاء الاصطناعي مع معمارية API-First كاملة.
-    
+
+
     ## المبادئ الأساسية
+
     - **API-First**: النظام مصمم أولاً كـ API
+
     - **Platform Independent**: يعمل على أي منصة (Web, Mobile, Desktop)
+
     - **Language Agnostic**: يمكن استخدامه من أي لغة برمجة
+
     - **Stateless**: كل طلب مستقل
-    
+
+
     ## المصادقة
+
     يستخدم النظام JWT (JSON Web Tokens) للمصادقة.
+
     ```
+
     Authorization: Bearer <token>
+
     ```
-    
+
+
     ## معدلات الطلبات
+
     - **معدل عام**: 100 طلب/دقيقة
+
     - **نقاط النهاية الحساسة**: 10 طلبات/دقيقة
-    
+
+
     ## Versioning
+
     - **الإصدار الحالي**: v1
+
     - **Base URL**: `/api/v1`
-  version: "1.0.0"
+
+    '
+  version: 1.0.0
   contact:
     name: CogniForge Support
     email: support@cogniforge.ai
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
-
 servers:
-  - url: https://api.cogniforge.ai/api/v1
-    description: Production Server
-  - url: https://staging-api.cogniforge.ai/api/v1
-    description: Staging Server
-  - url: http://localhost:8000/api/v1
-    description: Local Development
-
+- url: https://api.cogniforge.ai/api/v1
+  description: Production Server
+- url: https://staging-api.cogniforge.ai/api/v1
+  description: Staging Server
+- url: http://localhost:8000/api/v1
+  description: Local Development
 tags:
-  - name: Security
-    description: Authentication & Authorization endpoints
-  - name: Agents
-    description: Agent planning and coordination endpoints
-  - name: Users
-    description: User management operations
-  - name: CRUD
-    description: Generic CRUD operations for resources
-  - name: Admin
-    description: Administrative operations
-  - name: Observability
-    description: Monitoring, metrics, and health checks
-
+- name: Security
+  description: Authentication & Authorization endpoints
+- name: Agents
+  description: Agent planning and coordination endpoints
+- name: Users
+  description: User management operations
+- name: CRUD
+  description: Generic CRUD operations for resources
+- name: Admin
+  description: Administrative operations
+- name: Observability
+  description: Monitoring, metrics, and health checks
 components:
   securitySchemes:
     BearerAuth:
@@ -62,59 +77,63 @@ components:
       scheme: bearer
       bearerFormat: JWT
       description: JWT token obtained from /api/security/login
-  
   schemas:
-    # ==============================================================================
-    # Common Schemas
-    # ==============================================================================
     ErrorResponse:
       type: object
       required:
-        - status
-        - error
-        - timestamp
+      - status
+      - error
+      - timestamp
       properties:
         status:
           type: string
-          enum: [error, fail]
+          enum:
+          - error
+          - fail
           description: Status of the response
         error:
           type: object
           required:
-            - code
-            - message
+          - code
+          - message
           properties:
             code:
               type: string
               description: Machine-readable error code
-              example: "INVALID_CREDENTIALS"
+              example: INVALID_CREDENTIALS
             message:
               type: string
               description: Human-readable error message
-              example: "Invalid email or password"
+              example: Invalid email or password
             details:
               type: object
               description: Additional error details
               additionalProperties: true
+          description: يوضح هذا الحقل قيمة error.
         timestamp:
           type: string
           format: date-time
           description: ISO 8601 timestamp
-          example: "2026-01-03T00:00:00Z"
+          example: '2026-01-03T00:00:00Z'
         request_id:
           type: string
           description: Unique request identifier for tracing
-          example: "req_abc123xyz"
-    
+          example: req_abc123xyz
+      example:
+        status: string
+        error: {}
+        timestamp: '2026-01-03T00:00:00Z'
+        request_id: req_abc123xyz
     SuccessResponse:
       type: object
       required:
-        - status
-        - data
+      - status
+      - data
       properties:
         status:
           type: string
-          enum: [success]
+          enum:
+          - success
           description: Status of the response
         data:
           type: object
@@ -135,14 +154,18 @@ components:
           additionalProperties:
             type: string
             format: uri
-    
+      example:
+        status: string
+        data: {}
+        meta: {}
+        links: {}
     PaginationMeta:
       type: object
       required:
-        - page
-        - per_page
-        - total
-        - total_pages
+      - page
+      - per_page
+      - total
+      - total_pages
       properties:
         page:
           type: integer
@@ -171,95 +194,106 @@ components:
         has_prev:
           type: boolean
           description: Whether there is a previous page
-    
-    # ==============================================================================
-    # Security Schemas
-    # ==============================================================================
+      example:
+        page: 1
+        per_page: 20
+        total: 157
+        total_pages: 8
+        has_next: true
+        has_prev: true
     LoginRequest:
       type: object
       required:
-        - email
-        - password
+      - email
+      - password
       properties:
         email:
           type: string
           format: email
           description: User email address
-          example: "user@example.com"
+          example: user@example.com
         password:
           type: string
           format: password
           minLength: 8
           description: User password
-          example: "SecurePass123!"
-    
+          example: SecurePass123!
+      example:
+        email: user@example.com
+        password: SecurePass123!
     RegisterRequest:
       type: object
       required:
-        - email
-        - password
-        - full_name
+      - email
+      - password
+      - full_name
       properties:
         email:
           type: string
           format: email
           description: User email address
-          example: "newuser@example.com"
+          example: newuser@example.com
         password:
           type: string
           format: password
           minLength: 8
           description: User password (must be at least 8 characters)
-          example: "SecurePass123!"
+          example: SecurePass123!
         full_name:
           type: string
           minLength: 2
           maxLength: 100
           description: User's full name
-          example: "John Doe"
-
-    # ==============================================================================
-    # Agents Schemas
-    # ==============================================================================
+          example: John Doe
+      example:
+        email: newuser@example.com
+        password: SecurePass123!
+        full_name: John Doe
     AgentPlanStep:
       type: object
       required:
-        - step_id
-        - title
-        - description
+      - step_id
+      - title
+      - description
       properties:
         step_id:
           type: string
           description: Unique identifier for the plan step
-          example: "step-01"
+          example: step-01
         title:
           type: string
           description: Short title of the plan step
-          example: "تحليل الهدف"
+          example: تحليل الهدف
         description:
           type: string
           description: Detailed explanation of the plan step
-          example: "جمع المعطيات وتحليل المشكلة لتحديد نطاق التنفيذ."
+          example: جمع المعطيات وتحليل المشكلة لتحديد نطاق التنفيذ.
         dependencies:
           type: array
           description: List of step IDs that must be completed first
           items:
             type: string
-          example: ["step-00"]
+          example: &id001
+          - step-00
         estimated_effort:
           type: string
           description: Human-readable estimate for the step
-          example: "2 ساعات"
-
+          example: 2 ساعات
+      example:
+        step_id: step-01
+        title: تحليل الهدف
+        description: جمع المعطيات وتحليل المشكلة لتحديد نطاق التنفيذ.
+        dependencies: *id001
+        estimated_effort: 2 ساعات
     AgentsPlanRequest:
       type: object
       required:
-        - objective
+      - objective
       properties:
         objective:
           type: string
           description: الهدف الرئيسي المطلوب من فريق الوكلاء
-          example: "تصميم نظام API-First للعقود"
+          example: تصميم نظام API-First للعقود
         context:
           type: object
           description: سياق إضافي يساعد الوكلاء على الفهم
@@ -269,38 +303,50 @@ components:
           description: القيود التشغيلية أو التقنية
           items:
             type: string
-          example: ["OpenAPI v3.1", "JWT Auth", "No backend code yet"]
+          example: &id002
+          - OpenAPI v3.1
+          - JWT Auth
+          - No backend code yet
         priority:
           type: string
           description: أولوية التخطيط
-          enum: ["low", "medium", "high", "urgent"]
-          example: "high"
-
+          enum:
+          - low
+          - medium
+          - high
+          - urgent
+          example: high
+      example:
+        objective: تصميم نظام API-First للعقود
+        context: {}
+        constraints: *id002
+        priority: high
     AgentsPlanResponse:
       type: object
       required:
-        - status
-        - data
+      - status
+      - data
       properties:
         status:
           type: string
-          enum: ["success"]
+          enum:
+          - success
           description: Status of the response
         data:
           type: object
           required:
-            - plan_id
-            - objective
-            - steps
+          - plan_id
+          - objective
+          - steps
           properties:
             plan_id:
               type: string
               description: Unique identifier for the generated plan
-              example: "plan_01HZX9G8KQK1R2"
+              example: plan_01HZX9G8KQK1R2
             objective:
               type: string
               description: Original objective of the plan
-              example: "تصميم نظام API-First للعقود"
+              example: تصميم نظام API-First للعقود
             steps:
               type: array
               items:
@@ -309,52 +355,61 @@ components:
               type: string
               format: date-time
               description: Timestamp when the plan was created
-              example: "2026-01-03T00:00:00Z"
-    
+              example: '2026-01-03T00:00:00Z'
+          description: يوضح هذا الحقل قيمة data.
+      example:
+        status: string
+        data: {}
     AuthResponse:
       type: object
       required:
-        - status
-        - data
+      - status
+      - data
       properties:
         status:
           type: string
-          enum: [success]
+          enum:
+          - success
+          description: يوضح هذا الحقل قيمة status.
         data:
           type: object
           required:
-            - access_token
-            - token_type
-            - user
+          - access_token
+          - token_type
+          - user
           properties:
             access_token:
               type: string
               description: JWT access token
-              example: "eyJhbGciOiJIUzI1NiIs..."
+              example: eyJhbGciOiJIUzI1NiIs...
             refresh_token:
               type: string
               description: Refresh token for obtaining new access tokens
-              example: "refresh_abc123..."
+              example: refresh_abc123...
             token_type:
               type: string
-              enum: [Bearer]
+              enum:
+              - Bearer
               description: Token type
-              example: "Bearer"
+              example: Bearer
             expires_in:
               type: integer
               description: Token expiration time in seconds
               example: 3600
             user:
               $ref: '#/components/schemas/UserObject'
-    
+          description: يوضح هذا الحقل قيمة data.
+      example:
+        status: string
+        data: {}
     UserObject:
       type: object
       required:
-        - id
-        - email
-        - full_name
-        - is_admin
-        - created_at
+      - id
+      - email
+      - full_name
+      - is_admin
+      - created_at
       properties:
         id:
           type: integer
@@ -364,11 +419,11 @@ components:
           type: string
           format: email
           description: User email address
-          example: "user@example.com"
+          example: user@example.com
         full_name:
           type: string
           description: User's full name
-          example: "John Doe"
+          example: John Doe
         is_admin:
           type: boolean
           description: Whether user has admin privileges
@@ -377,30 +432,33 @@ components:
           type: string
           format: date-time
           description: Account creation timestamp
-          example: "2026-01-01T00:00:00Z"
+          example: '2026-01-01T00:00:00Z'
         updated_at:
           type: string
           format: date-time
           description: Last update timestamp
-          example: "2026-01-03T00:00:00Z"
-    
-    # ==============================================================================
-    # Resource Schemas
-    # ==============================================================================
+          example: '2026-01-03T00:00:00Z'
+      example:
+        id: 42
+        email: user@example.com
+        full_name: John Doe
+        is_admin: false
+        created_at: '2026-01-01T00:00:00Z'
+        updated_at: '2026-01-03T00:00:00Z'
     GenericResource:
       type: object
       required:
-        - id
-        - type
+      - id
+      - type
       properties:
         id:
           type: string
           description: Resource unique identifier
-          example: "res_123abc"
+          example: res_123abc
         type:
           type: string
           description: Resource type
-          example: "mission"
+          example: mission
         attributes:
           type: object
           description: Resource attributes
@@ -416,30 +474,35 @@ components:
             self:
               type: string
               format: uri
-              example: "https://api.cogniforge.ai/api/v1/resources/mission/res_123abc"
-    
+              example: https://api.cogniforge.ai/api/v1/resources/mission/res_123abc
+      example:
+        id: res_123abc
+        type: mission
+        attributes: {}
+        relationships: {}
+        links: {}
     PaginatedResourceResponse:
       allOf:
-        - $ref: '#/components/schemas/SuccessResponse'
-        - type: object
-          properties:
-            data:
-              type: array
-              items:
-                $ref: '#/components/schemas/GenericResource'
-            meta:
-              allOf:
-                - $ref: '#/components/schemas/PaginationMeta'
-                - type: object
-                  properties:
-                    filters:
-                      type: object
-                      description: Applied filters
-                    sort:
-                      type: object
-                      description: Applied sorting
-
-  
+      - $ref: '#/components/schemas/SuccessResponse'
+      - type: object
+        properties:
+          data:
+            type: array
+            items:
+              $ref: '#/components/schemas/GenericResource'
+          meta:
+            allOf:
+            - $ref: '#/components/schemas/PaginationMeta'
+            - type: object
+              properties:
+                filters:
+                  type: object
+                  description: Applied filters
+                sort:
+                  type: object
+                  description: Applied sorting
+      example:
+        message: example
   responses:
     UnauthorizedError:
       description: Authentication required or token invalid/expired
@@ -450,19 +513,18 @@ components:
           examples:
             missing_token:
               value:
-                status: "error"
+                status: error
                 error:
-                  code: "MISSING_TOKEN"
-                  message: "Authentication token is required"
-                timestamp: "2026-01-03T00:00:00Z"
+                  code: MISSING_TOKEN
+                  message: Authentication token is required
+                timestamp: '2026-01-03T00:00:00Z'
             invalid_token:
               value:
-                status: "error"
+                status: error
                 error:
-                  code: "INVALID_TOKEN"
-                  message: "Authentication token is invalid or expired"
-                timestamp: "2026-01-03T00:00:00Z"
-    
+                  code: INVALID_TOKEN
+                  message: Authentication token is invalid or expired
+                timestamp: '2026-01-03T00:00:00Z'
     BadRequestError:
       description: Invalid request data
       content:
@@ -472,15 +534,14 @@ components:
           examples:
             validation_error:
               value:
-                status: "error"
+                status: error
                 error:
-                  code: "VALIDATION_ERROR"
-                  message: "Request validation failed"
+                  code: VALIDATION_ERROR
+                  message: Request validation failed
                   details:
-                    field: "email"
-                    reason: "Invalid email format"
-                timestamp: "2026-01-03T00:00:00Z"
-    
+                    field: email
+                    reason: Invalid email format
+                timestamp: '2026-01-03T00:00:00Z'
     NotFoundError:
       description: Resource not found
       content:
@@ -490,21 +551,16 @@ components:
           examples:
             not_found:
               value:
-                status: "error"
+                status: error
                 error:
-                  code: "NOT_FOUND"
-                  message: "The requested resource was not found"
-                timestamp: "2026-01-03T00:00:00Z"
-
-
+                  code: NOT_FOUND
+                  message: The requested resource was not found
+                timestamp: '2026-01-03T00:00:00Z'
 paths:
-  # ==============================================================================
-  # Security Endpoints
-  # ==============================================================================
   /api/security/health:
     get:
       tags:
-        - Security
+      - Security
       summary: Security Health Check
       description: Check if security services are operational
       operationId: securityHealthCheck
@@ -518,23 +574,26 @@ paths:
                 properties:
                   status:
                     type: string
-                    example: "success"
+                    example: success
                   data:
                     type: object
                     properties:
                       status:
                         type: string
-                        example: "healthy"
+                        example: healthy
                       features:
                         type: array
                         items:
                           type: string
-                        example: ["jwt", "argon2"]
-  
+                        example:
+                        - jwt
+                        - argon2
+              example:
+                message: مثال لاستجابة
   /api/security/register:
     post:
       tags:
-        - Security
+      - Security
       summary: Register New User
       description: Create a new user account in the system
       operationId: registerUser
@@ -549,9 +608,9 @@ paths:
               basic:
                 summary: Basic registration
                 value:
-                  email: "newuser@example.com"
-                  password: "SecurePass123!"
-                  full_name: "Jane Smith"
+                  email: newuser@example.com
+                  password: SecurePass123!
+                  full_name: Jane Smith
       responses:
         '201':
           description: User registered successfully
@@ -562,55 +621,61 @@ paths:
                 properties:
                   status:
                     type: string
-                    example: "success"
+                    example: success
                   data:
                     type: object
                     properties:
                       message:
                         type: string
-                        example: "User registered successfully"
+                        example: User registered successfully
                       user:
                         $ref: '#/components/schemas/UserObject'
+              example:
+                message: مثال لاستجابة
         '400':
           description: Invalid input
           content:
-            application/json:
+            application/json: &id003
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples:
                 validation_error:
                   value:
-                    status: "error"
+                    status: error
                     error:
-                      code: "VALIDATION_ERROR"
-                      message: "Invalid email format"
-                    timestamp: "2026-01-03T00:00:00Z"
+                      code: VALIDATION_ERROR
+                      message: Invalid email format
+                    timestamp: '2026-01-03T00:00:00Z'
+            application/problem+json: *id003
         '409':
           description: User already exists
           content:
-            application/json:
+            application/json: &id004
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples:
                 duplicate_email:
                   value:
-                    status: "error"
+                    status: error
                     error:
-                      code: "DUPLICATE_EMAIL"
-                      message: "User with this email already exists"
-                    timestamp: "2026-01-03T00:00:00Z"
-  
+                      code: DUPLICATE_EMAIL
+                      message: User with this email already exists
+                    timestamp: '2026-01-03T00:00:00Z'
+            application/problem+json: *id004
   /api/security/login:
     post:
       tags:
-        - Security
+      - Security
       summary: Authenticate User
-      description: |
-        Authenticate user with email and password and receive a JWT token.
-        
+      description: 'Authenticate user with email and password and receive a JWT token.
+
+
         **Rate Limiting**: 10 requests per minute per IP
-        
+
+
         **Security**: Protected by Chrono-Kinetic Defense Shield
+
+        '
       operationId: loginUser
       security: []
       requestBody:
@@ -623,13 +688,13 @@ paths:
               admin_login:
                 summary: Admin login
                 value:
-                  email: "admin@example.com"
-                  password: "AdminPass123!"
+                  email: admin@example.com
+                  password: AdminPass123!
               user_login:
                 summary: Regular user login
                 value:
-                  email: "user@example.com"
-                  password: "UserPass123!"
+                  email: user@example.com
+                  password: UserPass123!
       responses:
         '200':
           description: Authentication successful
@@ -640,62 +705,62 @@ paths:
               examples:
                 successful_login:
                   value:
-                    status: "success"
+                    status: success
                     data:
-                      access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                      refresh_token: "refresh_abc123xyz..."
-                      token_type: "Bearer"
+                      access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                      refresh_token: refresh_abc123xyz...
+                      token_type: Bearer
                       expires_in: 3600
                       user:
                         id: 1
-                        email: "user@example.com"
-                        full_name: "John Doe"
+                        email: user@example.com
+                        full_name: John Doe
                         is_admin: false
-                        created_at: "2026-01-01T00:00:00Z"
+                        created_at: '2026-01-01T00:00:00Z'
         '401':
           description: Invalid credentials
           content:
-            application/json:
+            application/json: &id005
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples:
                 invalid_credentials:
                   value:
-                    status: "error"
+                    status: error
                     error:
-                      code: "INVALID_CREDENTIALS"
-                      message: "Invalid email or password"
-                    timestamp: "2026-01-03T00:00:00Z"
+                      code: INVALID_CREDENTIALS
+                      message: Invalid email or password
+                    timestamp: '2026-01-03T00:00:00Z'
+            application/problem+json: *id005
         '429':
           description: Too many requests
           content:
-            application/json:
+            application/json: &id006
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples:
                 rate_limit:
                   value:
-                    status: "error"
+                    status: error
                     error:
-                      code: "RATE_LIMIT_EXCEEDED"
-                      message: "Too many login attempts. Please try again later."
-                    timestamp: "2026-01-03T00:00:00Z"
-
-  # ==============================================================================
-  # Agents Endpoints
-  # ==============================================================================
+                      code: RATE_LIMIT_EXCEEDED
+                      message: Too many login attempts. Please try again later.
+                    timestamp: '2026-01-03T00:00:00Z'
+            application/problem+json: *id006
   /api/v1/agents/plan:
     post:
       tags:
-        - Agents
+      - Agents
       summary: Create Agent Plan
-      description: |
-        Generate a structured plan using the agent council.
+      description: 'Generate a structured plan using the agent council.
+
 
         **Authentication**: Requires JWT Bearer token.
+
+        '
       operationId: createAgentPlan
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -706,11 +771,11 @@ paths:
               default:
                 summary: Basic planning request
                 value:
-                  objective: "تصميم نظام API-First للعقود"
+                  objective: تصميم نظام API-First للعقود
                   constraints:
-                    - "OpenAPI v3.1"
-                    - "JWT Auth"
-                  priority: "high"
+                  - OpenAPI v3.1
+                  - JWT Auth
+                  priority: high
       responses:
         '201':
           description: Plan generated successfully
@@ -718,66 +783,70 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AgentsPlanResponse'
+              example:
+                message: مثال لاستجابة
         '400':
           description: Invalid request payload
           content:
-            application/json:
+            application/json: &id007
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples:
                 invalid_payload:
                   value:
-                    status: "error"
+                    status: error
                     error:
-                      code: "INVALID_REQUEST"
-                      message: "Objective is required"
-                    timestamp: "2026-01-03T00:00:00Z"
+                      code: INVALID_REQUEST
+                      message: Objective is required
+                    timestamp: '2026-01-03T00:00:00Z'
+            application/problem+json: *id007
         '401':
           description: Authentication required
           content:
-            application/json:
+            application/json: &id008
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples:
                 unauthorized:
                   value:
-                    status: "error"
+                    status: error
                     error:
-                      code: "UNAUTHORIZED"
-                      message: "Missing or invalid token"
-                    timestamp: "2026-01-03T00:00:00Z"
+                      code: UNAUTHORIZED
+                      message: Missing or invalid token
+                    timestamp: '2026-01-03T00:00:00Z'
+            application/problem+json: *id008
         '429':
           description: Too many requests
           content:
-            application/json:
+            application/json: &id009
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples:
                 rate_limit:
                   value:
-                    status: "error"
+                    status: error
                     error:
-                      code: "RATE_LIMIT_EXCEEDED"
-                      message: "Too many planning requests. Please try again later."
-                    timestamp: "2026-01-03T00:00:00Z"
-
+                      code: RATE_LIMIT_EXCEEDED
+                      message: Too many planning requests. Please try again later.
+                    timestamp: '2026-01-03T00:00:00Z'
+            application/problem+json: *id009
   /api/v1/agents/plan/{plan_id}:
     get:
       tags:
-        - Agents
+      - Agents
       summary: Get Agent Plan
       description: Retrieve the details of a previously generated plan.
       operationId: getAgentPlan
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: plan_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Unique plan identifier
-          example: "plan_01HZX9G8KQK1R2"
+      - name: plan_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique plan identifier
+        example: plan_01HZX9G8KQK1R2
       responses:
         '200':
           description: Plan retrieved successfully
@@ -785,44 +854,51 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AgentsPlanResponse'
+              example:
+                message: مثال لاستجابة
         '401':
           description: Authentication required
           content:
-            application/json:
+            application/json: &id010
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: مثال لاستجابة
+            application/problem+json: *id010
         '404':
           description: Plan not found
           content:
-            application/json:
+            application/json: &id011
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples:
                 plan_not_found:
                   value:
-                    status: "error"
+                    status: error
                     error:
-                      code: "PLAN_NOT_FOUND"
-                      message: "No plan found for the given identifier"
-                    timestamp: "2026-01-03T00:00:00Z"
-  
-
-  # ==============================================================================
-  # Observability Endpoints
-  # ==============================================================================
+                      code: PLAN_NOT_FOUND
+                      message: No plan found for the given identifier
+                    timestamp: '2026-01-03T00:00:00Z'
+            application/problem+json: *id011
   /api/observability/health:
     get:
       tags:
-        - Observability
+      - Observability
       summary: System Health Check
-      description: |
-        Comprehensive health check of all system components.
-        
+      description: 'Comprehensive health check of all system components.
+
+
         Returns status of:
+
         - Database connection
+
         - External services
+
         - Cache
+
         - Message queues
+
+        '
       operationId: systemHealthCheck
       responses:
         '200':
@@ -834,606 +910,611 @@ paths:
                 properties:
                   status:
                     type: string
-                    enum: [healthy, degraded, unhealthy]
-                    example: "healthy"
-
-  # ==============================================================================
-  # Runtime Coverage Endpoints (Spec Alignment)
-  # ==============================================================================
+                    enum:
+                    - healthy
+                    - degraded
+                    - unhealthy
+                    example: healthy
+              example:
+                message: مثال لاستجابة
   /health:
     get:
       tags:
-        - Observability
+      - Observability
       summary: Root Health Check
       operationId: rootHealthCheck
       responses:
         '200':
           description: Service is healthy
-
+      description: Root Health Check
   /system/health:
     get:
       tags:
-        - Observability
+      - Observability
       summary: System Health Endpoint
       operationId: systemHealthEndpoint
       responses:
         '200':
           description: System health status
-
+      description: System Health Endpoint
   /system/healthz:
     get:
       tags:
-        - Observability
+      - Observability
       summary: System Healthz Endpoint
       operationId: systemHealthzEndpoint
       responses:
         '200':
           description: System health status
-
+      description: System Healthz Endpoint
   /system/info:
     get:
       tags:
-        - Observability
+      - Observability
       summary: System Info Endpoint
       operationId: systemInfoEndpoint
       responses:
         '200':
           description: System information
-
+      description: System Info Endpoint
   /api/security/token/generate:
     post:
       tags:
-        - Security
+      - Security
       summary: Generate Security Token
       operationId: securityTokenGenerate
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: Token generated
-
+      description: Generate Security Token
   /api/security/token/verify:
     post:
       tags:
-        - Security
+      - Security
       summary: Verify Security Token
       operationId: securityTokenVerify
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: Token verification result
-
+      description: Verify Security Token
   /api/security/user/me:
     get:
       tags:
-        - Security
+      - Security
       summary: Get Current User
       operationId: securityCurrentUser
       responses:
         '200':
           description: Current user profile
-
+      description: Get Current User
   /api/v1/auth/register:
     post:
       tags:
-        - Security
+      - Security
       summary: Register User
       operationId: authRegister
       security: []
       responses:
         '200':
           description: User registered
-
+      description: Register User
   /api/v1/auth/login:
     post:
       tags:
-        - Security
+      - Security
       summary: Login User
       operationId: authLogin
       security: []
       responses:
         '200':
           description: User authenticated
-
+      description: Login User
   /api/v1/auth/logout:
     post:
       tags:
-        - Security
+      - Security
       summary: Logout User
       operationId: authLogout
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: User logged out
-
+      description: Logout User
   /api/v1/auth/refresh:
     post:
       tags:
-        - Security
+      - Security
       summary: Refresh Token
       operationId: authRefresh
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: Token refreshed
-
+      description: Refresh Token
   /api/v1/auth/reauth:
     post:
       tags:
-        - Security
+      - Security
       summary: Re-authenticate User
       operationId: authReauth
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: Re-authentication completed
-
+      description: Re-authenticate User
   /api/v1/auth/password/forgot:
     post:
       tags:
-        - Security
+      - Security
       summary: Forgot Password
       operationId: authForgotPassword
       security: []
       responses:
         '200':
           description: Reset email sent
-
+      description: Forgot Password
   /api/v1/auth/password/reset:
     post:
       tags:
-        - Security
+      - Security
       summary: Reset Password
       operationId: authResetPassword
       security: []
       responses:
         '200':
           description: Password reset
-
+      description: Reset Password
   /api/v1/users/me:
     get:
       tags:
-        - Users
+      - Users
       summary: Get Current User
       operationId: usersMeGet
       responses:
         '200':
           description: Current user profile
+      description: Get Current User
     patch:
       tags:
-        - Users
+      - Users
       summary: Update Current User
       operationId: usersMePatch
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: Current user updated
-
+      description: Update Current User
   /api/v1/users/me/change-password:
     post:
       tags:
-        - Users
+      - Users
       summary: Change Password
       operationId: usersMeChangePassword
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: Password updated
-
+      description: Change Password
   /api/chat/latest:
     get:
       tags:
-        - Agents
+      - Agents
       summary: Latest Chat Messages
       operationId: chatLatest
       responses:
         '200':
           description: Latest chat messages
-
+      description: Latest Chat Messages
   /api/chat/conversations:
     get:
       tags:
-        - Agents
+      - Agents
       summary: List Conversations
       operationId: chatConversationsList
       responses:
         '200':
           description: Conversations list
-
+      description: List Conversations
   /api/chat/conversations/{conversation_id}:
     get:
       tags:
-        - Agents
+      - Agents
       summary: Get Conversation
       operationId: chatConversationGet
       parameters:
-        - name: conversation_id
-          in: path
-          description: Unique conversation identifier used to retrieve the conversation details.
-          required: true
-          schema:
-            type: string
+      - name: conversation_id
+        in: path
+        description: Unique conversation identifier used to retrieve the conversation details.
+        required: true
+        schema:
+          type: string
       responses:
         '200':
           description: Conversation details
-
+      description: Get Conversation
   /admin/api/chat/latest:
     get:
       tags:
-        - Admin
+      - Admin
       summary: Admin Latest Chat
       operationId: adminChatLatest
       responses:
         '200':
           description: Latest admin chat messages
-
+      description: Admin Latest Chat
   /admin/api/conversations:
     get:
       tags:
-        - Admin
+      - Admin
       summary: Admin Conversations
       operationId: adminConversationsList
       responses:
         '200':
           description: Admin conversations list
-
+      description: Admin Conversations
   /admin/api/conversations/{conversation_id}:
     get:
       tags:
-        - Admin
+      - Admin
       summary: Admin Conversation Details
       operationId: adminConversationGet
       parameters:
-        - name: conversation_id
-          in: path
-          description: Unique conversation identifier used by admins to fetch conversation details.
-          required: true
-          schema:
-            type: string
+      - name: conversation_id
+        in: path
+        description: Unique conversation identifier used by admins to fetch conversation details.
+        required: true
+        schema:
+          type: string
       responses:
         '200':
           description: Admin conversation details
-
+      description: Admin Conversation Details
   /api/v1/admin/ai-config:
     get:
       tags:
-        - Admin
+      - Admin
       summary: Get AI Config
       operationId: adminAiConfigGet
       responses:
         '200':
           description: AI configuration
+      description: Get AI Config
     put:
       tags:
-        - Admin
+      - Admin
       summary: Update AI Config
       operationId: adminAiConfigUpdate
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: AI configuration updated
-
+      description: Update AI Config
   /api/v1/admin/audit:
     get:
       tags:
-        - Admin
+      - Admin
       summary: Audit Log
       operationId: adminAuditLog
       responses:
         '200':
           description: Audit entries
-
+      description: Audit Log
   /api/v1/admin/users:
     get:
       tags:
-        - Admin
+      - Admin
       summary: List Users
       operationId: adminUsersList
       responses:
         '200':
           description: Users list
+      description: List Users
     post:
       tags:
-        - Admin
+      - Admin
       summary: Create User
       operationId: adminUsersCreate
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: User created
-
+      description: Create User
   /admin/users/count:
     get:
       tags:
-        - Admin
+      - Admin
       summary: Count Users
       operationId: adminUsersCount
       responses:
         '200':
           description: Users count
-
+      description: Count Users
   /api/v1/admin/users/{user_id}/roles:
     post:
       tags:
-        - Admin
+      - Admin
       summary: Update User Roles
       operationId: adminUsersRolesUpdate
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: user_id
-          in: path
-          required: true
-          description: Unique identifier of the user
-          schema:
-            type: string
+      - name: user_id
+        in: path
+        required: true
+        description: Unique identifier of the user
+        schema:
+          type: string
       responses:
         '200':
           description: User roles updated
-
+      description: Update User Roles
   /api/v1/admin/users/{user_id}/status:
     patch:
       tags:
-        - Admin
+      - Admin
       summary: Update User Status
       operationId: adminUsersStatusUpdate
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - name: user_id
-          in: path
-          required: true
-          description: Unique identifier of the user
-          schema:
-            type: string
+      - name: user_id
+        in: path
+        required: true
+        description: Unique identifier of the user
+        schema:
+          type: string
       responses:
         '200':
           description: User status updated
-
+      description: Update User Status
   /api/observability/aiops:
     get:
       tags:
-        - Observability
+      - Observability
       summary: AIOps Overview
       operationId: observabilityAiops
       responses:
         '200':
           description: AIOps status
-
+      description: AIOps Overview
   /api/observability/alerts:
     get:
       tags:
-        - Observability
+      - Observability
       summary: Alerts Overview
       operationId: observabilityAlerts
       responses:
         '200':
           description: Alerts list
-
+      description: Alerts Overview
   /api/observability/analytics/{path}:
     get:
       tags:
-        - Observability
+      - Observability
       summary: Analytics Path
       operationId: observabilityAnalyticsPath
       parameters:
-        - name: path
-          in: path
-          required: true
-          description: Path to the analytics resource
-          schema:
-            type: string
+      - name: path
+        in: path
+        required: true
+        description: Path to the analytics resource
+        schema:
+          type: string
       responses:
         '200':
           description: Analytics response
-
+      description: Analytics Path
   /api/observability/gitops:
     get:
       tags:
-        - Observability
+      - Observability
       summary: GitOps Overview
       operationId: observabilityGitops
       responses:
         '200':
           description: GitOps status
-
+      description: GitOps Overview
   /api/observability/metrics:
     get:
       tags:
-        - Observability
+      - Observability
       summary: Metrics Overview
       operationId: observabilityMetrics
       responses:
         '200':
           description: Metrics summary
-
+      description: Metrics Overview
   /api/observability/performance:
     get:
       tags:
-        - Observability
+      - Observability
       summary: Performance Overview
       operationId: observabilityPerformance
       responses:
         '200':
           description: Performance metrics
-
+      description: Performance Overview
   /api/v1/data-mesh/contracts:
     post:
       tags:
-        - CRUD
+      - CRUD
       summary: Create Data Contract
       operationId: dataMeshContractsCreate
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: Data contract created
-
+      description: Create Data Contract
   /api/v1/data-mesh/metrics:
     get:
       tags:
-        - CRUD
+      - CRUD
       summary: Data Mesh Metrics
       operationId: dataMeshMetrics
       responses:
         '200':
           description: Data mesh metrics
-
+      description: Data Mesh Metrics
   /api/v1/overmind/missions:
     post:
       tags:
-        - Agents
+      - Agents
       summary: Create Overmind Mission
       operationId: overmindMissionsCreate
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: Mission created
-
+      description: Create Overmind Mission
   /api/v1/overmind/missions/{mission_id}:
     get:
       tags:
-        - Agents
+      - Agents
       summary: Get Overmind Mission
       operationId: overmindMissionGet
       parameters:
-        - name: mission_id
-          in: path
-          required: true
-          description: Unique identifier of the mission
-          schema:
-            type: string
+      - name: mission_id
+        in: path
+        required: true
+        description: Unique identifier of the mission
+        schema:
+          type: string
       responses:
         '200':
           description: Mission details
-
+      description: Get Overmind Mission
   /api/v1/qa/question:
     post:
       tags:
-        - Agents
+      - Agents
       summary: Submit QA Question
       operationId: qaQuestionSubmit
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: QA response
-
+      description: Submit QA Question
   /api/missions:
     get:
       tags:
-        - Agents
+      - Agents
       summary: List Missions
       operationId: listMissions
       responses:
         '200':
           description: Missions list
-
+      description: List Missions
   /api/missions/{mission_id}:
     get:
       tags:
-        - Agents
+      - Agents
       summary: Mission Details
       operationId: getMissionDetails
       parameters:
-        - name: mission_id
-          in: path
-          required: true
-          description: Unique identifier of the mission
-          schema:
-            type: integer
+      - name: mission_id
+        in: path
+        required: true
+        description: Unique identifier of the mission
+        schema:
+          type: integer
       responses:
         '200':
           description: Mission details
-
+      description: Mission Details
   /api/v1/agents/langgraph/run:
     post:
       tags:
-        - Agents
+      - Agents
       summary: Run LangGraph
       operationId: runLangGraph
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       responses:
         '201':
           description: LangGraph run created
-
+      description: Run LangGraph
   /system/asyncapi.json:
     get:
       tags:
-        - Observability
+      - Observability
       summary: AsyncAPI Schema
       operationId: asyncapiSchema
       responses:
         '200':
           description: AsyncAPI JSON schema
-
+      description: AsyncAPI Schema
   /v1/content/search:
     get:
       tags:
-        - CRUD
+      - CRUD
       summary: Search Content
       operationId: contentSearch
       responses:
         '200':
           description: Content search results
-
+      description: Search Content
   /v1/content/{id}:
     get:
       tags:
-        - CRUD
+      - CRUD
       summary: Get Content
       operationId: getContent
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Unique identifier of the content
-          schema:
-            type: string
+      - name: id
+        in: path
+        required: true
+        description: Unique identifier of the content
+        schema:
+          type: string
       responses:
         '200':
           description: Content details
-
+      description: Get Content
   /v1/content/{id}/raw:
     get:
       tags:
-        - CRUD
+      - CRUD
       summary: Get Content Raw
       operationId: getContentRaw
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Unique identifier of the content
-          schema:
-            type: string
+      - name: id
+        in: path
+        required: true
+        description: Unique identifier of the content
+        schema:
+          type: string
       responses:
         '200':
           description: Raw content
-
+      description: Get Content Raw
   /v1/content/{id}/solution:
     get:
       tags:
-        - CRUD
+      - CRUD
       summary: Get Content Solution
       operationId: getContentSolution
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Unique identifier of the content
-          schema:
-            type: string
+      - name: id
+        in: path
+        required: true
+        description: Unique identifier of the content
+        schema:
+          type: string
       responses:
         '200':
           description: Content solution
+      description: Get Content Solution
