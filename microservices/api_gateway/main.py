@@ -328,7 +328,5 @@ async def system_proxy(path: str, request: Request) -> StreamingResponse:
     return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"system/{path}")
 
 
-
-
 if __name__ == "__main__":
     uvicorn.run("microservices.api_gateway.main:app", host="0.0.0.0", port=8000, reload=True)
