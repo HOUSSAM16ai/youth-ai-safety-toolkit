@@ -20,7 +20,12 @@ def main() -> int:
 
     data = json.loads(CONTRACT_FILE.read_text(encoding="utf-8"))
     contracts = data.get("contracts", [])
-    required_routes = {"/api/chat/{path:path}", "/v1/content/{path:path}", "/api/v1/data-mesh/{path:path}", "/system/{path:path}"}
+    required_routes = {
+        "/api/chat/{path:path}",
+        "/v1/content/{path:path}",
+        "/api/v1/data-mesh/{path:path}",
+        "/system/{path:path}",
+    }
     current_routes = {item.get("route") for item in contracts}
     if not required_routes.issubset(current_routes):
         print("❌ Contract baseline incomplete for cutover routes (phase1/phase2).")

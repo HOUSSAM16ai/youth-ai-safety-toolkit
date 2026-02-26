@@ -19,18 +19,21 @@ class LegacyACL:
     def __init__(self, proxy: GatewayProxy) -> None:
         self._proxy = proxy
 
-    async def forward_http(self, request: Request, upstream_path: str, route_id: str) -> StreamingResponse:
+    async def forward_http(
+        self, request: Request, upstream_path: str, route_id: str
+    ) -> StreamingResponse:
         """يمرر طلب HTTP إلى legacy مع وسم تتبعي موحد لحركة legacy."""
         request.state.legacy_route = True
         request.state.legacy_route_id = route_id
-        logger.warning("legacy_acl_http route_id=%s path=%s legacy=true", route_id, request.url.path)
+        logger.warning(
+            "legacy_acl_http route_id=%s path=%s legacy=true", route_id, request.url.path
+        )
         return await self._proxy.forward(
             request,
             settings.CORE_KERNEL_URL,
             upstream_path,
             extra_headers={"X-Legacy-Route": "true", "X-Legacy-Route-Id": route_id},
         )
-
 
     def chat_upstream_path(self, path: str) -> str:
         """يوحد ترجمة مسارات chat نحو واجهة legacy دون تسريب التفاصيل للبوابة."""
@@ -42,6 +45,8 @@ class LegacyACL:
 
     def websocket_target(self, upstream_path: str, route_id: str) -> str:
         """يعيد عنوان websocket للنواة القديمة مع تسجيل معرف المسار."""
-        logger.warning("legacy_acl_ws route_id=%s upstream_path=%s legacy=true", route_id, upstream_path)
+        logger.warning(
+            "legacy_acl_ws route_id=%s upstream_path=%s legacy=true", route_id, upstream_path
+        )
         base_url = settings.CORE_KERNEL_URL.replace("http", "ws", 1)
         return f"{base_url}/{upstream_path}"

@@ -315,7 +315,9 @@ async def chat_http_proxy(path: str, request: Request) -> StreamingResponse:
     """
     logger.warning("Legacy route accessed: /api/chat/%s", path)
     if settings.ROUTE_CHAT_USE_LEGACY:
-        return await legacy_acl.forward_http(request, legacy_acl.chat_upstream_path(path), "chat_http")
+        return await legacy_acl.forward_http(
+            request, legacy_acl.chat_upstream_path(path), "chat_http"
+        )
     return await proxy_handler.forward(
         request,
         settings.ORCHESTRATOR_SERVICE_URL,
@@ -359,7 +361,9 @@ async def content_proxy(path: str, request: Request) -> StreamingResponse:
     """
     logger.warning("Legacy route accessed: /v1/content/%s", path)
     if settings.ROUTE_CONTENT_USE_LEGACY:
-        return await legacy_acl.forward_http(request, legacy_acl.content_upstream_path(path), "content")
+        return await legacy_acl.forward_http(
+            request, legacy_acl.content_upstream_path(path), "content"
+        )
     return await proxy_handler.forward(
         request,
         settings.RESEARCH_AGENT_URL,
