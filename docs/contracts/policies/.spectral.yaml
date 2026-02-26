@@ -430,3 +430,6 @@ overrides:
       cogniforge-asyncapi-event-version: off
       cogniforge-asyncapi-event-id: off
       cogniforge-asyncapi-occurred-at: off
+  - files: ["docs/contracts/asyncapi/*.yaml"]
+    rules:
+      cogniforge-api-version-in-path: off

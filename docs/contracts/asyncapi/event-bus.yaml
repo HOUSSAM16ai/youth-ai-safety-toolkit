@@ -15,11 +15,26 @@ info:
   contact:
     name: CogniForge Support
     email: support@cogniforge.ai
+    url: https://cogniforge.ai/support
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+servers:
+  production:
+    url: rabbitmq.cogniforge.local:5672/v1
+    protocol: amqp
+    description: Production RabbitMQ Server
+
+tags:
+  - name: event-bus
+    description: Core event bus operations
 
 channels:
   user/created:
     description: حدث إنشاء مستخدم جديد
     subscribe:
+      description: الاشتراك في أحداث إنشاء المستخدمين وتلقي إشعارات عند إضافة مستخدم جديد.
       summary: الاشتراك في أحداث إنشاء المستخدمين
       operationId: onUserCreated
       message:
@@ -28,6 +43,7 @@ channels:
   user/updated:
     description: حدث تحديث بيانات مستخدم
     subscribe:
+      description: الاشتراك في أحداث تحديث بيانات المستخدمين ومزامنة التغييرات.
       summary: الاشتراك في أحداث تحديث المستخدمين
       operationId: onUserUpdated
       message:
@@ -36,6 +52,7 @@ channels:
   plan/created:
     description: حدث إنشاء خطة تعليمية جديدة
     subscribe:
+      description: الاشتراك في أحداث إنشاء الخطط التعليمية لبدء المعالجة أو التتبع.
       summary: الاشتراك في أحداث إنشاء الخطط
       operationId: onPlanCreated
       message:
@@ -44,6 +61,7 @@ channels:
   plan/completed:
     description: حدث إكمال خطة تعليمية
     subscribe:
+      description: الاشتراك في أحداث إكمال الخطط لتحديث السجلات وإصدار الشهادات.
       summary: الاشتراك في أحداث إكمال الخطط
       operationId: onPlanCompleted
       message:
@@ -52,6 +70,7 @@ channels:
   memory/stored:
     description: حدث حفظ ذاكرة جديدة
     subscribe:
+      description: الاشتراك في أحداث حفظ الذاكرة لتحديث قاعدة المعرفة أو الفهرسة.
       summary: الاشتراك في أحداث حفظ الذاكرة
       operationId: onMemoryStored
       message:
@@ -60,6 +79,7 @@ channels:
   learning/progress:
     description: حدث تقدم في التعلم
     subscribe:
+      description: الاشتراك في أحداث التقدم لتحديث لوحات المعلومات وتحليل الأداء.
       summary: الاشتراك في أحداث التقدم
       operationId: onLearningProgress
       message:
@@ -68,6 +88,7 @@ channels:
   task/assigned:
     description: حدث تعيين مهمة
     subscribe:
+      description: الاشتراك في أحداث تعيين المهام لتوزيع العمل على الوكلاء.
       summary: الاشتراك في أحداث تعيين المهام
       operationId: onTaskAssigned
       message:
@@ -76,12 +97,18 @@ channels:
   task/completed:
     description: حدث إكمال مهمة
     subscribe:
+      description: الاشتراك في أحداث إكمال المهام للتحقق من النتائج والمتابعة.
       summary: الاشتراك في أحداث إكمال المهام
       operationId: onTaskCompleted
       message:
         $ref: '#/components/messages/TaskCompleted'
 
 components:
+  securitySchemes:
+    userPassword:
+      type: userPassword
+      description: Simple username/password authentication
+
   messages:
     UserCreated:
       name: UserCreated
@@ -153,8 +180,9 @@ components:
       required:
         - event_id
         - event_type
-        - timestamp
+        - occurred_at
         - source
+        - event_version
       properties:
         event_id:
           type: string
@@ -163,17 +191,31 @@ components:
         event_type:
           type: string
           description: نوع الحدث
+        occurred_at:
+          type: string
+          format: date-time
+          description: وقت وقوع الحدث
         timestamp:
           type: string
           format: date-time
-          description: وقت الحدث
+          description: وقت معالجة الحدث (للتوافق القديم)
         source:
           type: string
           description: مصدر الحدث
+        event_version:
+          type: string
+          description: إصدار هيكل الحدث
+          example: "1.0.0"
         correlation_id:
           type: string
           format: uuid
           description: معرف الارتباط للتتبع
+      example:
+        event_id: "550e8400-e29b-41d4-a716-446655440000"
+        event_type: "user.created"
+        occurred_at: "2024-01-01T12:00:00Z"
+        source: "user-service"
+        event_version: "1.0.0"
     
     UserCreatedPayload:
       allOf:
@@ -191,6 +233,23 @@ components:
             email:
               type: string
               format: email
+            event_id:
+              type: string
+              format: uuid
+            event_version:
+              type: string
+            occurred_at:
+              type: string
+              format: date-time
+      example:
+        event_id: "550e8400-e29b-41d4-a716-446655440000"
+        event_type: "user.created"
+        occurred_at: "2024-01-01T12:00:00Z"
+        source: "user-service"
+        event_version: "1.0.0"
+        user_id: "123e4567-e89b-12d3-a456-426614174000"
+        name: "John Doe"
+        email: "john@example.com"
     
     UserUpdatedPayload:
       allOf:
@@ -206,6 +265,22 @@ components:
               type: array
               items:
                 type: string
+            event_id:
+              type: string
+              format: uuid
+            event_version:
+              type: string
+            occurred_at:
+              type: string
+              format: date-time
+      example:
+        event_id: "550e8400-e29b-41d4-a716-446655440001"
+        event_type: "user.updated"
+        occurred_at: "2024-01-01T12:30:00Z"
+        source: "user-service"
+        event_version: "1.0.0"
+        user_id: "123e4567-e89b-12d3-a456-426614174000"
+        updated_fields: ["email", "name"]
     
     PlanCreatedPayload:
       allOf:
@@ -227,6 +302,24 @@ components:
               type: array
               items:
                 type: string
+            event_id:
+              type: string
+              format: uuid
+            event_version:
+              type: string
+            occurred_at:
+              type: string
+              format: date-time
+      example:
+        event_id: "550e8400-e29b-41d4-a716-446655440002"
+        event_type: "plan.created"
+        occurred_at: "2024-01-01T13:00:00Z"
+        source: "planning-service"
+        event_version: "1.0.0"
+        plan_id: "123e4567-e89b-12d3-a456-426614174001"
+        goal: "Learn Python"
+        user_id: "123e4567-e89b-12d3-a456-426614174000"
+        steps: ["Install Python", "Write Hello World"]
     
     PlanCompletedPayload:
       allOf:
@@ -245,6 +338,23 @@ components:
             completion_date:
               type: string
               format: date-time
+            event_id:
+              type: string
+              format: uuid
+            event_version:
+              type: string
+            occurred_at:
+              type: string
+              format: date-time
+      example:
+        event_id: "550e8400-e29b-41d4-a716-446655440003"
+        event_type: "plan.completed"
+        occurred_at: "2024-01-01T14:00:00Z"
+        source: "planning-service"
+        event_version: "1.0.0"
+        plan_id: "123e4567-e89b-12d3-a456-426614174001"
+        user_id: "123e4567-e89b-12d3-a456-426614174000"
+        completion_date: "2024-01-01T14:00:00Z"
     
     MemoryStoredPayload:
       allOf:
@@ -263,6 +373,23 @@ components:
               type: array
               items:
                 type: string
+            event_id:
+              type: string
+              format: uuid
+            event_version:
+              type: string
+            occurred_at:
+              type: string
+              format: date-time
+      example:
+        event_id: "550e8400-e29b-41d4-a716-446655440004"
+        event_type: "memory.stored"
+        occurred_at: "2024-01-01T15:00:00Z"
+        source: "memory-service"
+        event_version: "1.0.0"
+        memory_id: "123e4567-e89b-12d3-a456-426614174002"
+        content: "User prefers dark mode"
+        tags: ["preference", "ui"]
     
     LearningProgressPayload:
       allOf:
@@ -286,6 +413,24 @@ components:
               maximum: 100
             current_step:
               type: integer
+            event_id:
+              type: string
+              format: uuid
+            event_version:
+              type: string
+            occurred_at:
+              type: string
+              format: date-time
+      example:
+        event_id: "550e8400-e29b-41d4-a716-446655440005"
+        event_type: "learning.progress"
+        occurred_at: "2024-01-01T16:00:00Z"
+        source: "learning-service"
+        event_version: "1.0.0"
+        user_id: "123e4567-e89b-12d3-a456-426614174000"
+        plan_id: "123e4567-e89b-12d3-a456-426614174001"
+        progress_percentage: 50.0
+        current_step: 1
     
     TaskAssignedPayload:
       allOf:
@@ -305,6 +450,24 @@ components:
             priority:
               type: string
               enum: [low, medium, high, critical]
+            event_id:
+              type: string
+              format: uuid
+            event_version:
+              type: string
+            occurred_at:
+              type: string
+              format: date-time
+      example:
+        event_id: "550e8400-e29b-41d4-a716-446655440006"
+        event_type: "task.assigned"
+        occurred_at: "2024-01-01T17:00:00Z"
+        source: "task-service"
+        event_version: "1.0.0"
+        task_id: "123e4567-e89b-12d3-a456-426614174003"
+        agent_name: "ResearchAgent"
+        description: "Analyze market trends"
+        priority: "high"
     
     TaskCompletedPayload:
       allOf:
@@ -324,3 +487,21 @@ components:
             completion_time:
               type: string
               format: date-time
+            event_id:
+              type: string
+              format: uuid
+            event_version:
+              type: string
+            occurred_at:
+              type: string
+              format: date-time
+      example:
+        event_id: "550e8400-e29b-41d4-a716-446655440007"
+        event_type: "task.completed"
+        occurred_at: "2024-01-01T18:00:00Z"
+        source: "task-service"
+        event_version: "1.0.0"
+        task_id: "123e4567-e89b-12d3-a456-426614174003"
+        agent_name: "ResearchAgent"
+        result: { "summary": "Market is growing" }
+        completion_time: "2024-01-01T18:00:00Z"
