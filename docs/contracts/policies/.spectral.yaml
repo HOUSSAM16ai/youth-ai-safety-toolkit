@@ -45,7 +45,7 @@ rules:
     description: كل عملية يجب أن يكون لها operationId (Every operation must have operationId)
     message: "أضف operationId فريد لكل عملية"
     severity: error
-    given: "$.paths[*][*]"
+    given: "$.paths[*][?(@property !== 'parameters')]"
     then:
       field: operationId
       function: truthy
@@ -54,7 +54,7 @@ rules:
     description: operationId يجب أن يكون فريداً (operationId must be unique)
     message: "operationId يجب أن يكون فريداً في كل المسارات"
     severity: error
-    given: "$.paths[*][*]"
+    given: "$.paths[*][?(@property !== 'parameters')]"
     then:
       function: pattern
       field: operationId
@@ -65,7 +65,7 @@ rules:
     description: كل عملية يجب أن يكون لها ملخص (Every operation must have summary)
     message: "أضف ملخص واضح لكل عملية"
     severity: error
-    given: "$.paths[*][*]"
+    given: "$.paths[*][?(@property !== 'parameters')]"
     then:
       field: summary
       function: truthy
@@ -74,7 +74,7 @@ rules:
     description: كل عملية يجب أن يكون لها وصف (Every operation must have description)
     message: "أضف وصف تفصيلي لكل عملية"
     severity: warn
-    given: "$.paths[*][*]"
+    given: "$.paths[*][?(@property !== 'parameters')]"
     then:
       field: description
       function: truthy
@@ -83,7 +83,7 @@ rules:
     description: كل عملية يجب أن تحتوي على تصنيف (Every operation must have tags)
     message: "أضف على الأقل تصنيف واحد لكل عملية"
     severity: error
-    given: "$.paths[*][*]"
+    given: "$.paths[*][?(@property !== 'parameters')]"
     then:
       field: tags
       function: truthy

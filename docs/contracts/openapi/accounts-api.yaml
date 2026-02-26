@@ -152,6 +152,8 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
     post:
+      security:
+        - OAuth2: [write]
       tags: [Accounts]
       summary: إنشاء حساب جديد (Create Account)
       description: |
@@ -260,6 +262,8 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
     patch:
+      security:
+        - OAuth2: [write]
       tags: [Accounts]
       summary: تحديث حساب جزئياً (Partial Update Account)
       operationId: updateAccount
@@ -287,6 +291,8 @@ paths:
         '412':
           description: فشل الشرط المسبق (Precondition Failed)
     delete:
+      security:
+        - OAuth2: [admin]
       tags: [Accounts]
       summary: حذف حساب (Delete Account)
       operationId: deleteAccount
@@ -311,6 +317,7 @@ paths:
         - name: Idempotency-Key
           in: header
           required: true
+          description: مفتاح التماثل لمنع تكرار العمليات (Idempotency key)
           schema:
             type: string
             minLength: 16
@@ -571,7 +578,7 @@ components:
           type: string
           format: uri
           description: URI يعرف نسخة محددة من المشكلة (URI for this specific occurrence)
-          example: "/v1/accounts?cursor=xyz"
+          example: "https://api.cogniforge.com/v1/accounts?cursor=xyz"
         request_id:
           type: string
           description: معرف الطلب للمتابعة (Request ID for tracking)
