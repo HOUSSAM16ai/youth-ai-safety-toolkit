@@ -340,6 +340,7 @@ rules:
     description: الأحداث يجب أن تحتوي على رقم إصدار (Events must have version)
     message: "أضف event_version لكل حدث"
     severity: error
+    formats: [asyncapi2]
     given: "$.components.schemas[?(@.allOf)]..properties"
     then:
       field: event_version
@@ -349,6 +350,7 @@ rules:
     description: الأحداث يجب أن تحتوي على معرف فريد (Events must have unique ID)
     message: "أضف event_id لكل حدث"
     severity: error
+    formats: [asyncapi2]
     given: "$.components.schemas[?(@.allOf)]..properties"
     then:
       field: event_id
@@ -358,6 +360,7 @@ rules:
     description: الأحداث يجب أن تحتوي على وقت الحدوث (Events must have occurred_at timestamp)
     message: "أضف occurred_at لكل حدث"
     severity: error
+    formats: [asyncapi2]
     given: "$.components.schemas[?(@.allOf)]..properties"
     then:
       field: occurred_at

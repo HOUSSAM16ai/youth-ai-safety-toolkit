@@ -1055,6 +1055,7 @@ paths:
       parameters:
         - name: conversation_id
           in: path
+          description: Unique conversation identifier used to retrieve the conversation details.
           required: true
           schema:
             type: string
@@ -1091,6 +1092,7 @@ paths:
       parameters:
         - name: conversation_id
           in: path
+          description: Unique conversation identifier used by admins to fetch conversation details.
           required: true
           schema:
             type: string
