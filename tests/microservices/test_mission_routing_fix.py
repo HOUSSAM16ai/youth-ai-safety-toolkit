@@ -1,4 +1,5 @@
 import os
+import jwt
 from unittest.mock import AsyncMock, patch
 
 # Set required environment variable before importing settings
@@ -13,13 +14,12 @@ from microservices.api_gateway.security import verify_gateway_request
 
 client = TestClient(app)
 
+# Helper to generate token
+def get_valid_token():
+    return jwt.encode({"sub": "test-user"}, settings.SECRET_KEY, algorithm="HS256")
 
-# Override security dependency for testing
-async def override_verify_gateway_request():
-    return {"sub": "test-user"}
-
-
-app.dependency_overrides[verify_gateway_request] = override_verify_gateway_request
+def get_auth_headers():
+    return {"Authorization": f"Bearer {get_valid_token()}"}
 
 
 @patch.object(proxy_handler, "forward", new_callable=AsyncMock)
@@ -31,7 +31,7 @@ def test_mission_route_proxies_to_orchestrator(mock_forward):
     mock_forward.return_value = JSONResponse(content={"status": "ok"})
 
     # Test the root listing endpoint
-    response = client.get("/api/v1/missions")
+    response = client.get("/api/v1/missions", headers=get_auth_headers())
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
@@ -52,7 +52,7 @@ def test_mission_detail_route_proxies_to_orchestrator(mock_forward):
     """
     mock_forward.return_value = JSONResponse(content={"status": "ok"})
 
-    response = client.get("/api/v1/missions/123")
+    response = client.get("/api/v1/missions/123", headers=get_auth_headers())
 
     assert response.status_code == 200
     assert mock_forward.called

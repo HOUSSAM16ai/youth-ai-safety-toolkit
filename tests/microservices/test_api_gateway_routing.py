@@ -1,4 +1,5 @@
 import os
+import jwt
 from unittest.mock import AsyncMock, patch
 
 # Set required environment variable before importing settings
@@ -13,13 +14,12 @@ from microservices.api_gateway.security import verify_gateway_request
 
 client = TestClient(app)
 
+# Helper to generate token
+def get_valid_token():
+    return jwt.encode({"sub": "test-user"}, settings.SECRET_KEY, algorithm="HS256")
 
-# Override security dependency
-async def override_verify_gateway_request():
-    return {"sub": "test-user"}
-
-
-app.dependency_overrides[verify_gateway_request] = override_verify_gateway_request
+def get_auth_headers():
+    return {"Authorization": f"Bearer {get_valid_token()}"}
 
 
 @patch.object(proxy_handler, "forward", new_callable=AsyncMock)
@@ -29,27 +29,24 @@ def test_planning_route_proxies_correctly(mock_forward):
     """
     mock_forward.return_value = JSONResponse(content={"status": "ok"})
 
-    response = client.get("/api/v1/planning/test")
+    response = client.get("/api/v1/planning/test", headers=get_auth_headers())
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
 
     # Verify forward was called with correct args
-    # args: request, target_url, path, service_token
-    # We can check target_url
     assert mock_forward.called
     args, _ = mock_forward.call_args
-    assert "http://planning-agent:8001" in args or settings.PLANNING_AGENT_URL in args  # target_url
-    assert "test" in args  # path (stripped prefix)
+    assert "http://planning-agent:8001" in args or settings.PLANNING_AGENT_URL in args
+    assert "test" in args
 
 
 @patch.object(proxy_handler, "forward", new_callable=AsyncMock)
 def test_unknown_route_returns_404(mock_forward):
     """
     Verify that requests to unknown routes return 404 and are NOT forwarded.
-    This confirms the removal of the catch-all proxy.
     """
-    response = client.get("/unknown/route")
+    response = client.get("/unknown/route", headers=get_auth_headers())
 
     assert response.status_code == 404
     assert not mock_forward.called
@@ -62,14 +59,13 @@ def test_admin_route_proxies_to_user_service(mock_forward):
     """
     mock_forward.return_value = JSONResponse(content={"status": "ok"})
 
-    response = client.get("/admin/users")
+    response = client.get("/admin/users", headers=get_auth_headers())
 
     assert response.status_code == 200
     assert mock_forward.called
     args, _ = mock_forward.call_args
-    assert settings.USER_SERVICE_URL in args  # target_url
-    # The path passed to forward should include the prefix for legacy routes as we construct it manually
-    assert "api/v1/admin/users" in args  # path
+    assert settings.USER_SERVICE_URL in args
+    assert "api/v1/admin/users" in args
 
 
 @patch.object(proxy_handler, "forward", new_callable=AsyncMock)
@@ -79,25 +75,31 @@ def test_chat_route_proxies_to_monolith(mock_forward):
     """
     mock_forward.return_value = JSONResponse(content={"status": "ok"})
 
-    response = client.get("/api/chat/history")
+    # Temporarily enable legacy routing for this test
+    original_setting = settings.ROUTE_CHAT_USE_LEGACY
+    settings.ROUTE_CHAT_USE_LEGACY = True
 
-    assert response.status_code == 200
-    assert mock_forward.called
-    args, _ = mock_forward.call_args
-    assert settings.CORE_KERNEL_URL in args
-    assert "api/chat/history" in args
+    try:
+        response = client.get("/api/chat/history", headers=get_auth_headers())
+
+        assert response.status_code == 200
+        assert mock_forward.called
+        args, _ = mock_forward.call_args
+        # Should route to Monolith (Core Kernel)
+        assert settings.CORE_KERNEL_URL in args
+        assert "api/chat/history" in args
+    finally:
+        settings.ROUTE_CHAT_USE_LEGACY = original_setting
 
 
 @patch.object(proxy_handler, "forward", new_callable=AsyncMock)
 def test_legacy_v1_no_fallback(mock_forward):
     """
     Verify that unmatched /api/v1/* requests do NOT fall back to the Monolith.
-    They should return 404, exposing gaps in migration.
     """
     mock_forward.return_value = JSONResponse(content={"status": "ok"})
 
-    # /api/v1/planning is matched by specific route, so try something else
-    response = client.get("/api/v1/random-crud/item")
+    response = client.get("/api/v1/random-crud/item", headers=get_auth_headers())
 
     assert response.status_code == 404
     assert not mock_forward.called
