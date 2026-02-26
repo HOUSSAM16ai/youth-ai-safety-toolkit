@@ -107,6 +107,7 @@ rules:
             - required: ["201"]
             - required: ["202"]
             - required: ["204"]
+        dialect: auto
 
   cogniforge-response-2xx-description:
     description: استجابات النجاح يجب أن يكون لها وصف (Success responses must have description)
@@ -124,6 +125,9 @@ rules:
     given: "$.paths[*][*].responses"
     then:
       function: schema
+      functionOptions:
+        schema: {}
+        dialect: auto
 
   cogniforge-request-id-header:
     description: استجابات النجاح يجب أن تحتوي على X-Request-Id (Success responses must have X-Request-Id header)
@@ -159,6 +163,7 @@ rules:
           anyOf:
             - required: ["example"]
             - required: ["examples"]
+        dialect: auto
 
   # ==========================================================================
   # Security Rules - قواعد الأمان
@@ -236,6 +241,9 @@ rules:
     given: "$.paths[*].get"
     then:
       function: schema
+      functionOptions:
+        schema: {}
+        dialect: auto
 
   # ==========================================================================
   # Idempotency Rules - قواعد التماثل
@@ -248,6 +256,9 @@ rules:
     given: "$.paths[*].post.parameters[?(@.in === 'header')]"
     then:
       function: schema
+      functionOptions:
+        schema: {}
+        dialect: auto
 
   # ==========================================================================
   # Versioning Rules - قواعد الإصدارات
@@ -295,6 +306,9 @@ rules:
     given: "$.paths[*][*].responses.200.headers"
     then:
       function: schema
+      functionOptions:
+        schema: {}
+        dialect: auto
 
   # ==========================================================================
   # Caching Rules - قواعد التخزين المؤقت
@@ -360,6 +374,9 @@ rules:
     given: "$.components.schemas[*]"
     then:
       function: schema
+      functionOptions:
+        schema: {}
+        dialect: auto
 
   cogniforge-no-property-type-change:
     description: لا تغير أنواع الخصائص (Don't change property types)
@@ -368,6 +385,9 @@ rules:
     given: "$.components.schemas[*].properties[*]"
     then:
       function: schema
+      functionOptions:
+        schema: {}
+        dialect: auto
 
   # ==========================================================================
   # Documentation Rules - قواعد التوثيق
@@ -385,6 +405,7 @@ rules:
           anyOf:
             - required: ["example"]
             - required: ["examples"]
+        dialect: auto
 
   cogniforge-examples-for-responses:
     description: الاستجابات يجب أن تحتوي على أمثلة (Responses should have examples)
@@ -398,3 +419,4 @@ rules:
           anyOf:
             - required: ["example"]
             - required: ["examples"]
+        dialect: auto
