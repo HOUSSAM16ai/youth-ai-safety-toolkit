@@ -420,3 +420,10 @@ rules:
             - required: ["example"]
             - required: ["examples"]
         dialect: auto
+
+overrides:
+  - files: ["docs/contracts/openapi/*.yaml"]
+    rules:
+      cogniforge-asyncapi-event-version: off
+      cogniforge-asyncapi-event-id: off
+      cogniforge-asyncapi-occurred-at: off

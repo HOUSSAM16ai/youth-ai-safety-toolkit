@@ -416,7 +416,7 @@ components:
             self:
               type: string
               format: uri
-              example: "/api/v1/resources/mission/res_123abc"
+              example: "https://api.cogniforge.ai/api/v1/resources/mission/res_123abc"
     
     PaginatedResourceResponse:
       allOf:
@@ -538,6 +538,7 @@ paths:
       summary: Register New User
       description: Create a new user account in the system
       operationId: registerUser
+      security: []
       requestBody:
         required: true
         content:
@@ -611,6 +612,7 @@ paths:
         
         **Security**: Protected by Chrono-Kinetic Defense Shield
       operationId: loginUser
+      security: []
       requestBody:
         required: true
         content:
@@ -884,6 +886,8 @@ paths:
         - Security
       summary: Generate Security Token
       operationId: securityTokenGenerate
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: Token generated
@@ -894,6 +898,8 @@ paths:
         - Security
       summary: Verify Security Token
       operationId: securityTokenVerify
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: Token verification result
@@ -914,6 +920,7 @@ paths:
         - Security
       summary: Register User
       operationId: authRegister
+      security: []
       responses:
         '200':
           description: User registered
@@ -924,6 +931,7 @@ paths:
         - Security
       summary: Login User
       operationId: authLogin
+      security: []
       responses:
         '200':
           description: User authenticated
@@ -934,6 +942,8 @@ paths:
         - Security
       summary: Logout User
       operationId: authLogout
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: User logged out
@@ -944,6 +954,8 @@ paths:
         - Security
       summary: Refresh Token
       operationId: authRefresh
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: Token refreshed
@@ -954,6 +966,8 @@ paths:
         - Security
       summary: Re-authenticate User
       operationId: authReauth
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: Re-authentication completed
@@ -964,6 +978,7 @@ paths:
         - Security
       summary: Forgot Password
       operationId: authForgotPassword
+      security: []
       responses:
         '200':
           description: Reset email sent
@@ -974,6 +989,7 @@ paths:
         - Security
       summary: Reset Password
       operationId: authResetPassword
+      security: []
       responses:
         '200':
           description: Password reset
@@ -992,6 +1008,8 @@ paths:
         - Users
       summary: Update Current User
       operationId: usersMePatch
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: Current user updated
@@ -1002,6 +1020,8 @@ paths:
         - Users
       summary: Change Password
       operationId: usersMeChangePassword
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: Password updated
@@ -1092,6 +1112,8 @@ paths:
         - Admin
       summary: Update AI Config
       operationId: adminAiConfigUpdate
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: AI configuration updated
@@ -1120,6 +1142,8 @@ paths:
         - Admin
       summary: Create User
       operationId: adminUsersCreate
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: User created
@@ -1140,10 +1164,13 @@ paths:
         - Admin
       summary: Update User Roles
       operationId: adminUsersRolesUpdate
+      security:
+        - BearerAuth: []
       parameters:
         - name: user_id
           in: path
           required: true
+          description: Unique identifier of the user
           schema:
             type: string
       responses:
@@ -1156,10 +1183,13 @@ paths:
         - Admin
       summary: Update User Status
       operationId: adminUsersStatusUpdate
+      security:
+        - BearerAuth: []
       parameters:
         - name: user_id
           in: path
           required: true
+          description: Unique identifier of the user
           schema:
             type: string
       responses:
@@ -1196,6 +1226,7 @@ paths:
         - name: path
           in: path
           required: true
+          description: Path to the analytics resource
           schema:
             type: string
       responses:
@@ -1238,6 +1269,8 @@ paths:
         - CRUD
       summary: Create Data Contract
       operationId: dataMeshContractsCreate
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: Data contract created
@@ -1258,6 +1291,8 @@ paths:
         - Agents
       summary: Create Overmind Mission
       operationId: overmindMissionsCreate
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: Mission created
@@ -1272,6 +1307,7 @@ paths:
         - name: mission_id
           in: path
           required: true
+          description: Unique identifier of the mission
           schema:
             type: string
       responses:
@@ -1284,6 +1320,8 @@ paths:
         - Agents
       summary: Submit QA Question
       operationId: qaQuestionSubmit
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: QA response
@@ -1308,6 +1346,7 @@ paths:
         - name: mission_id
           in: path
           required: true
+          description: Unique identifier of the mission
           schema:
             type: integer
       responses:
@@ -1320,6 +1359,8 @@ paths:
         - Agents
       summary: Run LangGraph
       operationId: runLangGraph
+      security:
+        - BearerAuth: []
       responses:
         '201':
           description: LangGraph run created
@@ -1354,6 +1395,7 @@ paths:
         - name: id
           in: path
           required: true
+          description: Unique identifier of the content
           schema:
             type: string
       responses:
@@ -1370,6 +1412,7 @@ paths:
         - name: id
           in: path
           required: true
+          description: Unique identifier of the content
           schema:
             type: string
       responses:
@@ -1386,6 +1429,7 @@ paths:
         - name: id
           in: path
           required: true
+          description: Unique identifier of the content
           schema:
             type: string
       responses:
