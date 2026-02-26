@@ -371,7 +371,8 @@ components:
           plan_id: plan_123abc
           objective: تصميم نظام API-First للعقود
           steps:
-          - title: تحليل المتطلبات
+          - step_id: step-01
+            title: تحليل المتطلبات
             description: تجميع القيود والمتطلبات
             priority: high
           estimated_duration_minutes: 45
@@ -814,7 +815,8 @@ paths:
                   plan_id: plan_123abc
                   objective: تصميم نظام API-First للعقود
                   steps:
-                  - title: تحليل المتطلبات
+                  - step_id: step-01
+                    title: تحليل المتطلبات
                     description: تجميع القيود والمتطلبات
                     priority: high
                   estimated_duration_minutes: 45
@@ -1531,7 +1533,8 @@ paths:
                   plan_id: plan_123abc
                   objective: تصميم نظام API-First للعقود
                   steps:
-                  - title: تحليل المتطلبات
+                  - step_id: step-01
+                    title: تحليل المتطلبات
                     description: تجميع القيود والمتطلبات
                     priority: high
                   estimated_duration_minutes: 45
