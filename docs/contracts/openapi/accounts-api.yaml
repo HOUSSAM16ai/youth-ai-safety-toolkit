@@ -228,8 +228,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Account'
-              example:
-                message: مثال لاستجابة
+              example: &id001
+                id: acc_1a2b3c4d
+                name: حساب العميل الرئيسي
+                type: individual
+                status: active
+                balance: 10000
+                currency: USD
+                metadata:
+                  customer_id: cust_123456
+                created_at: '2026-01-01T00:00:00Z'
+                updated_at: '2026-01-02T00:00:00Z'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -241,12 +250,79 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemDetails'
               example:
-                message: مثال لاستجابة
+                type: https://api.cogniforge.com/errors/conflict
+                title: Conflict
+                status: 409
+                detail: مفتاح التماثل مستخدم مسبقاً.
+                instance: https://api.cogniforge.com/v1/accounts
+                request_id: req_1a2b3c4d5e6f
+                timestamp: '2026-01-03T00:00:00Z'
         '422':
           $ref: '#/components/responses/ValidationError'
-  /accounts/{accountId}:
+  /payments:
+    post:
+      tags:
+      - Payments
+      summary: إنشاء دفعة (Create Payment)
+      description: 'إنشاء دفعة جديدة مع دعم التماثل
+
+
+        **ملاحظة أمنية:** يتطلب نطاق ''payments:write''
+
+        '
+      operationId: createPayment
+      security:
+      - OAuth2:
+        - payments:write
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: true
+        description: مفتاح التماثل لمنع تكرار العمليات (Idempotency key)
+        schema:
+          type: string
+          minLength: 16
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePaymentRequest'
+            example:
+              amount: 5000
+              currency: USD
+              destination_account_id: acc_1a2b3c4d
+              description: دفعة للخدمات المقدمة
+              metadata:
+                invoice_id: inv_123
+      responses:
+        '201':
+          description: تم الإنشاء (Created)
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+              example: &id003
+                id: pay_1a2b3c4d
+                status: pending
+                amount: 5000
+                currency: USD
+                destination_account_id: acc_1a2b3c4d
+                metadata:
+                  invoice_id: inv_123
+                created_at: '2026-01-03T00:00:00Z'
+                updated_at: '2026-01-03T00:00:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: تضارب مفتاح التماثل (Idempotency key conflict)
+  /accounts/{account-id}:
     parameters:
-    - name: accountId
+    - name: account-id
       in: path
       required: true
       description: معرف الحساب (Account identifier)
@@ -283,8 +359,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Account'
-              example:
-                message: مثال لاستجابة
+              example: *id001
         '304':
           description: لم يتم التعديل (Not Modified)
         '404':
@@ -310,8 +385,11 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateAccountRequest'
-            example:
-              message: مثال لطلب
+            example: &id002
+              name: حساب محدث
+              status: suspended
+              metadata:
+                reason: user_request
       responses:
         '200':
           description: تم التحديث بنجاح (Updated successfully)
@@ -319,8 +397,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Account'
-              example:
-                message: مثال لاستجابة
+              example: *id001
         '404':
           $ref: '#/components/responses/NotFound'
         '412':
@@ -340,54 +417,6 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
       description: حذف حساب (Delete Account)
-  /payments:
-    post:
-      tags:
-      - Payments
-      summary: إنشاء دفعة (Create Payment)
-      description: 'إنشاء دفعة جديدة مع دعم التماثل
-
-
-        **ملاحظة أمنية:** يتطلب نطاق ''payments:write''
-
-        '
-      operationId: createPayment
-      security:
-      - OAuth2:
-        - payments:write
-      parameters:
-      - name: Idempotency-Key
-        in: header
-        required: true
-        description: مفتاح التماثل لمنع تكرار العمليات (Idempotency key)
-        schema:
-          type: string
-          minLength: 16
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreatePaymentRequest'
-            example:
-              message: مثال لطلب
-      responses:
-        '201':
-          description: تم الإنشاء (Created)
-          headers:
-            X-Request-Id:
-              schema:
-                type: string
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Payment'
-              example:
-                message: مثال لاستجابة
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '409':
-          description: تضارب مفتاح التماثل (Idempotency key conflict)
 components:
   securitySchemes:
     OAuth2:
@@ -433,10 +462,16 @@ components:
           description: يوضح هذا الحقل قيمة data.
         pagination:
           $ref: '#/components/schemas/PaginationInfo'
-          description: يوضح هذا الحقل قيمة pagination.
+          description: معلومات الترقيم والانتقال بين الصفحات.
       example:
-        data: []
-        pagination: value
+        data:
+        - *id001
+        pagination:
+          next_cursor: cursor_next
+          previous_cursor: null
+          has_more: true
+          count: 1
+          total: 1
     PaginationInfo:
       type: object
       required:
@@ -526,16 +561,7 @@ components:
           type: string
           format: date-time
           description: تاريخ آخر تحديث (Last update timestamp)
-      example:
-        id: acc_1a2b3c4d
-        name: حساب العميل الرئيسي
-        type: string
-        status: string
-        balance: 10000
-        currency: USD
-        metadata: {}
-        created_at: string
-        updated_at: string
+      example: *id001
     CreateAccountRequest:
       type: object
       required:
@@ -567,9 +593,10 @@ components:
           description: يوضح هذا الحقل قيمة metadata.
       example:
         name: أحمد محمد
-        type: string
+        type: individual
         currency: USD
-        metadata: {}
+        metadata:
+          source: web
     UpdateAccountRequest:
       type: object
       properties:
@@ -590,10 +617,7 @@ components:
           additionalProperties: true
           maxProperties: 50
           description: يوضح هذا الحقل قيمة metadata.
-      example:
-        name: string
-        status: string
-        metadata: {}
+      example: *id002
     Payment:
       type: object
       required:
@@ -642,15 +666,7 @@ components:
           type: string
           format: date-time
           description: يوضح هذا الحقل قيمة updated_at.
-      example:
-        id: pay_1a2b3c4d
-        status: string
-        amount: 0
-        currency: USD
-        destination_account_id: string
-        metadata: {}
-        created_at: string
-        updated_at: string
+      example: *id003
     CreatePaymentRequest:
       type: object
       required:
@@ -734,7 +750,7 @@ components:
         detail: تم تجاوز حد المعدل. الرجاء المحاولة بعد دقيقة.
         instance: https://api.cogniforge.com/v1/accounts?cursor=xyz
         request_id: req_1a2b3c4d5e6f
-        timestamp: string
+        timestamp: '2026-01-03T00:00:00Z'
   responses:
     BadRequest:
       description: طلب غير صحيح (Bad Request)
