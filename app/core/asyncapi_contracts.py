@@ -51,7 +51,7 @@ def validate_asyncapi_contract_structure(spec_path: Path) -> AsyncAPIContractRep
 
     channels_missing_ops = [name for name, has_ops in channels.items() if not has_ops]
     for channel in channels_missing_ops:
-        errors.append(f"Channel {channel} must define publish or subscribe.")
+        errors.append(f"Channel {channel} must define publish, subscribe, or messages.")
 
     return AsyncAPIContractReport(errors=tuple(errors))
 
@@ -74,6 +74,39 @@ def _scan_top_level_keys(text: str) -> set[str]:
 
 def _extract_channels_from_yaml(text: str) -> dict[str, bool]:
     """يستخرج القنوات ويحدد ما إذا كانت تحتوي publish أو subscribe."""
+    # This is a very basic parser and prone to errors with complex YAML,
+    # but serves the purpose of a quick check.
+    import yaml
+
+    try:
+        data = yaml.safe_load(text)
+        if not isinstance(data, dict):
+            return {}
+        channels = data.get("channels", {})
+        if not isinstance(channels, dict):
+            return {}
+
+        result = {}
+        for name, content in channels.items():
+            if not isinstance(content, dict):
+                result[name] = False
+                continue
+
+            # AsyncAPI 2.x uses publish/subscribe
+            has_pub_sub = "publish" in content or "subscribe" in content
+            # AsyncAPI 3.0 uses messages
+            has_messages = "messages" in content
+
+            result[name] = has_pub_sub or has_messages
+
+        return result
+    except Exception:
+        # Fallback to manual parsing if yaml fails or dependency missing
+        return _extract_channels_from_yaml_manual(text)
+
+
+def _extract_channels_from_yaml_manual(text: str) -> dict[str, bool]:
+    """يستخرج القنوات ويحدد ما إذا كانت تحتوي publish أو subscribe (manual fallback)."""
     lines = text.splitlines()
     channels_indent: int | None = None
     channels: dict[str, bool] = {}
@@ -133,7 +166,7 @@ def _channel_has_operations(
         indent = len(line) - len(line.lstrip(" "))
         if indent <= base_indent:
             break
-        if stripped in {"publish:", "subscribe:"}:
+        if stripped in {"publish:", "subscribe:", "messages:"}:
             return True
         index += 1
     return False

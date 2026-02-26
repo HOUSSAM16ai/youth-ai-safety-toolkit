@@ -217,6 +217,8 @@ async def list_conversations(
     "/conversations/{conversation_id}",
     summary="تفاصيل محادثة",
     response_model=CustomerConversationDetails,
+    description="استرجاع تفاصيل محادثة محددة.",
+    operation_id="chatConversationGet",
 )
 async def get_conversation(
     conversation_id: int,

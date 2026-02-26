@@ -1,4 +1,4 @@
-asyncapi: 2.6.0
+asyncapi: 3.0.0
 info:
   title: CogniForge Event Bus
   version: '1.0.0'
@@ -19,88 +19,63 @@ info:
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0
+  tags:
+    - name: event-bus
+      description: Core event bus operations
 
 servers:
   production:
-    url: rabbitmq.cogniforge.local:5672/v1
+    host: rabbitmq.cogniforge.local:5672/v1
     protocol: amqp
     description: Production RabbitMQ Server
-
-tags:
-  - name: event-bus
-    description: Core event bus operations
 
 channels:
   user/created:
     description: حدث إنشاء مستخدم جديد
-    subscribe:
-      description: الاشتراك في أحداث إنشاء المستخدمين وتلقي إشعارات عند إضافة مستخدم جديد.
-      summary: الاشتراك في أحداث إنشاء المستخدمين
-      operationId: onUserCreated
-      message:
+    messages:
+      onUserCreated:
         $ref: '#/components/messages/UserCreated'
   
   user/updated:
     description: حدث تحديث بيانات مستخدم
-    subscribe:
-      description: الاشتراك في أحداث تحديث بيانات المستخدمين ومزامنة التغييرات.
-      summary: الاشتراك في أحداث تحديث المستخدمين
-      operationId: onUserUpdated
-      message:
+    messages:
+      onUserUpdated:
         $ref: '#/components/messages/UserUpdated'
   
   plan/created:
     description: حدث إنشاء خطة تعليمية جديدة
-    subscribe:
-      description: الاشتراك في أحداث إنشاء الخطط التعليمية لبدء المعالجة أو التتبع.
-      summary: الاشتراك في أحداث إنشاء الخطط
-      operationId: onPlanCreated
-      message:
+    messages:
+      onPlanCreated:
         $ref: '#/components/messages/PlanCreated'
   
   plan/completed:
     description: حدث إكمال خطة تعليمية
-    subscribe:
-      description: الاشتراك في أحداث إكمال الخطط لتحديث السجلات وإصدار الشهادات.
-      summary: الاشتراك في أحداث إكمال الخطط
-      operationId: onPlanCompleted
-      message:
+    messages:
+      onPlanCompleted:
         $ref: '#/components/messages/PlanCompleted'
   
   memory/stored:
     description: حدث حفظ ذاكرة جديدة
-    subscribe:
-      description: الاشتراك في أحداث حفظ الذاكرة لتحديث قاعدة المعرفة أو الفهرسة.
-      summary: الاشتراك في أحداث حفظ الذاكرة
-      operationId: onMemoryStored
-      message:
+    messages:
+      onMemoryStored:
         $ref: '#/components/messages/MemoryStored'
   
   learning/progress:
     description: حدث تقدم في التعلم
-    subscribe:
-      description: الاشتراك في أحداث التقدم لتحديث لوحات المعلومات وتحليل الأداء.
-      summary: الاشتراك في أحداث التقدم
-      operationId: onLearningProgress
-      message:
+    messages:
+      onLearningProgress:
         $ref: '#/components/messages/LearningProgress'
   
   task/assigned:
     description: حدث تعيين مهمة
-    subscribe:
-      description: الاشتراك في أحداث تعيين المهام لتوزيع العمل على الوكلاء.
-      summary: الاشتراك في أحداث تعيين المهام
-      operationId: onTaskAssigned
-      message:
+    messages:
+      onTaskAssigned:
         $ref: '#/components/messages/TaskAssigned'
   
   task/completed:
     description: حدث إكمال مهمة
-    subscribe:
-      description: الاشتراك في أحداث إكمال المهام للتحقق من النتائج والمتابعة.
-      summary: الاشتراك في أحداث إكمال المهام
-      operationId: onTaskCompleted
-      message:
+    messages:
+      onTaskCompleted:
         $ref: '#/components/messages/TaskCompleted'
 
 components:

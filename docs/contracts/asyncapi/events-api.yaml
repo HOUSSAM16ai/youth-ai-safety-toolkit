@@ -1,4 +1,4 @@
-asyncapi: '2.6.0'
+asyncapi: '3.0.0'
 info:
   title: CogniForge Domain Events API
   version: 1.0.0
@@ -20,34 +20,33 @@ info:
   license:
     name: Proprietary
     url: https://cogniforge.ai/license
+  tags:
+    - name: account-events
+      description: Events related to user accounts
+    - name: payment-events
+      description: Events related to payments
+    - name: user-events
+      description: Events related to user lifecycle
+    - name: system-events
+      description: Events related to system health
 
 defaultContentType: application/json
 
 servers:
   production:
-    url: kafka1.cogniforge.com:9092/v1
+    host: kafka1.cogniforge.com:9092/v1
     protocol: kafka
     description: إنتاج - Kafka Cluster (Production)
     security:
-      - saslScram: []
+      - $ref: '#/components/securitySchemes/saslScram'
   staging:
-    url: kafka-staging.cogniforge.com:9092/v1
+    host: kafka-staging.cogniforge.com:9092/v1
     protocol: kafka
     description: اختبار - Staging Environment
   development:
-    url: localhost:9092/v1
+    host: localhost:9092/v1
     protocol: kafka
     description: تطوير - Local Development
-
-tags:
-  - name: account-events
-    description: Events related to user accounts
-  - name: payment-events
-    description: Events related to payments
-  - name: user-events
-    description: Events related to user lifecycle
-  - name: system-events
-    description: Events related to system health
 
 channels:
   # ============================================================================
@@ -59,54 +58,26 @@ channels:
       يتم نشر هذا الحدث عند إنشاء حساب جديد
       
       Published when a new account is created.
-    subscribe:
-      summary: الاشتراك في أحداث إنشاء الحسابات
-      operationId: onAccountCreated
-      description: استهلاك أحداث إنشاء الحساب لتنفيذ إجراءات لاحقة.
-      message:
-        $ref: '#/components/messages/AccountCreated'
-      bindings:
-        kafka:
-          groupId: account-service-consumers
-          clientId: account-consumer-1
-    publish:
-      summary: نشر حدث إنشاء حساب
-      operationId: publishAccountCreated
-      description: نشر حدث عند إنشاء حساب جديد بنجاح.
-      message:
+    messages:
+      onAccountCreated:
         $ref: '#/components/messages/AccountCreated'
 
   account.updated.v1:
     description: يتم نشره عند تحديث حساب (Published when account is updated)
-    subscribe:
-      operationId: onAccountUpdated
-      summary: الاشتراك في أحداث تحديث الحساب
-      description: استهلاك أحداث تحديث الحساب لمزامنة البيانات.
-      message:
-        $ref: '#/components/messages/AccountUpdated'
-    publish:
-      operationId: publishAccountUpdated
-      summary: نشر حدث تحديث حساب
-      description: نشر حدث عند تحديث بيانات الحساب.
-      message:
+    messages:
+      onAccountUpdated:
         $ref: '#/components/messages/AccountUpdated'
 
   account.suspended.v1:
     description: يتم نشره عند تعليق حساب (Published when account is suspended)
-    subscribe:
-      operationId: onAccountSuspended
-      summary: الاشتراك في أحداث تعليق الحساب
-      description: استهلاك أحداث تعليق الحساب لإيقاف الوصول.
-      message:
+    messages:
+      onAccountSuspended:
         $ref: '#/components/messages/AccountSuspended'
 
   account.closed.v1:
     description: يتم نشره عند إغلاق حساب (Published when account is closed)
-    subscribe:
-      operationId: onAccountClosed
-      summary: الاشتراك في أحداث إغلاق الحساب
-      description: استهلاك أحداث إغلاق الحساب لأرشفة البيانات.
-      message:
+    messages:
+      onAccountClosed:
         $ref: '#/components/messages/AccountClosed'
 
   # ============================================================================
@@ -115,59 +86,32 @@ channels:
 
   payment.initiated.v1:
     description: يتم نشره عند بدء دفعة (Published when payment is initiated)
-    subscribe:
-      operationId: onPaymentInitiated
-      summary: الاشتراك في أحداث بدء الدفع
-      description: استهلاك أحداث بدء الدفع لبدء المعالجة.
-      message:
-        $ref: '#/components/messages/PaymentInitiated'
-    publish:
-      operationId: publishPaymentInitiated
-      summary: نشر حدث بدء الدفع
-      description: نشر حدث عند طلب دفعة جديدة.
-      message:
+    messages:
+      onPaymentInitiated:
         $ref: '#/components/messages/PaymentInitiated'
 
   payment.processing.v1:
     description: يتم نشره عند معالجة دفعة (Published when payment is processing)
-    subscribe:
-      operationId: onPaymentProcessing
-      summary: الاشتراك في أحداث معالجة الدفع
-      description: استهلاك أحداث معالجة الدفع لتحديث الحالة.
-      message:
+    messages:
+      onPaymentProcessing:
         $ref: '#/components/messages/PaymentProcessing'
 
   payment.settled.v1:
     description: يتم نشره عند تسوية دفعة بنجاح (Published when payment is successfully settled)
-    subscribe:
-      operationId: onPaymentSettled
-      summary: الاشتراك في أحداث تسوية الدفع
-      description: استهلاك أحداث تسوية الدفع لتأكيد العملية.
-      message:
-        $ref: '#/components/messages/PaymentSettled'
-    publish:
-      operationId: publishPaymentSettled
-      summary: نشر حدث تسوية الدفع
-      description: نشر حدث عند اكتمال الدفع بنجاح.
-      message:
+    messages:
+      onPaymentSettled:
         $ref: '#/components/messages/PaymentSettled'
 
   payment.failed.v1:
     description: يتم نشره عند فشل دفعة (Published when payment fails)
-    subscribe:
-      operationId: onPaymentFailed
-      summary: الاشتراك في أحداث فشل الدفع
-      description: استهلاك أحداث فشل الدفع لاتخاذ إجراءات تصحيحية.
-      message:
+    messages:
+      onPaymentFailed:
         $ref: '#/components/messages/PaymentFailed'
 
   payment.refunded.v1:
     description: يتم نشره عند استرداد دفعة (Published when payment is refunded)
-    subscribe:
-      operationId: onPaymentRefunded
-      summary: الاشتراك في أحداث استرداد الدفع
-      description: استهلاك أحداث استرداد الدفع لتحديث الأرصدة.
-      message:
+    messages:
+      onPaymentRefunded:
         $ref: '#/components/messages/PaymentRefunded'
 
   # ============================================================================
@@ -176,29 +120,20 @@ channels:
 
   user.registered.v1:
     description: يتم نشره عند تسجيل مستخدم جديد (Published when new user registers)
-    subscribe:
-      operationId: onUserRegistered
-      summary: الاشتراك في أحداث تسجيل المستخدم
-      description: استهلاك أحداث تسجيل المستخدم لإرسال رسائل الترحيب.
-      message:
+    messages:
+      onUserRegistered:
         $ref: '#/components/messages/UserRegistered'
 
   user.verified.v1:
     description: يتم نشره عند التحقق من بريد المستخدم (Published when user email is verified)
-    subscribe:
-      operationId: onUserVerified
-      summary: الاشتراك في أحداث التحقق من المستخدم
-      description: استهلاك أحداث التحقق لتفعيل الحساب.
-      message:
+    messages:
+      onUserVerified:
         $ref: '#/components/messages/UserVerified'
 
   user.login.v1:
     description: يتم نشره عند تسجيل دخول المستخدم (Published when user logs in)
-    subscribe:
-      operationId: onUserLogin
-      summary: الاشتراك في أحداث تسجيل الدخول
-      description: استهلاك أحداث تسجيل الدخول لأغراض التدقيق.
-      message:
+    messages:
+      onUserLogin:
         $ref: '#/components/messages/UserLogin'
 
   # ============================================================================
@@ -207,20 +142,14 @@ channels:
 
   system.health.degraded.v1:
     description: يتم نشره عند تدهور صحة النظام (Published when system health degrades)
-    subscribe:
-      operationId: onSystemHealthDegraded
-      summary: الاشتراك في أحداث تدهور الصحة
-      description: استهلاك أحداث تدهور الصحة لتنبيه المشرفين.
-      message:
+    messages:
+      onSystemHealthDegraded:
         $ref: '#/components/messages/SystemHealthDegraded'
 
   system.maintenance.scheduled.v1:
     description: يتم نشره عند جدولة صيانة (Published when maintenance is scheduled)
-    subscribe:
-      operationId: onMaintenanceScheduled
-      summary: الاشتراك في أحداث جدولة الصيانة
-      description: استهلاك أحداث الصيانة لإعلام المستخدمين.
-      message:
+    messages:
+      onMaintenanceScheduled:
         $ref: '#/components/messages/MaintenanceScheduled'
 
 components:
