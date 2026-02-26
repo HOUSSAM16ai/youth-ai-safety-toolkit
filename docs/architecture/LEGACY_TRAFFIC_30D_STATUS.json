@@ -1,0 +1,10 @@
+{
+  "status_version": 1,
+  "window_days": 30,
+  "legacy_request_total_30d": 0,
+  "legacy_ws_sessions_total_30d": 0,
+  "legacy_traffic_ratio_30d": 0.0,
+  "verified_by": "ops-placeholder",
+  "verified_at": "2026-02-26T00:00:00Z",
+  "notes": "Placeholder evidence file for Phase 4 gate; replace with telemetry-backed values per release window."
+}

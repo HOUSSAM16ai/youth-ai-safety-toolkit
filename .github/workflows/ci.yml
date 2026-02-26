@@ -175,6 +175,9 @@ jobs:
       - name: 🧯 Fitness #7 - Legacy env/profile enforcement
         run: python scripts/fitness/check_core_kernel_env_profile.py
 
+      - name: 📊 Fitness #8 - Legacy traffic 30d hard-zero
+        run: python scripts/fitness/check_legacy_traffic_zero_window.py
+
 
   # ===========================================================================
   # 🧪 مرحلة الاختبارات
