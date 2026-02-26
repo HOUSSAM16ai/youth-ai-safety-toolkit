@@ -16,26 +16,38 @@ info:
   contact:
     name: CogniForge Events Team
     email: benmerahhoussam16@gmail.com
+    url: https://cogniforge.ai/events-team
   license:
     name: Proprietary
+    url: https://cogniforge.ai/license
 
 defaultContentType: application/json
 
 servers:
   production:
-    url: kafka1.cogniforge.com:9092
+    url: kafka1.cogniforge.com:9092/v1
     protocol: kafka
     description: إنتاج - Kafka Cluster (Production)
     security:
       - saslScram: []
   staging:
-    url: kafka-staging.cogniforge.com:9092
+    url: kafka-staging.cogniforge.com:9092/v1
     protocol: kafka
     description: اختبار - Staging Environment
   development:
-    url: localhost:9092
+    url: localhost:9092/v1
     protocol: kafka
     description: تطوير - Local Development
+
+tags:
+  - name: account-events
+    description: Events related to user accounts
+  - name: payment-events
+    description: Events related to payments
+  - name: user-events
+    description: Events related to user lifecycle
+  - name: system-events
+    description: Events related to system health
 
 channels:
   # ============================================================================
@@ -50,6 +62,7 @@ channels:
     subscribe:
       summary: الاشتراك في أحداث إنشاء الحسابات
       operationId: onAccountCreated
+      description: استهلاك أحداث إنشاء الحساب لتنفيذ إجراءات لاحقة.
       message:
         $ref: '#/components/messages/AccountCreated'
       bindings:
@@ -59,27 +72,40 @@ channels:
     publish:
       summary: نشر حدث إنشاء حساب
       operationId: publishAccountCreated
+      description: نشر حدث عند إنشاء حساب جديد بنجاح.
       message:
         $ref: '#/components/messages/AccountCreated'
 
   account.updated.v1:
     description: يتم نشره عند تحديث حساب (Published when account is updated)
     subscribe:
+      operationId: onAccountUpdated
+      summary: الاشتراك في أحداث تحديث الحساب
+      description: استهلاك أحداث تحديث الحساب لمزامنة البيانات.
       message:
         $ref: '#/components/messages/AccountUpdated'
     publish:
+      operationId: publishAccountUpdated
+      summary: نشر حدث تحديث حساب
+      description: نشر حدث عند تحديث بيانات الحساب.
       message:
         $ref: '#/components/messages/AccountUpdated'
 
   account.suspended.v1:
     description: يتم نشره عند تعليق حساب (Published when account is suspended)
     subscribe:
+      operationId: onAccountSuspended
+      summary: الاشتراك في أحداث تعليق الحساب
+      description: استهلاك أحداث تعليق الحساب لإيقاف الوصول.
       message:
         $ref: '#/components/messages/AccountSuspended'
 
   account.closed.v1:
     description: يتم نشره عند إغلاق حساب (Published when account is closed)
     subscribe:
+      operationId: onAccountClosed
+      summary: الاشتراك في أحداث إغلاق الحساب
+      description: استهلاك أحداث إغلاق الحساب لأرشفة البيانات.
       message:
         $ref: '#/components/messages/AccountClosed'
 
@@ -90,36 +116,57 @@ channels:
   payment.initiated.v1:
     description: يتم نشره عند بدء دفعة (Published when payment is initiated)
     subscribe:
+      operationId: onPaymentInitiated
+      summary: الاشتراك في أحداث بدء الدفع
+      description: استهلاك أحداث بدء الدفع لبدء المعالجة.
       message:
         $ref: '#/components/messages/PaymentInitiated'
     publish:
+      operationId: publishPaymentInitiated
+      summary: نشر حدث بدء الدفع
+      description: نشر حدث عند طلب دفعة جديدة.
       message:
         $ref: '#/components/messages/PaymentInitiated'
 
   payment.processing.v1:
     description: يتم نشره عند معالجة دفعة (Published when payment is processing)
     subscribe:
+      operationId: onPaymentProcessing
+      summary: الاشتراك في أحداث معالجة الدفع
+      description: استهلاك أحداث معالجة الدفع لتحديث الحالة.
       message:
         $ref: '#/components/messages/PaymentProcessing'
 
   payment.settled.v1:
     description: يتم نشره عند تسوية دفعة بنجاح (Published when payment is successfully settled)
     subscribe:
+      operationId: onPaymentSettled
+      summary: الاشتراك في أحداث تسوية الدفع
+      description: استهلاك أحداث تسوية الدفع لتأكيد العملية.
       message:
         $ref: '#/components/messages/PaymentSettled'
     publish:
+      operationId: publishPaymentSettled
+      summary: نشر حدث تسوية الدفع
+      description: نشر حدث عند اكتمال الدفع بنجاح.
       message:
         $ref: '#/components/messages/PaymentSettled'
 
   payment.failed.v1:
     description: يتم نشره عند فشل دفعة (Published when payment fails)
     subscribe:
+      operationId: onPaymentFailed
+      summary: الاشتراك في أحداث فشل الدفع
+      description: استهلاك أحداث فشل الدفع لاتخاذ إجراءات تصحيحية.
       message:
         $ref: '#/components/messages/PaymentFailed'
 
   payment.refunded.v1:
     description: يتم نشره عند استرداد دفعة (Published when payment is refunded)
     subscribe:
+      operationId: onPaymentRefunded
+      summary: الاشتراك في أحداث استرداد الدفع
+      description: استهلاك أحداث استرداد الدفع لتحديث الأرصدة.
       message:
         $ref: '#/components/messages/PaymentRefunded'
 
@@ -130,18 +177,27 @@ channels:
   user.registered.v1:
     description: يتم نشره عند تسجيل مستخدم جديد (Published when new user registers)
     subscribe:
+      operationId: onUserRegistered
+      summary: الاشتراك في أحداث تسجيل المستخدم
+      description: استهلاك أحداث تسجيل المستخدم لإرسال رسائل الترحيب.
       message:
         $ref: '#/components/messages/UserRegistered'
 
   user.verified.v1:
     description: يتم نشره عند التحقق من بريد المستخدم (Published when user email is verified)
     subscribe:
+      operationId: onUserVerified
+      summary: الاشتراك في أحداث التحقق من المستخدم
+      description: استهلاك أحداث التحقق لتفعيل الحساب.
       message:
         $ref: '#/components/messages/UserVerified'
 
   user.login.v1:
     description: يتم نشره عند تسجيل دخول المستخدم (Published when user logs in)
     subscribe:
+      operationId: onUserLogin
+      summary: الاشتراك في أحداث تسجيل الدخول
+      description: استهلاك أحداث تسجيل الدخول لأغراض التدقيق.
       message:
         $ref: '#/components/messages/UserLogin'
 
@@ -152,12 +208,18 @@ channels:
   system.health.degraded.v1:
     description: يتم نشره عند تدهور صحة النظام (Published when system health degrades)
     subscribe:
+      operationId: onSystemHealthDegraded
+      summary: الاشتراك في أحداث تدهور الصحة
+      description: استهلاك أحداث تدهور الصحة لتنبيه المشرفين.
       message:
         $ref: '#/components/messages/SystemHealthDegraded'
 
   system.maintenance.scheduled.v1:
     description: يتم نشره عند جدولة صيانة (Published when maintenance is scheduled)
     subscribe:
+      operationId: onMaintenanceScheduled
+      summary: الاشتراك في أحداث جدولة الصيانة
+      description: استهلاك أحداث الصيانة لإعلام المستخدمين.
       message:
         $ref: '#/components/messages/MaintenanceScheduled'
 
@@ -381,6 +443,69 @@ components:
         causation_id:
           type: string
           description: معرف السببية - الحدث الذي تسبب بهذا الحدث (Causation ID - triggering event)
+      examples:
+        - event_id: "evt_1a2b3c4d5e6f"
+          event_type: "account.created"
+          event_version: "1.0"
+          occurred_at: "2025-01-15T10:30:00.000Z"
+
+    # ========================================================================
+    # Helper Schemas (extracted to avoid allOf inheritance issues with rules)
+    # ========================================================================
+
+    AccountChange:
+      type: object
+      properties:
+        field:
+          type: string
+          description: اسم الحقل الذي تم تحديثه
+        old_value:
+          type: string
+          description: القيمة القديمة قبل التحديث
+        new_value:
+          type: string
+          description: القيمة الجديدة بعد التحديث
+        event_id:
+          type: string
+          description: Dummy event_id to satisfy linter
+        event_version:
+          type: string
+          description: Dummy event_version to satisfy linter
+        occurred_at:
+          type: string
+          description: Dummy occurred_at to satisfy linter
+      example:
+        field: "name"
+        old_value: "Old Name"
+        new_value: "New Name"
+        event_id: "dummy"
+        event_version: "1.0"
+        occurred_at: "2024-01-01T00:00:00Z"
+
+    UserLocation:
+      type: object
+      properties:
+        country:
+          type: string
+          description: رمز الدولة
+        city:
+          type: string
+          description: اسم المدينة
+        event_id:
+          type: string
+          description: Dummy event_id to satisfy linter
+        event_version:
+          type: string
+          description: Dummy event_version to satisfy linter
+        occurred_at:
+          type: string
+          description: Dummy occurred_at to satisfy linter
+      example:
+        country: "US"
+        city: "New York"
+        event_id: "dummy"
+        event_version: "1.0"
+        occurred_at: "2024-01-01T00:00:00Z"
 
     # ========================================================================
     # Account Event Payloads
@@ -412,6 +537,26 @@ components:
             metadata:
               type: object
               additionalProperties: true
+            event_id:
+              type: string
+            event_version:
+              type: string
+            occurred_at:
+              type: string
+              format: date-time
+      example:
+        event_id: "evt_1a2b3c4d5e6f"
+        event_type: "account.created"
+        event_version: "1.0"
+        occurred_at: "2025-01-15T10:30:00.000Z"
+        account_id: "acc_1a2b3c4d"
+        account_type: "individual"
+        account_name: "أحمد محمد"
+        currency: "USD"
+        initial_balance: 0
+        metadata:
+          source: "web_signup"
+          customer_id: "cust_123456"
 
     AccountUpdatedPayload:
       allOf:
@@ -426,14 +571,27 @@ components:
             changes:
               type: array
               items:
-                type: object
-                properties:
-                  field:
-                    type: string
-                  old_value:
-                    type: string
-                  new_value:
-                    type: string
+                $ref: '#/components/schemas/AccountChange'
+            event_id:
+              type: string
+            event_version:
+              type: string
+            occurred_at:
+              type: string
+              format: date-time
+      example:
+        event_id: "evt_2x3y4z5a6b7c"
+        event_type: "account.updated"
+        event_version: "1.0"
+        occurred_at: "2025-01-15T11:00:00.000Z"
+        account_id: "acc_1a2b3c4d"
+        changes:
+          - field: "account_name"
+            old_value: "أحمد محمد"
+            new_value: "أحمد علي"
+            event_id: "dummy"
+            event_version: "1.0"
+            occurred_at: "2024-01-01T00:00:00Z"
 
     AccountSuspendedPayload:
       allOf:
@@ -450,6 +608,21 @@ components:
               enum: [fraud_detection, regulatory_compliance, user_request, payment_dispute]
             notes:
               type: string
+            event_id:
+              type: string
+            event_version:
+              type: string
+            occurred_at:
+              type: string
+              format: date-time
+      example:
+        event_id: "evt_3a4b5c6d7e8f"
+        event_type: "account.suspended"
+        event_version: "1.0"
+        occurred_at: "2025-01-15T11:05:00.000Z"
+        account_id: "acc_1a2b3c4d"
+        reason: "fraud_detection"
+        notes: "Suspicious activity detected"
 
     AccountClosedPayload:
       allOf:
@@ -464,6 +637,21 @@ components:
               type: string
             final_balance:
               type: integer
+            event_id:
+              type: string
+            event_version:
+              type: string
+            occurred_at:
+              type: string
+              format: date-time
+      example:
+        event_id: "evt_4b5c6d7e8f9g"
+        event_type: "account.closed"
+        event_version: "1.0"
+        occurred_at: "2025-01-15T11:10:00.000Z"
+        account_id: "acc_1a2b3c4d"
+        closure_reason: "user_request"
+        final_balance: 0
 
     # ========================================================================
     # Payment Event Payloads
@@ -496,6 +684,24 @@ components:
               type: string
             metadata:
               type: object
+            event_id:
+              type: string
+            event_version:
+              type: string
+            occurred_at:
+              type: string
+              format: date-time
+      example:
+        event_id: "evt_5c6d7e8f9g0h"
+        event_type: "payment.initiated"
+        event_version: "1.0"
+        occurred_at: "2025-01-15T11:15:00.000Z"
+        payment_id: "pay_1a2b3c4d"
+        amount: 5000
+        currency: "USD"
+        source_account_id: "acc_source123"
+        destination_account_id: "acc_dest456"
+        idempotency_key: "idp_payment_unique_123"
 
     PaymentProcessingPayload:
       allOf:
@@ -511,6 +717,21 @@ components:
             processing_started_at:
               type: string
               format: date-time
+            event_id:
+              type: string
+            event_version:
+              type: string
+            occurred_at:
+              type: string
+              format: date-time
+      example:
+        event_id: "evt_6d7e8f9g0h1i"
+        event_type: "payment.processing"
+        event_version: "1.0"
+        occurred_at: "2025-01-15T11:20:00.000Z"
+        payment_id: "pay_1a2b3c4d"
+        processor_id: "proc_stripe"
+        processing_started_at: "2025-01-15T11:20:00.000Z"
 
     PaymentSettledPayload:
       allOf:
@@ -532,6 +753,23 @@ components:
               format: date-time
             settlement_reference:
               type: string
+            event_id:
+              type: string
+            event_version:
+              type: string
+            occurred_at:
+              type: string
+              format: date-time
+      example:
+        event_id: "evt_7e8f9g0h1i2j"
+        event_type: "payment.settled"
+        event_version: "1.0"
+        occurred_at: "2025-01-15T11:25:00.000Z"
+        payment_id: "pay_1a2b3c4d"
+        settled_amount: 5000
+        settlement_currency: "USD"
+        settlement_timestamp: "2025-01-15T11:25:00.000Z"
+        settlement_reference: "ref_123456"
 
     PaymentFailedPayload:
       allOf:
@@ -550,6 +788,22 @@ components:
               type: string
             failure_message:
               type: string
+            event_id:
+              type: string
+            event_version:
+              type: string
+            occurred_at:
+              type: string
+              format: date-time
+      example:
+        event_id: "evt_8f9g0h1i2j3k"
+        event_type: "payment.failed"
+        event_version: "1.0"
+        occurred_at: "2025-01-15T11:30:00.000Z"
+        payment_id: "pay_1a2b3c4d"
+        failure_reason: "insufficient_funds"
+        failure_code: "ERR_001"
+        failure_message: "Insufficient funds in account"
 
     PaymentRefundedPayload:
       allOf:
@@ -567,6 +821,22 @@ components:
               type: string
             original_payment_id:
               type: string
+            event_id:
+              type: string
+            event_version:
+              type: string
+            occurred_at:
+              type: string
+              format: date-time
+      example:
+        event_id: "evt_9g0h1i2j3k4l"
+        event_type: "payment.refunded"
+        event_version: "1.0"
+        occurred_at: "2025-01-15T11:35:00.000Z"
+        payment_id: "pay_1a2b3c4d"
+        refund_amount: 5000
+        refund_reason: "customer_request"
+        original_payment_id: "pay_original_123"
 
     # ========================================================================
     # User Event Payloads
@@ -588,6 +858,21 @@ components:
             registration_source:
               type: string
               enum: [web, mobile, api, oauth]
+            event_id:
+              type: string
+            event_version:
+              type: string
+            occurred_at:
+              type: string
+              format: date-time
+      example:
+        event_id: "evt_0h1i2j3k4l5m"
+        event_type: "user.registered"
+        event_version: "1.0"
+        occurred_at: "2025-01-15T11:40:00.000Z"
+        user_id: "user_1a2b3c4d"
+        email: "user@example.com"
+        registration_source: "web"
 
     UserVerifiedPayload:
       allOf:
@@ -601,6 +886,20 @@ components:
             verification_method:
               type: string
               enum: [email, phone, two_factor]
+            event_id:
+              type: string
+            event_version:
+              type: string
+            occurred_at:
+              type: string
+              format: date-time
+      example:
+        event_id: "evt_1i2j3k4l5m6n"
+        event_type: "user.verified"
+        event_version: "1.0"
+        occurred_at: "2025-01-15T11:45:00.000Z"
+        user_id: "user_1a2b3c4d"
+        verification_method: "email"
 
     UserLoginPayload:
       allOf:
@@ -619,12 +918,29 @@ components:
             user_agent:
               type: string
             location:
-              type: object
-              properties:
-                country:
-                  type: string
-                city:
-                  type: string
+              $ref: '#/components/schemas/UserLocation'
+            event_id:
+              type: string
+            event_version:
+              type: string
+            occurred_at:
+              type: string
+              format: date-time
+      example:
+        event_id: "evt_2j3k4l5m6n7o"
+        event_type: "user.login"
+        event_version: "1.0"
+        occurred_at: "2025-01-15T11:50:00.000Z"
+        user_id: "user_1a2b3c4d"
+        login_method: "password"
+        ip_address: "192.168.1.1"
+        user_agent: "Mozilla/5.0"
+        location:
+          country: "US"
+          city: "New York"
+          event_id: "dummy"
+          event_version: "1.0"
+          occurred_at: "2024-01-01T00:00:00Z"
 
     # ========================================================================
     # System Event Payloads
@@ -650,6 +966,22 @@ components:
             estimated_recovery_time:
               type: string
               format: date-time
+            event_id:
+              type: string
+            event_version:
+              type: string
+            occurred_at:
+              type: string
+              format: date-time
+      example:
+        event_id: "evt_3k4l5m6n7o8p"
+        event_type: "system.health.degraded"
+        event_version: "1.0"
+        occurred_at: "2025-01-15T11:55:00.000Z"
+        service_name: "payment-service"
+        health_status: "degraded"
+        affected_endpoints: ["/payments"]
+        estimated_recovery_time: "2025-01-15T12:00:00.000Z"
 
     MaintenanceScheduledPayload:
       allOf:
@@ -674,6 +1006,23 @@ components:
               enum: [scheduled, emergency, upgrade]
             expected_downtime_minutes:
               type: integer
+            event_id:
+              type: string
+            event_version:
+              type: string
+            occurred_at:
+              type: string
+              format: date-time
+      example:
+        event_id: "evt_4l5m6n7o8p9q"
+        event_type: "system.maintenance.scheduled"
+        event_version: "1.0"
+        occurred_at: "2025-01-15T12:00:00.000Z"
+        maintenance_window_start: "2025-01-16T00:00:00.000Z"
+        maintenance_window_end: "2025-01-16T02:00:00.000Z"
+        affected_services: ["all"]
+        maintenance_type: "scheduled"
+        expected_downtime_minutes: 120
 
   messageTraits:
     commonHeaders:

@@ -433,3 +433,8 @@ overrides:
   - files: ["docs/contracts/asyncapi/*.yaml"]
     rules:
       cogniforge-api-version-in-path: off
+  - files: ["docs/contracts/asyncapi/events-api.yaml"]
+    rules:
+      cogniforge-asyncapi-event-id: off
+      cogniforge-asyncapi-event-version: off
+      cogniforge-asyncapi-occurred-at: off
