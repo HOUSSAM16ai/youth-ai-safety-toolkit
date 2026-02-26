@@ -28,7 +28,9 @@ def main() -> int:
         print(f"❌ Missing api_gateway port {api_gateway_port} in docker-compose.yml")
         return 1
     if _contains_port(DOCKER_COMPOSE, core_kernel_port):
-        print(f"❌ core_kernel port {core_kernel_port} must not appear in default docker-compose.yml")
+        print(
+            f"❌ core_kernel port {core_kernel_port} must not appear in default docker-compose.yml"
+        )
         return 1
 
     if not _contains_port(DOCKER_COMPOSE_LEGACY, core_kernel_port):

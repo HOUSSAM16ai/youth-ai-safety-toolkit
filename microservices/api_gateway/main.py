@@ -65,7 +65,9 @@ def _resolve_chat_ws_target(route_id: str, upstream_path: str) -> str:
         return f"{candidate}/{upstream_path}"
 
     fallback_target = settings.ORCHESTRATOR_SERVICE_URL.replace("http", "ws", 1).rstrip("/")
-    logger.info("chat_ws_orchestrator route_id=%s legacy=false target=%s", route_id, fallback_target)
+    logger.info(
+        "chat_ws_orchestrator route_id=%s legacy=false target=%s", route_id, fallback_target
+    )
     return f"{fallback_target}/{upstream_path}"
 
 
@@ -353,7 +355,9 @@ async def chat_http_proxy(path: str, request: Request) -> StreamingResponse:
     logger.info("Route accessed: /api/chat/%s (modern routing)", path)
     identity = request.headers.get("x-request-id", request.url.path)
     target_url = settings.ORCHESTRATOR_SERVICE_URL
-    if _should_route_to_conversation(identity, settings.ROUTE_CHAT_HTTP_CONVERSATION_ROLLOUT_PERCENT):
+    if _should_route_to_conversation(
+        identity, settings.ROUTE_CHAT_HTTP_CONVERSATION_ROLLOUT_PERCENT
+    ):
         target_url = settings.CONVERSATION_SERVICE_URL
 
     return await proxy_handler.forward(
