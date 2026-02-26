@@ -271,12 +271,12 @@ docker-logs:
 # =============================================================================
 microservices-build:
 	@echo "$(BLUE)🏗️  Building all microservices...$(NC)"
-	docker-compose -f docker-compose.microservices.yml build
+	docker-compose -f docker-compose.yml build
 	@echo "$(GREEN)✅ All microservices built!$(NC)"
 
 microservices-up:
 	@echo "$(BLUE)🚀 Starting all microservices...$(NC)"
-	docker-compose -f docker-compose.microservices.yml up -d
+	docker-compose -f docker-compose.yml up -d
 	@echo "$(GREEN)✅ All microservices started!$(NC)"
 	@echo ""
 	@echo "$(YELLOW)📊 Service URLs:$(NC)"
@@ -289,12 +289,12 @@ microservices-up:
 
 microservices-down:
 	@echo "$(BLUE)🛑 Stopping all microservices...$(NC)"
-	docker-compose -f docker-compose.microservices.yml down
+	docker-compose -f docker-compose.yml down
 	@echo "$(GREEN)✅ All microservices stopped!$(NC)"
 
 microservices-logs:
 	@echo "$(BLUE)📋 Viewing microservices logs...$(NC)"
-	docker-compose -f docker-compose.microservices.yml logs -f
+	docker-compose -f docker-compose.yml logs -f
 
 microservices-health:
 	@echo "$(BLUE)🏥 Checking microservices health...$(NC)"
@@ -319,12 +319,12 @@ microservices-health:
 
 microservices-restart:
 	@echo "$(BLUE)🔄 Restarting all microservices...$(NC)"
-	docker-compose -f docker-compose.microservices.yml restart
+	docker-compose -f docker-compose.yml restart
 	@echo "$(GREEN)✅ All microservices restarted!$(NC)"
 
 microservices-ps:
 	@echo "$(BLUE)📊 Microservices status:$(NC)"
-	docker-compose -f docker-compose.microservices.yml ps
+	docker-compose -f docker-compose.yml ps
 
 # =============================================================================
 # MICROSERVICES TESTING

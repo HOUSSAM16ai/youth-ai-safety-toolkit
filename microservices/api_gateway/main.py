@@ -81,6 +81,15 @@ async def health_check():
     }
 
 
+@app.get("/gateway/health")
+async def gateway_health_check():
+    """
+    Alias for /health.
+    Matches legacy documentation expectations.
+    """
+    return await health_check()
+
+
 # --- Smart Routing ---
 
 
@@ -220,19 +229,24 @@ async def missions_path_proxy(path: str, request: Request) -> StreamingResponse:
     )
 
 
-# --- Explicit Legacy Routes ---
+# --- LEGACY MONOLITH ROUTES (STRANGLER PATTERN) ---
+# These routes are explicitly mapped to the Core Kernel (Monolith).
+# They are marked as deprecated and logged for future extraction.
+# Governance: New routes MUST NOT be added here without exception approval.
 
 
 @app.api_route(
     "/admin/ai-config",
     methods=["GET", "PUT", "OPTIONS", "HEAD"],
     include_in_schema=False,
+    deprecated=True,
 )
 async def admin_ai_config_proxy(request: Request) -> StreamingResponse:
     """
-    Strangler Fig: Route AI Config to Monolith.
-    This feature has not been migrated to User Service yet.
+    [LEGACY] Strangler Fig: Route AI Config to Monolith.
+    TARGET: User Service (Pending Migration)
     """
+    logger.warning("Legacy route accessed: /admin/ai-config")
     return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, "api/v1/admin/ai-config")
 
 
@@ -246,6 +260,7 @@ async def admin_proxy(path: str, request: Request) -> StreamingResponse:
     Proxy Admin routes to User Service (UMS).
     Rewrite: /admin/{path} -> /api/v1/admin/{path}
     """
+    # This is NOT legacy monolith, it points to USER_SERVICE.
     return await proxy_handler.forward(
         request,
         settings.USER_SERVICE_URL,
@@ -264,6 +279,7 @@ async def security_proxy(path: str, request: Request) -> StreamingResponse:
     Proxy Security routes to User Service (Auth).
     Rewrite: /api/security/{path} -> /api/v1/auth/{path}
     """
+    # This is NOT legacy monolith, it points to USER_SERVICE.
     return await proxy_handler.forward(
         request,
         settings.USER_SERVICE_URL,
@@ -276,16 +292,24 @@ async def security_proxy(path: str, request: Request) -> StreamingResponse:
     "/api/chat/{path:path}",
     methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
     include_in_schema=False,
+    deprecated=True,
 )
 async def chat_http_proxy(path: str, request: Request) -> StreamingResponse:
+    """
+    [LEGACY] HTTP Chat Proxy.
+    TARGET: Orchestrator Service / Conversation Service
+    """
+    logger.warning("Legacy route accessed: /api/chat/%s", path)
     return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"api/chat/{path}")
 
 
 @app.websocket("/api/chat/ws")
 async def chat_ws_proxy(websocket: WebSocket):
     """
-    Proxy for Customer Chat WebSocket.
+    [LEGACY] Customer Chat WebSocket.
+    TARGET: Orchestrator Service / Conversation Service
     """
+    logger.warning("Legacy WebSocket accessed: /api/chat/ws")
     target_url = settings.CORE_KERNEL_URL.replace("http", "ws") + "/api/chat/ws"
     await websocket_proxy(websocket, target_url)
 
@@ -293,8 +317,10 @@ async def chat_ws_proxy(websocket: WebSocket):
 @app.websocket("/admin/api/chat/ws")
 async def admin_chat_ws_proxy(websocket: WebSocket):
     """
-    Proxy for Admin Chat WebSocket.
+    [LEGACY] Admin Chat WebSocket.
+    TARGET: Orchestrator Service / Conversation Service
     """
+    logger.warning("Legacy WebSocket accessed: /admin/api/chat/ws")
     target_url = settings.CORE_KERNEL_URL.replace("http", "ws") + "/admin/api/chat/ws"
     await websocket_proxy(websocket, target_url)
 
@@ -303,8 +329,14 @@ async def admin_chat_ws_proxy(websocket: WebSocket):
     "/v1/content/{path:path}",
     methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
     include_in_schema=False,
+    deprecated=True,
 )
 async def content_proxy(path: str, request: Request) -> StreamingResponse:
+    """
+    [LEGACY] Content Service Proxy.
+    TARGET: Content Service (To Be Extracted)
+    """
+    logger.warning("Legacy route accessed: /v1/content/%s", path)
     return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"v1/content/{path}")
 
 
@@ -312,8 +344,14 @@ async def content_proxy(path: str, request: Request) -> StreamingResponse:
     "/api/v1/data-mesh/{path:path}",
     methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
     include_in_schema=False,
+    deprecated=True,
 )
 async def datamesh_proxy(path: str, request: Request) -> StreamingResponse:
+    """
+    [LEGACY] Data Mesh Proxy.
+    TARGET: Data Mesh Service
+    """
+    logger.warning("Legacy route accessed: /api/v1/data-mesh/%s", path)
     return await proxy_handler.forward(
         request, settings.CORE_KERNEL_URL, f"api/v1/data-mesh/{path}"
     )
@@ -323,8 +361,14 @@ async def datamesh_proxy(path: str, request: Request) -> StreamingResponse:
     "/system/{path:path}",
     methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
     include_in_schema=False,
+    deprecated=True,
 )
 async def system_proxy(path: str, request: Request) -> StreamingResponse:
+    """
+    [LEGACY] System Routes Proxy.
+    TARGET: System Service
+    """
+    logger.warning("Legacy route accessed: /system/%s", path)
     return await proxy_handler.forward(request, settings.CORE_KERNEL_URL, f"system/{path}")
 
 
