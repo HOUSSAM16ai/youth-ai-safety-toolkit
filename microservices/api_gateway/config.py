@@ -8,13 +8,13 @@ class Settings(BaseSettings):
     """
 
     # Service URLs (Defaults for local development/Docker Compose)
-    PLANNING_AGENT_URL: str = "http://planning-agent:8000"
-    MEMORY_AGENT_URL: str = "http://memory-agent:8000"
-    USER_SERVICE_URL: str = "http://user-service:8000"
-    OBSERVABILITY_SERVICE_URL: str = "http://observability-service:8000"
-    RESEARCH_AGENT_URL: str = "http://research-agent:8000"
-    REASONING_AGENT_URL: str = "http://reasoning-agent:8000"
-    ORCHESTRATOR_SERVICE_URL: str = "http://orchestrator-service:8000"
+    PLANNING_AGENT_URL: str = "http://planning-agent:8001"
+    MEMORY_AGENT_URL: str = "http://memory-agent:8002"
+    USER_SERVICE_URL: str = "http://user-service:8003"
+    OBSERVABILITY_SERVICE_URL: str = "http://observability-service:8005"
+    RESEARCH_AGENT_URL: str = "http://research-agent:8007"
+    REASONING_AGENT_URL: str = "http://reasoning-agent:8008"
+    ORCHESTRATOR_SERVICE_URL: str = "http://orchestrator-service:8006"
     CORE_KERNEL_URL: str = "http://core-kernel:8000"
 
     # Gateway Configuration
@@ -36,9 +36,6 @@ class Settings(BaseSettings):
     MAX_RETRIES: int = 3
     RETRY_BACKOFF_FACTOR: float = 0.5  # Base backoff in seconds
 
-    # Feature Flags (Rollback & Migration)
-    ENABLE_MICROSERVICE_MISSIONS: bool = True  # Default to New Architecture
-    ENABLE_LEGACY_OVERMIND: bool = False  # Failsafe Rollback
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=True, extra="ignore"

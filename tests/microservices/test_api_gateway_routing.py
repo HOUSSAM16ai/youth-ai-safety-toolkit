@@ -89,17 +89,15 @@ def test_chat_route_proxies_to_monolith(mock_forward):
 
 
 @patch.object(proxy_handler, "forward", new_callable=AsyncMock)
-def test_legacy_v1_fallback(mock_forward):
+def test_legacy_v1_no_fallback(mock_forward):
     """
-    Verify that unmatched /api/v1/* requests fall back to the Monolith (e.g. CRUD).
+    Verify that unmatched /api/v1/* requests do NOT fall back to the Monolith.
+    They should return 404, exposing gaps in migration.
     """
     mock_forward.return_value = JSONResponse(content={"status": "ok"})
 
     # /api/v1/planning is matched by specific route, so try something else
     response = client.get("/api/v1/random-crud/item")
 
-    assert response.status_code == 200
-    assert mock_forward.called
-    args, _ = mock_forward.call_args
-    assert settings.CORE_KERNEL_URL in args
-    assert "api/v1/random-crud/item" in args
+    assert response.status_code == 404
+    assert not mock_forward.called
