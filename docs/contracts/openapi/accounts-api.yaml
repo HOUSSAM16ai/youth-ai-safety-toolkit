@@ -462,7 +462,7 @@ components:
           description: يوضح هذا الحقل قيمة data.
         pagination:
           $ref: '#/components/schemas/PaginationInfo'
-          description: معلومات الترقيم والانتقال بين الصفحات.
+          description: 'كائن يحتوي معلومات الترقيم: المؤشرات، عدد العناصر، وحالة وجود صفحات إضافية.'
       example:
         data:
         - *id001

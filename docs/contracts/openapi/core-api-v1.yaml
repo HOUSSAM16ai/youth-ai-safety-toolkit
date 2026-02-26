@@ -120,8 +120,12 @@ components:
           description: Unique request identifier for tracing
           example: req_abc123xyz
       example:
-        status: string
-        error: {}
+        status: error
+        error:
+          code: INVALID_REQUEST
+          message: Invalid request payload
+          details:
+            field: objective
         timestamp: '2026-01-03T00:00:00Z'
         request_id: req_abc123xyz
     SuccessResponse:
@@ -155,10 +159,14 @@ components:
             type: string
             format: uri
       example:
-        status: string
-        data: {}
-        meta: {}
-        links: {}
+        status: success
+        data:
+          message: Operation completed
+        meta:
+          timestamp: '2026-01-03T00:00:00Z'
+          request_id: req_abc123xyz
+        links:
+          self: https://api.cogniforge.ai/api/v1/resource/1
     PaginationMeta:
       type: object
       required:
@@ -358,8 +366,15 @@ components:
               example: '2026-01-03T00:00:00Z'
           description: يوضح هذا الحقل قيمة data.
       example:
-        status: string
-        data: {}
+        status: success
+        data:
+          plan_id: plan_123abc
+          objective: تصميم نظام API-First للعقود
+          steps:
+          - title: تحليل المتطلبات
+            description: تجميع القيود والمتطلبات
+            priority: high
+          estimated_duration_minutes: 45
     AuthResponse:
       type: object
       required:
@@ -400,8 +415,18 @@ components:
               $ref: '#/components/schemas/UserObject'
           description: يوضح هذا الحقل قيمة data.
       example:
-        status: string
-        data: {}
+        status: success
+        data:
+          access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example
+          refresh_token: refresh_abc123xyz
+          token_type: Bearer
+          expires_in: 3600
+          user:
+            id: 1
+            email: user@example.com
+            full_name: John Doe
+            is_admin: false
+            created_at: '2026-01-01T00:00:00Z'
     UserObject:
       type: object
       required:
@@ -784,7 +809,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/AgentsPlanResponse'
               example:
-                message: مثال لاستجابة
+                status: success
+                data:
+                  plan_id: plan_123abc
+                  objective: تصميم نظام API-First للعقود
+                  steps:
+                  - title: تحليل المتطلبات
+                    description: تجميع القيود والمتطلبات
+                    priority: high
+                  estimated_duration_minutes: 45
         '400':
           description: Invalid request payload
           content:
@@ -830,56 +863,6 @@ paths:
                       message: Too many planning requests. Please try again later.
                     timestamp: '2026-01-03T00:00:00Z'
             application/problem+json: *id009
-  /api/v1/agents/plan/{plan_id}:
-    get:
-      tags:
-      - Agents
-      summary: Get Agent Plan
-      description: Retrieve the details of a previously generated plan.
-      operationId: getAgentPlan
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: plan_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: Unique plan identifier
-        example: plan_01HZX9G8KQK1R2
-      responses:
-        '200':
-          description: Plan retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AgentsPlanResponse'
-              example:
-                message: مثال لاستجابة
-        '401':
-          description: Authentication required
-          content:
-            application/json: &id010
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                message: مثال لاستجابة
-            application/problem+json: *id010
-        '404':
-          description: Plan not found
-          content:
-            application/json: &id011
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                plan_not_found:
-                  value:
-                    status: error
-                    error:
-                      code: PLAN_NOT_FOUND
-                      message: No plan found for the given identifier
-                    timestamp: '2026-01-03T00:00:00Z'
-            application/problem+json: *id011
   /api/observability/health:
     get:
       tags:
@@ -1518,3 +1501,65 @@ paths:
         '200':
           description: Content solution
       description: Get Content Solution
+  /api/v1/agents/plans/{plan-id}:
+    get:
+      tags:
+      - Agents
+      summary: Get Agent Plan
+      description: Retrieve the details of a previously generated plan.
+      operationId: getAgentPlan
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: plan-id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique plan identifier
+        example: plan_01HZX9G8KQK1R2
+      responses:
+        '200':
+          description: Plan retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentsPlanResponse'
+              example:
+                status: success
+                data:
+                  plan_id: plan_123abc
+                  objective: تصميم نظام API-First للعقود
+                  steps:
+                  - title: تحليل المتطلبات
+                    description: تجميع القيود والمتطلبات
+                    priority: high
+                  estimated_duration_minutes: 45
+        '401':
+          description: Authentication required
+          content:
+            application/json: &id010
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: error
+                error:
+                  code: UNAUTHORIZED
+                  message: Missing or invalid token
+                timestamp: '2026-01-03T00:00:00Z'
+            application/problem+json: *id010
+        '404':
+          description: Plan not found
+          content:
+            application/json: &id011
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                plan_not_found:
+                  value:
+                    status: error
+                    error:
+                      code: PLAN_NOT_FOUND
+                      message: No plan found for the given identifier
+                    timestamp: '2026-01-03T00:00:00Z'
+            application/problem+json: *id011
