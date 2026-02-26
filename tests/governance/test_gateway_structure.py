@@ -12,13 +12,9 @@ GATEWAY_FILE = "microservices/api_gateway/main.py"
 # These functions are allowed to point to the Monolith (for now).
 # Any NEW function added to this list violates the "Stop the Bleeding" rule.
 LEGACY_ALLOWLIST = {
-    "admin_ai_config_proxy",
     "chat_http_proxy",
     "chat_ws_proxy",
     "admin_chat_ws_proxy",
-    "content_proxy",
-    "datamesh_proxy",
-    "system_proxy",
 }
 
 

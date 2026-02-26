@@ -1,4 +1,4 @@
-"""يتحقق أن CORE_KERNEL_URL غير موجود في compose الافتراضي ومحصور بملف legacy."""
+"""يتحقق أن التشغيل الافتراضي بلا core-kernel وأنه محصور في ملف الطوارئ legacy."""
 
 from __future__ import annotations
 
@@ -13,19 +13,25 @@ def main() -> int:
     default_text = DEFAULT_COMPOSE.read_text(encoding="utf-8")
     legacy_text = LEGACY_COMPOSE.read_text(encoding="utf-8")
 
-    if "CORE_KERNEL_URL" in default_text:
-        print("❌ CORE_KERNEL_URL must not exist in default docker-compose.yml")
-        return 1
+    forbidden_tokens = ["core-kernel:", "postgres-core:", "CORE_KERNEL_URL"]
+    for token in forbidden_tokens:
+        if token in default_text:
+            print(f"❌ Default compose must not contain '{token}'")
+            return 1
 
-    if "core-kernel" not in legacy_text:
-        print("❌ docker-compose.legacy.yml must retain core-kernel emergency stack")
-        return 1
+    required_tokens = [
+        "core-kernel:",
+        "postgres-core:",
+        'profiles: ["legacy", "emergency"]',
+        "LEGACY_APPROVAL_TICKET",
+        "LEGACY_EXPIRES_AT",
+    ]
+    for token in required_tokens:
+        if token not in legacy_text:
+            print(f"❌ Legacy compose missing required token: {token}")
+            return 1
 
-    if 'profiles: ["legacy"]' not in default_text:
-        print("❌ core-kernel service in default compose must be behind legacy profile")
-        return 1
-
-    print("✅ CORE_KERNEL_URL removed from default compose and legacy profile enforced.")
+    print("✅ Default compose isolated from core-kernel; emergency legacy profile is enforced.")
     return 0
 
 

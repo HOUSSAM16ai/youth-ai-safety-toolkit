@@ -51,34 +51,24 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: 📦 Install Spectral CLI (Optional)
-        continue-on-error: true
+      - name: 📦 Install Spectral CLI
         run: |
-          if command -v npm >/dev/null 2>&1; then
-            npm install -g @stoplight/spectral-cli
-          else
-            echo "⚠️ npm not available - skipping Spectral installation."
+          if ! command -v npm >/dev/null 2>&1; then
+            echo "❌ npm is required for contract validation."
+            exit 1
           fi
+          npm install -g @stoplight/spectral-cli
 
       - name: 🔎 Check Spectral Availability
-        run: |
-          if command -v spectral >/dev/null 2>&1; then
-            spectral --version
-          else
-            echo "⚠️ Spectral CLI not available - skipping contract validation."
-          fi
+        run: spectral --version
 
       - name: 🔍 Validate OpenAPI Contracts
         run: |
-          if ! command -v spectral >/dev/null 2>&1; then
-            echo "⚠️ Spectral CLI not available - skipping OpenAPI validation."
-            exit 0
-          fi
           echo "🔍 Validating OpenAPI contracts..."
           if ls docs/contracts/openapi/*.yaml 1> /dev/null 2>&1; then
             for file in docs/contracts/openapi/*.yaml; do
               echo "Validating: $file"
-              spectral lint "$file" --ruleset docs/contracts/policies/.spectral.yaml || true
+              spectral lint "$file" --ruleset docs/contracts/policies/.spectral.yaml
             done
           else
             echo "⚠️ No OpenAPI contracts found - skipping validation"
@@ -86,19 +76,21 @@ jobs:
 
       - name: 🔍 Validate AsyncAPI Contracts
         run: |
-          if ! command -v spectral >/dev/null 2>&1; then
-            echo "⚠️ Spectral CLI not available - skipping AsyncAPI validation."
-            exit 0
-          fi
           echo "🔍 Validating AsyncAPI contracts..."
           if ls docs/contracts/asyncapi/*.yaml 1> /dev/null 2>&1; then
             for file in docs/contracts/asyncapi/*.yaml; do
               echo "Validating: $file"
-              spectral lint "$file" --ruleset docs/contracts/policies/.spectral.yaml || true
+              spectral lint "$file" --ruleset docs/contracts/policies/.spectral.yaml
             done
           else
             echo "⚠️ No AsyncAPI contracts found - skipping validation"
           fi
+
+
+      - name: 🧪 Provider Verification (Gateway ↔ chat/content)
+        run: |
+          python scripts/fitness/check_gateway_provider_contracts.py
+          python -m pytest -q tests/contracts/test_gateway_provider_contracts.py
 
       - name: ✅ Contract Validation Summary
         run: echo "✅ All contract validations completed!"

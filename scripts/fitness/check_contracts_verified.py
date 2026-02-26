@@ -8,6 +8,11 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CONTRACT_FILE = REPO_ROOT / "docs/contracts/consumer/gateway_route_contracts.json"
 TEST_FILE = REPO_ROOT / "tests/contracts/test_gateway_routing_contracts.py"
+CHAT_CONTENT_CONTRACT_FILE = (
+    REPO_ROOT / "docs/contracts/consumer/gateway_chat_content_contracts.json"
+)
+VERSIONING_RULES_FILE = REPO_ROOT / "docs/contracts/consumer/gateway_versioning_rules.md"
+PROVIDER_TEST_FILE = REPO_ROOT / "tests/contracts/test_gateway_provider_contracts.py"
 
 
 def main() -> int:
@@ -16,6 +21,15 @@ def main() -> int:
         return 1
     if not TEST_FILE.exists():
         print("❌ Missing gateway routing contract test.")
+        return 1
+    if not CHAT_CONTENT_CONTRACT_FILE.exists():
+        print("❌ Missing gateway chat/content provider contract file.")
+        return 1
+    if not VERSIONING_RULES_FILE.exists():
+        print("❌ Missing gateway versioning rules documentation.")
+        return 1
+    if not PROVIDER_TEST_FILE.exists():
+        print("❌ Missing gateway provider contract test.")
         return 1
 
     data = json.loads(CONTRACT_FILE.read_text(encoding="utf-8"))
@@ -31,7 +45,7 @@ def main() -> int:
         print("❌ Contract baseline incomplete for cutover routes (phase1/phase2).")
         return 1
 
-    print("✅ Contract baseline exists for phase1/phase2 routes and has test coverage file.")
+    print("✅ Contract baseline + provider verification artifacts exist and are enforceable.")
     return 0
 
 

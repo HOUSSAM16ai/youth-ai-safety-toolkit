@@ -5,25 +5,6 @@ services:
   # Infrastructure Services
   # ==========================================
 
-  # Postgres Core - For Monolith/Core Kernel
-  postgres-core:
-    image: postgres:15-alpine
-    container_name: cogniforge-postgres-core
-    restart: unless-stopped
-    ports:
-      - "5432:5432"
-    networks:
-      - cogniforge-network
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
-      POSTGRES_DB: core_db
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d core_db"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   redis:
     image: redis:7.2-alpine
     container_name: cogniforge-redis
@@ -191,34 +172,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
-  # ==========================================
-  # Core Kernel - The Monolith Core (Legacy Backend)
-  # ==========================================
-  core-kernel:
-    profiles: ["legacy"]
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: cogniforge-core-kernel
-    restart: unless-stopped
-    # IMPORTANT: Not binding to host port 8000 anymore to allow API Gateway to take precedence.
-    # It is accessible internally at http://core-kernel:8000
-    expose:
-      - "8000"
-    networks:
-      - cogniforge-network
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres-core:5432/core_db
-      ENVIRONMENT: ${ENVIRONMENT:-production}
-      # External API Keys (Passed from Host/Secrets)
-      TAVILY_API_KEY: ${TAVILY_API_KEY:-}
-      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
-      FIRECRAWL_API_KEY: ${FIRECRAWL_API_KEY:-}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-    depends_on:
-      postgres-core:
-        condition: service_healthy
 
   # ==========================================
   # Core Platform Services (Modern Architecture)

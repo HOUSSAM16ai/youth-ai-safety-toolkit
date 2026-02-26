@@ -6,22 +6,16 @@ import argparse
 from pathlib import Path
 
 ALLOWED_CONTEXTS: dict[str, dict[str, str]] = {
-    "docker-compose.microservices.yml": {
-        "api-gateway": ".",
-        "planning-agent": "./microservices/planning_agent",
-        "memory-agent": "./microservices/memory_agent",
-        "user-service": "./microservices/user_service",
-        "orchestrator-service": "./microservices/orchestrator_service",
-        "observability-service": "./microservices/observability_service",
-    },
     "docker-compose.yml": {
-        "core-kernel": ".",
         "frontend": "./frontend",
         "orchestrator-service": "./microservices/orchestrator_service",
         "observability-service": "./microservices/observability_service",
         "planning-agent": "./microservices/planning_agent",
         "memory-agent": "./microservices/memory_agent",
         "user-service": "./microservices/user_service",
+    },
+    "docker-compose.legacy.yml": {
+        "core-kernel": ".",
     },
 }
 

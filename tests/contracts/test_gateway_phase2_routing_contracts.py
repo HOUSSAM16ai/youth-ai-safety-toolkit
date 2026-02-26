@@ -19,7 +19,6 @@ def test_datamesh_defaults_to_observability_when_legacy_disabled(monkeypatch) ->
         return PlainTextResponse("ok")
 
     monkeypatch.setattr(main.proxy_handler, "forward", fake_forward)
-    monkeypatch.setattr(settings, "ROUTE_DATAMESH_USE_LEGACY", False)
     main.app.dependency_overrides[verify_gateway_request] = lambda: True
 
     response = TestClient(main.app).get("/api/v1/data-mesh/health")
@@ -38,7 +37,6 @@ def test_system_defaults_to_orchestrator_when_legacy_disabled(monkeypatch) -> No
         return PlainTextResponse("ok")
 
     monkeypatch.setattr(main.proxy_handler, "forward", fake_forward)
-    monkeypatch.setattr(settings, "ROUTE_SYSTEM_USE_LEGACY", False)
     main.app.dependency_overrides[verify_gateway_request] = lambda: True
 
     response = TestClient(main.app).get("/system/status")

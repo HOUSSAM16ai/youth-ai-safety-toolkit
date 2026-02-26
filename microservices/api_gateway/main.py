@@ -1,6 +1,8 @@
 import asyncio
+import hashlib
 import logging
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 
 import uvicorn
 from fastapi import Depends, FastAPI, Request, WebSocket
@@ -25,6 +27,65 @@ logger = logging.getLogger("api_gateway")
 # Initialize the proxy handler
 proxy_handler = GatewayProxy()
 legacy_acl = LegacyACL(proxy_handler)
+legacy_ws_sessions_total: dict[tuple[str, bool], int] = {}
+
+
+def _enforce_legacy_ttl(flag_name: str, ttl_value: str) -> None:
+    """يفرض صلاحية زمنية إلزامية لأي مسار fallback نحو legacy لتسهيل الإغلاق التدريجي."""
+    expiry = datetime.fromisoformat(ttl_value)
+    if expiry.tzinfo is None:
+        expiry = expiry.replace(tzinfo=UTC)
+
+    if datetime.now(tz=UTC) > expiry:
+        raise RuntimeError(f"Legacy fallback flag expired: {flag_name} ttl={ttl_value}")
+
+
+def _record_ws_legacy_metric(route_id: str, legacy_flag: bool) -> None:
+    """يسجل عداد جلسات WS بصيغة legacy_ws_sessions_total مع وسوم route_id و legacy_flag."""
+    key = (route_id, legacy_flag)
+    legacy_ws_sessions_total[key] = legacy_ws_sessions_total.get(key, 0) + 1
+    logger.info(
+        "legacy_ws_sessions_total=%s route_id=%s legacy_flag=%s",
+        legacy_ws_sessions_total[key],
+        route_id,
+        str(legacy_flag).lower(),
+    )
+
+
+def _rollout_bucket(identity: str) -> int:
+    """يولّد Bucket حتمي بين 0 و99 لدعم canary تدريجي آمن وقابل للإرجاع."""
+    digest = hashlib.sha256(identity.encode("utf-8")).hexdigest()
+    return int(digest[:8], 16) % 100
+
+
+def _should_route_to_conversation(identity: str, rollout_percent: int) -> bool:
+    """يحدد قرار التوجيه التدريجي إلى Conversation Service وفق نسبة مئوية مضبوطة."""
+    normalized = max(0, min(100, rollout_percent))
+    if normalized == 0:
+        return False
+    if normalized == 100:
+        return True
+    return _rollout_bucket(identity) < normalized
+
+
+def _resolve_chat_ws_target(route_id: str, upstream_path: str, use_legacy: bool, ttl: str) -> str:
+    """يحدد هدف WS مع حارس علم التوجيه وTTL إلزامي وضبط canary تدريجي."""
+    if use_legacy:
+        _enforce_legacy_ttl(route_id, ttl)
+        return legacy_acl.websocket_target(upstream_path, route_id)
+
+    identity = f"{route_id}:{upstream_path}"
+    use_conversation = _should_route_to_conversation(
+        identity, settings.ROUTE_CHAT_WS_CONVERSATION_ROLLOUT_PERCENT
+    )
+    if use_conversation:
+        candidate = settings.CONVERSATION_WS_URL.rstrip("/")
+        logger.info("chat_ws_candidate route_id=%s legacy=false target=%s", route_id, candidate)
+        return f"{candidate}/{upstream_path}"
+
+    fallback_target = settings.ORCHESTRATOR_SERVICE_URL.replace("http", "ws", 1).rstrip("/")
+    logger.info("chat_ws_orchestrator route_id=%s legacy=false target=%s", route_id, fallback_target)
+    return f"{fallback_target}/{upstream_path}"
 
 
 @asynccontextmanager
@@ -253,9 +314,7 @@ async def admin_ai_config_proxy(request: Request) -> StreamingResponse:
     [LEGACY] Strangler Fig: Route AI Config to Monolith.
     TARGET: User Service (Pending Migration)
     """
-    logger.warning("Legacy route accessed: /admin/ai-config")
-    if settings.ROUTE_ADMIN_AI_CONFIG_USE_LEGACY:
-        return await legacy_acl.forward_http(request, "api/v1/admin/ai-config", "admin_ai_config")
+    logger.info("Route accessed: /admin/ai-config -> user-service")
     return await proxy_handler.forward(
         request,
         settings.USER_SERVICE_URL,
@@ -318,9 +377,14 @@ async def chat_http_proxy(path: str, request: Request) -> StreamingResponse:
         return await legacy_acl.forward_http(
             request, legacy_acl.chat_upstream_path(path), "chat_http"
         )
+    identity = request.headers.get("x-request-id", request.url.path)
+    target_url = settings.ORCHESTRATOR_SERVICE_URL
+    if _should_route_to_conversation(identity, settings.ROUTE_CHAT_HTTP_CONVERSATION_ROLLOUT_PERCENT):
+        target_url = settings.CONVERSATION_SERVICE_URL
+
     return await proxy_handler.forward(
         request,
-        settings.ORCHESTRATOR_SERVICE_URL,
+        target_url,
         f"api/chat/{path}",
         service_token=create_service_token(),
     )
@@ -332,8 +396,16 @@ async def chat_ws_proxy(websocket: WebSocket):
     [LEGACY] Customer Chat WebSocket.
     TARGET: Orchestrator Service / Conversation Service
     """
-    logger.warning("Legacy WebSocket accessed: /api/chat/ws")
-    target_url = legacy_acl.websocket_target("api/chat/ws", "chat_ws_customer")
+    route_id = "chat_ws_customer"
+    use_legacy = settings.ROUTE_CHAT_WS_USE_LEGACY
+    logger.warning("Chat WebSocket route_id=%s legacy_flag=%s", route_id, str(use_legacy).lower())
+    _record_ws_legacy_metric(route_id, use_legacy)
+    target_url = _resolve_chat_ws_target(
+        route_id,
+        "api/chat/ws",
+        use_legacy,
+        settings.ROUTE_CHAT_WS_LEGACY_TTL,
+    )
     await websocket_proxy(websocket, target_url)
 
 
@@ -343,8 +415,16 @@ async def admin_chat_ws_proxy(websocket: WebSocket):
     [LEGACY] Admin Chat WebSocket.
     TARGET: Orchestrator Service / Conversation Service
     """
-    logger.warning("Legacy WebSocket accessed: /admin/api/chat/ws")
-    target_url = legacy_acl.websocket_target("admin/api/chat/ws", "chat_ws_admin")
+    route_id = "chat_ws_admin"
+    use_legacy = settings.ROUTE_ADMIN_CHAT_WS_USE_LEGACY
+    logger.warning("Chat WebSocket route_id=%s legacy_flag=%s", route_id, str(use_legacy).lower())
+    _record_ws_legacy_metric(route_id, use_legacy)
+    target_url = _resolve_chat_ws_target(
+        route_id,
+        "admin/api/chat/ws",
+        use_legacy,
+        settings.ROUTE_ADMIN_CHAT_WS_LEGACY_TTL,
+    )
     await websocket_proxy(websocket, target_url)
 
 
@@ -359,11 +439,7 @@ async def content_proxy(path: str, request: Request) -> StreamingResponse:
     [LEGACY] Content Service Proxy.
     TARGET: Content Service (To Be Extracted)
     """
-    logger.warning("Legacy route accessed: /v1/content/%s", path)
-    if settings.ROUTE_CONTENT_USE_LEGACY:
-        return await legacy_acl.forward_http(
-            request, legacy_acl.content_upstream_path(path), "content"
-        )
+    logger.info("Route accessed: /v1/content/%s -> research-agent", path)
     return await proxy_handler.forward(
         request,
         settings.RESEARCH_AGENT_URL,
@@ -383,9 +459,7 @@ async def datamesh_proxy(path: str, request: Request) -> StreamingResponse:
     [LEGACY] Data Mesh Proxy.
     TARGET: Data Mesh Service
     """
-    logger.warning("Legacy route accessed: /api/v1/data-mesh/%s", path)
-    if settings.ROUTE_DATAMESH_USE_LEGACY:
-        return await legacy_acl.forward_http(request, f"api/v1/data-mesh/{path}", "data_mesh")
+    logger.info("Route accessed: /api/v1/data-mesh/%s -> observability-service", path)
     return await proxy_handler.forward(
         request,
         settings.OBSERVABILITY_SERVICE_URL,
@@ -405,9 +479,7 @@ async def system_proxy(path: str, request: Request) -> StreamingResponse:
     [LEGACY] System Routes Proxy.
     TARGET: System Service
     """
-    logger.warning("Legacy route accessed: /system/%s", path)
-    if settings.ROUTE_SYSTEM_USE_LEGACY:
-        return await legacy_acl.forward_http(request, f"system/{path}", "system")
+    logger.info("Route accessed: /system/%s -> orchestrator-service", path)
     return await proxy_handler.forward(
         request,
         settings.ORCHESTRATOR_SERVICE_URL,

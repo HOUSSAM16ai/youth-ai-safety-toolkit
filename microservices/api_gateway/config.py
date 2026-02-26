@@ -15,14 +15,24 @@ class Settings(BaseSettings):
     RESEARCH_AGENT_URL: str = "http://research-agent:8007"
     REASONING_AGENT_URL: str = "http://reasoning-agent:8008"
     ORCHESTRATOR_SERVICE_URL: str = "http://orchestrator-service:8006"
+    CONVERSATION_SERVICE_URL: str = "http://conversation-service:8010"
     CORE_KERNEL_URL: str = "http://core-kernel:8000"
 
     # Per-route cutover flags (Phase 0 defaults keep behavior unchanged)
-    ROUTE_ADMIN_AI_CONFIG_USE_LEGACY: bool = True
     ROUTE_CHAT_USE_LEGACY: bool = False
-    ROUTE_CONTENT_USE_LEGACY: bool = False
-    ROUTE_DATAMESH_USE_LEGACY: bool = False
-    ROUTE_SYSTEM_USE_LEGACY: bool = False
+    ROUTE_CHAT_WS_USE_LEGACY: bool = True
+    ROUTE_ADMIN_CHAT_WS_USE_LEGACY: bool = True
+
+    # Progressive rollout for conversation target (0 -> 5 -> 25 -> 100)
+    ROUTE_CHAT_HTTP_CONVERSATION_ROLLOUT_PERCENT: int = 0
+    ROUTE_CHAT_WS_CONVERSATION_ROLLOUT_PERCENT: int = 0
+
+    # Mandatory TTL for legacy websocket rollback switches
+    ROUTE_CHAT_WS_LEGACY_TTL: str = "2099-12-31T23:59:59+00:00"
+    ROUTE_ADMIN_CHAT_WS_LEGACY_TTL: str = "2099-12-31T23:59:59+00:00"
+
+    # Candidate target for WS cutover (kept disabled by default in PR#1)
+    CONVERSATION_WS_URL: str = "ws://conversation-service:8010"
 
     # Gateway Configuration
     API_V1_STR: str = "/api/v1"

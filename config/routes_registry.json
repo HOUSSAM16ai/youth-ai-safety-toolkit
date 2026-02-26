@@ -2,22 +2,97 @@
   "version": 1,
   "generated_by": "manual-phase-0",
   "routes": [
-    {"public_path": "/api/v1/planning/{path:path}", "owner": "planning-agent", "legacy_flag": false},
-    {"public_path": "/api/v1/memory/{path:path}", "owner": "memory-agent", "legacy_flag": false},
-    {"public_path": "/api/v1/users/{path:path}", "owner": "user-service", "legacy_flag": false},
-    {"public_path": "/api/v1/auth/{path:path}", "owner": "user-service", "legacy_flag": false},
-    {"public_path": "/api/v1/observability/{path:path}", "owner": "observability-service", "legacy_flag": false},
-    {"public_path": "/api/v1/research/{path:path}", "owner": "research-agent", "legacy_flag": false},
-    {"public_path": "/api/v1/reasoning/{path:path}", "owner": "reasoning-agent", "legacy_flag": false},
-    {"public_path": "/api/v1/overmind/{path:path}", "owner": "orchestrator-service", "legacy_flag": false},
-    {"public_path": "/api/v1/missions", "owner": "orchestrator-service", "legacy_flag": false},
-    {"public_path": "/api/v1/missions/{path:path}", "owner": "orchestrator-service", "legacy_flag": false},
-    {"public_path": "/admin/ai-config", "owner": "legacy", "legacy_flag": true, "sunset_date": "2026-06-30"},
-    {"public_path": "/api/chat/{path:path}", "owner": "orchestrator-service", "legacy_flag": false, "legacy_fallback": true, "sunset_date": "2026-06-30"},
-    {"public_path": "/api/chat/ws", "owner": "legacy", "legacy_flag": true, "sunset_date": "2026-06-30"},
-    {"public_path": "/admin/api/chat/ws", "owner": "legacy", "legacy_flag": true, "sunset_date": "2026-06-30"},
-    {"public_path": "/v1/content/{path:path}", "owner": "research-agent", "legacy_flag": false, "legacy_fallback": true, "sunset_date": "2026-06-30"},
-    {"public_path": "/api/v1/data-mesh/{path:path}", "owner": "observability-service", "legacy_flag": false, "legacy_fallback": true, "sunset_date": "2026-09-30"},
-    {"public_path": "/system/{path:path}", "owner": "orchestrator-service", "legacy_flag": false, "legacy_fallback": true, "sunset_date": "2026-09-30"}
+    {
+      "public_path": "/api/v1/planning/{path:path}",
+      "owner": "planning-agent",
+      "legacy_flag": false
+    },
+    {
+      "public_path": "/api/v1/memory/{path:path}",
+      "owner": "memory-agent",
+      "legacy_flag": false
+    },
+    {
+      "public_path": "/api/v1/users/{path:path}",
+      "owner": "user-service",
+      "legacy_flag": false
+    },
+    {
+      "public_path": "/api/v1/auth/{path:path}",
+      "owner": "user-service",
+      "legacy_flag": false
+    },
+    {
+      "public_path": "/api/v1/observability/{path:path}",
+      "owner": "observability-service",
+      "legacy_flag": false
+    },
+    {
+      "public_path": "/api/v1/research/{path:path}",
+      "owner": "research-agent",
+      "legacy_flag": false
+    },
+    {
+      "public_path": "/api/v1/reasoning/{path:path}",
+      "owner": "reasoning-agent",
+      "legacy_flag": false
+    },
+    {
+      "public_path": "/api/v1/overmind/{path:path}",
+      "owner": "orchestrator-service",
+      "legacy_flag": false
+    },
+    {
+      "public_path": "/api/v1/missions",
+      "owner": "orchestrator-service",
+      "legacy_flag": false
+    },
+    {
+      "public_path": "/api/v1/missions/{path:path}",
+      "owner": "orchestrator-service",
+      "legacy_flag": false
+    },
+    {
+      "public_path": "/admin/ai-config",
+      "owner": "legacy",
+      "legacy_flag": false,
+      "sunset_date": "2026-06-30"
+    },
+    {
+      "public_path": "/api/chat/{path:path}",
+      "owner": "orchestrator-service",
+      "legacy_flag": false,
+      "sunset_date": "2026-06-30"
+    },
+    {
+      "public_path": "/api/chat/ws",
+      "owner": "legacy",
+      "legacy_flag": false,
+      "sunset_date": "2026-06-30"
+    },
+    {
+      "public_path": "/admin/api/chat/ws",
+      "owner": "legacy",
+      "legacy_flag": false,
+      "sunset_date": "2026-06-30"
+    },
+    {
+      "public_path": "/v1/content/{path:path}",
+      "owner": "research-agent",
+      "legacy_flag": false,
+      "sunset_date": "2026-06-30"
+    },
+    {
+      "public_path": "/api/v1/data-mesh/{path:path}",
+      "owner": "observability-service",
+      "legacy_flag": false,
+      "sunset_date": "2026-09-30"
+    },
+    {
+      "public_path": "/system/{path:path}",
+      "owner": "orchestrator-service",
+      "legacy_flag": false,
+      "sunset_date": "2026-09-30"
+    }
   ]
 }

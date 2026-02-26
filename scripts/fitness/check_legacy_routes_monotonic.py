@@ -1,4 +1,4 @@
-"""يتحقق أن عدد المسارات legacy لا يزيد عن خط الأساس المعتمد."""
+"""يتحقق أن عدد مسارات legacy يساوي صفرًا بعد إغلاق مرحلة الاستنزاف."""
 
 from __future__ import annotations
 
@@ -14,10 +14,13 @@ def main() -> int:
     routes_data = json.loads(ROUTES_FILE.read_text(encoding="utf-8"))
     baseline = int(BASELINE_FILE.read_text(encoding="utf-8").strip())
     current = sum(1 for route in routes_data["routes"] if route.get("legacy_flag") is True)
-    if current > baseline:
-        print(f"❌ Legacy route count increased: current={current} baseline={baseline}")
+    if baseline != 0:
+        print(f"❌ Baseline must be zero after phase2: baseline={baseline}")
         return 1
-    print(f"✅ Legacy route count monotonic: current={current} baseline={baseline}")
+    if current != 0:
+        print(f"❌ Legacy routes must be zero: current={current}")
+        return 1
+    print("✅ Legacy route hard-zero check passed: current=0 baseline=0")
     return 0
 
 

@@ -38,7 +38,6 @@ def test_content_route_defaults_to_research_when_legacy_flag_disabled(monkeypatc
         return PlainTextResponse("ok")
 
     monkeypatch.setattr(main.proxy_handler, "forward", fake_forward)
-    monkeypatch.setattr(settings, "ROUTE_CONTENT_USE_LEGACY", False)
     main.app.dependency_overrides[verify_gateway_request] = lambda: True
 
     response = TestClient(main.app).get("/v1/content/search")

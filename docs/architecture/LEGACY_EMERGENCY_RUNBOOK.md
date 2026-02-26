@@ -1,31 +1,35 @@
 # Legacy Emergency Re-Enable Runbook (Time-Boxed)
 
-## الهدف
 إعادة تمكين `core-kernel` بشكل طارئ ومؤقت فقط عند فشل حرج في الخدمات البديلة.
 
-## القاعدة
-- التشغيل الافتراضي يجب أن يكون بدون `core-kernel`.
+## مبادئ ملزمة
+- التشغيل الافتراضي يجب أن يكون بدون `core-kernel` وبدون `postgres-core`.
 - أي إعادة تمكين Legacy لها نافذة زمنية قصوى: **24 ساعة**.
-- بعد 24 ساعة يجب تنفيذ خطة إغلاق Legacy أو طلب استثناء موثق.
+- **Approval required**: يجب وجود تذكرة موافقة تشغيلية (`LEGACY_APPROVAL_TICKET`).
+- **Auto-expiry policy**: يجب ضبط `LEGACY_EXPIRES_AT` بصيغة ISO-8601 قبل التشغيل.
 
 ## خطوات التفعيل الطارئ
-1. شغّل ملف Legacy:
+1. شغّل ملف Legacy فقط:
    ```bash
-   docker compose -f docker-compose.legacy.yml up -d
+   docker compose -f docker-compose.legacy.yml --profile emergency up -d
    ```
-2. شغّل Gateway مع متغير:
+2. اضبط متغيرات الطوارئ (Placeholders فقط):
    ```bash
+   export LEGACY_APPROVAL_TICKET=CHG-XXXXX
+   export LEGACY_EXPIRES_AT=2026-02-27T12:00:00Z
    export CORE_KERNEL_URL=http://core-kernel:8000
    ```
-3. فعّل فقط المسارات المتأثرة عبر flags:
-   - `ROUTE_*_USE_LEGACY=true`
-4. راقب أحجام الطلبات legacy ومعرّفات route_id.
+3. فعّل flags المطلوبة لحالات chat فقط عند الضرورة:
+   - `ROUTE_CHAT_USE_LEGACY=true`
+   - `ROUTE_CHAT_WS_USE_LEGACY=true`
+   - `ROUTE_ADMIN_CHAT_WS_USE_LEGACY=true`
+4. راقب أحجام الطلبات legacy ومعرّفات `route_id`.
 
-## خطوات الإيقاف والعودة للوضع الطبيعي
-1. أعد flags إلى المسارات الجديدة (`false`).
-2. احذف متغير `CORE_KERNEL_URL` من بيئة التشغيل.
-3. أوقف stack الطوارئ:
+## الإغلاق الإجباري
+1. بعد انقضاء الوقت أو زوال السبب:
+   - أعد flags إلى الوضع الحديث.
+2. احذف متغيرات الطوارئ من بيئة التشغيل.
+3. أوقف stack الطارئ:
    ```bash
    docker compose -f docker-compose.legacy.yml down
    ```
-4. وثّق الحادثة وسبب التفعيل ومدته.

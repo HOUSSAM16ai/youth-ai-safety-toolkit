@@ -5,6 +5,7 @@ services:
 
   # Postgres Core - For Monolith/Core Kernel
   postgres-core:
+    profiles: ["legacy", "emergency"]
     image: postgres:15-alpine
     container_name: cogniforge-postgres-core
     restart: unless-stopped
@@ -42,13 +43,14 @@ services:
 
   # Core Kernel - The Monolith Core (Reality Kernel)
   core-kernel:
+    profiles: ["legacy", "emergency"]
     build:
       context: .
       dockerfile: Dockerfile
     container_name: cogniforge-core-kernel
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "8004:8000"
     networks:
       - cogniforge-network
     environment:
@@ -60,6 +62,8 @@ services:
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       FIRECRAWL_API_KEY: ${FIRECRAWL_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LEGACY_APPROVAL_TICKET: ${LEGACY_APPROVAL_TICKET:-CHG-REQUIRED}
+      LEGACY_EXPIRES_AT: ${LEGACY_EXPIRES_AT:-REQUIRED-ISO8601}
     depends_on:
       postgres-core:
         condition: service_healthy

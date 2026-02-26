@@ -10,21 +10,15 @@
     },
     {
       "route": "/v1/content/{path:path}",
-      "default_provider": "research-agent",
-      "legacy_fallback": "core-kernel-via-legacy-acl",
-      "toggle": "ROUTE_CONTENT_USE_LEGACY"
+      "default_provider": "research-agent"
     },
     {
       "route": "/api/v1/data-mesh/{path:path}",
-      "default_provider": "observability-service",
-      "legacy_fallback": "core-kernel-via-legacy-acl",
-      "toggle": "ROUTE_DATAMESH_USE_LEGACY"
+      "default_provider": "observability-service"
     },
     {
       "route": "/system/{path:path}",
-      "default_provider": "orchestrator-service",
-      "legacy_fallback": "core-kernel-via-legacy-acl",
-      "toggle": "ROUTE_SYSTEM_USE_LEGACY"
+      "default_provider": "orchestrator-service"
     }
   ]
 }
