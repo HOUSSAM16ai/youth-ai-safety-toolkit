@@ -16,13 +16,17 @@ class Settings(BaseSettings):
     REASONING_AGENT_URL: str = "http://reasoning-agent:8008"
     ORCHESTRATOR_SERVICE_URL: str = "http://orchestrator-service:8006"
     CONVERSATION_SERVICE_URL: str = "http://conversation-service:8010"
+
+    # REMOVED: CORE_KERNEL_URL default to None to enforce removal from default path.
+    # If legacy is needed, it must be explicitly injected via env var.
     CORE_KERNEL_URL: str | None = None
 
     # Per-route cutover flags (Phase 0 defaults keep behavior unchanged)
 
     # Progressive rollout for conversation target (0 -> 5 -> 25 -> 100)
-    ROUTE_CHAT_HTTP_CONVERSATION_ROLLOUT_PERCENT: int = 0
-    ROUTE_CHAT_WS_CONVERSATION_ROLLOUT_PERCENT: int = 0
+    # UPDATED: Set rollout to 100% to fully switch over chat traffic to microservices
+    ROUTE_CHAT_HTTP_CONVERSATION_ROLLOUT_PERCENT: int = 100
+    ROUTE_CHAT_WS_CONVERSATION_ROLLOUT_PERCENT: int = 100
 
     # Candidate target for WS cutover (kept disabled by default in PR#1)
     CONVERSATION_WS_URL: str = "ws://conversation-service:8010"

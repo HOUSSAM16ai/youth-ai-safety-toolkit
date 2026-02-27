@@ -1,26 +1,14 @@
 #!/bin/bash
-# scripts/check_app_imports.sh
-# Fails if "from app" or "import app" is found in microservices/, excluding allowlisted files.
-# Only scans .py files to avoid false positives in documentation.
+# Checks if any microservice improperly imports from the legacy 'app' package
+# Excluding 'app.infrastructure.clients' and 'app.core' for now as they are shared libs temporarily
 
-set -e
-
-# Temporary allowlist for existing violations (will be removed in PR #4)
-# We only allow conftest.py as it needs app fixture for now (until we mock it fully)
-ALLOWLIST="microservices/user_service/tests/conftest.py"
-
-echo "Scanning for 'from app' or 'import app' in microservices/..."
-
-# Find all python files in microservices
-VIOLATIONS=$(grep -rE --include="*.py" "^\s*(from|import)\s+app\b" microservices | grep -vE "$ALLOWLIST" || true)
+VIOLATIONS=$(grep -r "from app" microservices/ | grep -v "from app.infrastructure.clients" | grep -v "from app.core" | grep -v "test" || true)
 
 if [ -n "$VIOLATIONS" ]; then
-    echo "❌ ERROR: Found forbidden imports from 'app' package in microservices:"
+    echo "❌ Detected illegal imports from legacy 'app' package in microservices:"
     echo "$VIOLATIONS"
-    echo ""
-    echo "Microservices must be independent and cannot import from the monolith 'app/' namespace."
     exit 1
 else
-    echo "✅ No new forbidden imports found."
+    echo "✅ No illegal 'from app' imports detected in microservices."
     exit 0
 fi

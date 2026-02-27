@@ -111,6 +111,7 @@ async def create_overmind(db: AsyncSession) -> OvermindOrchestrator:
     engine, executor = _build_engine_with_components(state_manager, tool_timeout_seconds)
 
     # 3. The Orchestrator
+    # Explicitly ensure LangGraphOvermindEngine is used as the 'brain'
     return OvermindOrchestrator(state_manager=state_manager, executor=executor, brain=engine)
 
 
