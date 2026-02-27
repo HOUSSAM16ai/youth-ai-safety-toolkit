@@ -128,87 +128,6 @@ components:
             field: objective
         timestamp: '2026-01-03T00:00:00Z'
         request_id: req_abc123xyz
-    SuccessResponse:
-      type: object
-      required:
-      - status
-      - data
-      properties:
-        status:
-          type: string
-          enum:
-          - success
-          description: Status of the response
-        data:
-          type: object
-          description: Response payload
-          additionalProperties: true
-        meta:
-          type: object
-          description: Metadata about the response
-          properties:
-            timestamp:
-              type: string
-              format: date-time
-            request_id:
-              type: string
-        links:
-          type: object
-          description: HATEOAS links for related resources
-          additionalProperties:
-            type: string
-            format: uri
-      example:
-        status: success
-        data:
-          message: Operation completed
-        meta:
-          timestamp: '2026-01-03T00:00:00Z'
-          request_id: req_abc123xyz
-        links:
-          self: https://api.cogniforge.ai/api/v1/resource/1
-    PaginationMeta:
-      type: object
-      required:
-      - page
-      - per_page
-      - total
-      - total_pages
-      properties:
-        page:
-          type: integer
-          minimum: 1
-          description: Current page number
-          example: 1
-        per_page:
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Items per page
-          example: 20
-        total:
-          type: integer
-          minimum: 0
-          description: Total number of items
-          example: 157
-        total_pages:
-          type: integer
-          minimum: 0
-          description: Total number of pages
-          example: 8
-        has_next:
-          type: boolean
-          description: Whether there is a next page
-        has_prev:
-          type: boolean
-          description: Whether there is a previous page
-      example:
-        page: 1
-        per_page: 20
-        total: 157
-        total_pages: 8
-        has_next: true
-        has_prev: true
     LoginRequest:
       type: object
       required:
@@ -471,42 +390,6 @@ components:
         is_admin: false
         created_at: '2026-01-01T00:00:00Z'
         updated_at: '2026-01-03T00:00:00Z'
-    GenericResource:
-      type: object
-      required:
-      - id
-      - type
-      properties:
-        id:
-          type: string
-          description: Resource unique identifier
-          example: res_123abc
-        type:
-          type: string
-          description: Resource type
-          example: mission
-        attributes:
-          type: object
-          description: Resource attributes
-          additionalProperties: true
-        relationships:
-          type: object
-          description: Related resources
-          additionalProperties: true
-        links:
-          type: object
-          description: HATEOAS links
-          properties:
-            self:
-              type: string
-              format: uri
-              example: https://api.cogniforge.ai/api/v1/resources/mission/res_123abc
-      example:
-        id: res_123abc
-        type: mission
-        attributes: {}
-        relationships: {}
-        links: {}
   responses: {}
 paths:
   /api/security/health:

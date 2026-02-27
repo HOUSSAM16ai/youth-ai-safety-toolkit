@@ -10,17 +10,22 @@ from httpx import AsyncClient, Response
 
 GATEWAY_URL = "http://localhost:8000"
 
+
 class MockAsyncClient(AsyncClient):
     """Mock client that intercepts requests if server is down."""
+
     async def get(self, url, **kwargs):
         if url == "/health":
-            return Response(200, json={"status": "ok", "service": "api-gateway", "dependencies": {}})
+            return Response(
+                200, json={"status": "ok", "service": "api-gateway", "dependencies": {}}
+            )
         return await super().get(url, **kwargs)
 
     async def post(self, url, **kwargs):
         if url == "/api/chat/message":
-            return Response(401) # Auth required
+            return Response(401)  # Auth required
         return await super().post(url, **kwargs)
+
 
 @pytest.mark.asyncio
 async def test_gateway_health():
@@ -33,6 +38,7 @@ async def test_gateway_health():
     assert response.status_code == 200
     data = response.json()
     assert data["status"] in ["ok", "degraded"]
+
 
 @pytest.mark.asyncio
 async def test_chat_http_route():
