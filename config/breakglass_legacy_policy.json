@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "default_enabled": false,
+  "max_duration_hours": 24,
+  "required_fields": [
+    "LEGACY_BREAKGLASS_ENABLED",
+    "LEGACY_APPROVAL_TICKET",
+    "LEGACY_EXPIRES_AT"
+  ]
+}

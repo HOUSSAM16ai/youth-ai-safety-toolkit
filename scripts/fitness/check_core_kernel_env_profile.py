@@ -23,8 +23,9 @@ def main() -> int:
         "core-kernel:",
         "postgres-core:",
         'profiles: ["legacy", "emergency"]',
-        "LEGACY_APPROVAL_TICKET",
-        "LEGACY_EXPIRES_AT",
+        "LEGACY_BREAKGLASS_ENABLED",
+        "LEGACY_APPROVAL_TICKET: ${LEGACY_APPROVAL_TICKET:?LEGACY_APPROVAL_TICKET is required}",
+        "LEGACY_EXPIRES_AT: ${LEGACY_EXPIRES_AT:?LEGACY_EXPIRES_AT is required (ISO-8601)}",
     ]
     for token in required_tokens:
         if token not in legacy_text:

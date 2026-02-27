@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "owner": "microservices/orchestrator_service/src/services/overmind",
+  "legacy_snapshot": "app/services/overmind",
+  "phase": "2b",
+  "policy": "strict_decrease",
+  "previous_max_overlap_metric": 109,
+  "active_copy_coupling_overlap_metric_max": 108
+}

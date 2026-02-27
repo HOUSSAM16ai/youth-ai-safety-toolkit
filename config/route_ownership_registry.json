@@ -1,0 +1,159 @@
+{
+  "version": 1,
+  "source_of_truth": "phase-0-governance",
+  "routes": [
+    {
+      "route_id": "planning",
+      "protocol": "http",
+      "public_path": "/api/v1/planning/{path:path}",
+      "owner": "planning-agent",
+      "target_service": "planning-agent",
+      "default_profile": true,
+      "legacy_target": false
+    },
+    {
+      "route_id": "memory",
+      "protocol": "http",
+      "public_path": "/api/v1/memory/{path:path}",
+      "owner": "memory-agent",
+      "target_service": "memory-agent",
+      "default_profile": true,
+      "legacy_target": false
+    },
+    {
+      "route_id": "users",
+      "protocol": "http",
+      "public_path": "/api/v1/users/{path:path}",
+      "owner": "user-service",
+      "target_service": "user-service",
+      "default_profile": true,
+      "legacy_target": false
+    },
+    {
+      "route_id": "auth",
+      "protocol": "http",
+      "public_path": "/api/v1/auth/{path:path}",
+      "owner": "user-service",
+      "target_service": "user-service",
+      "default_profile": true,
+      "legacy_target": false
+    },
+    {
+      "route_id": "observability",
+      "protocol": "http",
+      "public_path": "/api/v1/observability/{path:path}",
+      "owner": "observability-service",
+      "target_service": "observability-service",
+      "default_profile": true,
+      "legacy_target": false
+    },
+    {
+      "route_id": "research",
+      "protocol": "http",
+      "public_path": "/api/v1/research/{path:path}",
+      "owner": "research-agent",
+      "target_service": "research-agent",
+      "default_profile": true,
+      "legacy_target": false
+    },
+    {
+      "route_id": "reasoning",
+      "protocol": "http",
+      "public_path": "/api/v1/reasoning/{path:path}",
+      "owner": "reasoning-agent",
+      "target_service": "reasoning-agent",
+      "default_profile": true,
+      "legacy_target": false
+    },
+    {
+      "route_id": "overmind",
+      "protocol": "http",
+      "public_path": "/api/v1/overmind/{path:path}",
+      "owner": "orchestrator-service",
+      "target_service": "orchestrator-service",
+      "default_profile": true,
+      "legacy_target": false
+    },
+    {
+      "route_id": "missions_root",
+      "protocol": "http",
+      "public_path": "/api/v1/missions",
+      "owner": "orchestrator-service",
+      "target_service": "orchestrator-service",
+      "default_profile": true,
+      "legacy_target": false
+    },
+    {
+      "route_id": "missions_path",
+      "protocol": "http",
+      "public_path": "/api/v1/missions/{path:path}",
+      "owner": "orchestrator-service",
+      "target_service": "orchestrator-service",
+      "default_profile": true,
+      "legacy_target": false
+    },
+    {
+      "route_id": "admin_ai_config",
+      "protocol": "http",
+      "public_path": "/admin/ai-config",
+      "owner": "identity-platform",
+      "target_service": "user-service",
+      "default_profile": true,
+      "legacy_target": false
+    },
+    {
+      "route_id": "chat_http",
+      "protocol": "http",
+      "public_path": "/api/chat/{path:path}",
+      "owner": "conversation-platform",
+      "target_service": "orchestrator-service",
+      "default_profile": true,
+      "legacy_target": false
+    },
+    {
+      "route_id": "chat_ws_customer",
+      "protocol": "websocket",
+      "public_path": "/api/chat/ws",
+      "owner": "conversation-platform",
+      "target_service": "conversation-service",
+      "default_profile": true,
+      "legacy_target": false
+    },
+    {
+      "route_id": "chat_ws_admin",
+      "protocol": "websocket",
+      "public_path": "/admin/api/chat/ws",
+      "owner": "conversation-platform",
+      "target_service": "conversation-service",
+      "default_profile": true,
+      "legacy_target": false
+    },
+    {
+      "route_id": "content",
+      "protocol": "http",
+      "public_path": "/v1/content/{path:path}",
+      "owner": "research-platform",
+      "target_service": "research-agent",
+      "default_profile": true,
+      "legacy_target": false
+    },
+    {
+      "route_id": "data_mesh",
+      "protocol": "http",
+      "public_path": "/api/v1/data-mesh/{path:path}",
+      "owner": "data-platform",
+      "target_service": "observability-service",
+      "default_profile": true,
+      "legacy_target": false
+    },
+    {
+      "route_id": "system",
+      "protocol": "http",
+      "public_path": "/system/{path:path}",
+      "owner": "orchestrator-platform",
+      "target_service": "orchestrator-service",
+      "default_profile": true,
+      "legacy_target": false
+    }
+  ]
+}

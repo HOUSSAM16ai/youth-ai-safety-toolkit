@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "services": [
+    {
+      "service_dir": "api_gateway",
+      "compose_service": "api-gateway",
+      "owner": "platform-team",
+      "dockerfile_required": true,
+      "expected_in_default_compose": true
+    },
+    {
+      "service_dir": "planning_agent",
+      "compose_service": "planning-agent",
+      "owner": "planning-team",
+      "dockerfile_required": true,
+      "expected_in_default_compose": true
+    },
+    {
+      "service_dir": "memory_agent",
+      "compose_service": "memory-agent",
+      "owner": "memory-team",
+      "dockerfile_required": true,
+      "expected_in_default_compose": true
+    },
+    {
+      "service_dir": "user_service",
+      "compose_service": "user-service",
+      "owner": "identity-team",
+      "dockerfile_required": true,
+      "expected_in_default_compose": true
+    },
+    {
+      "service_dir": "observability_service",
+      "compose_service": "observability-service",
+      "owner": "observability-team",
+      "dockerfile_required": true,
+      "expected_in_default_compose": true
+    },
+    {
+      "service_dir": "research_agent",
+      "compose_service": "research-agent",
+      "owner": "research-team",
+      "dockerfile_required": true,
+      "expected_in_default_compose": true
+    },
+    {
+      "service_dir": "reasoning_agent",
+      "compose_service": "reasoning-agent",
+      "owner": "reasoning-team",
+      "dockerfile_required": true,
+      "expected_in_default_compose": true
+    },
+    {
+      "service_dir": "orchestrator_service",
+      "compose_service": "orchestrator-service",
+      "owner": "orchestrator-team",
+      "dockerfile_required": true,
+      "expected_in_default_compose": true
+    },
+    {
+      "service_dir": "conversation_service",
+      "compose_service": "conversation-service",
+      "owner": "conversation-team",
+      "dockerfile_required": true,
+      "expected_in_default_compose": true
+    },
+    {
+      "service_dir": "auditor_service",
+      "compose_service": "auditor-service",
+      "owner": "audit-team",
+      "dockerfile_required": false,
+      "expected_in_default_compose": false
+    }
+  ]
+}

@@ -168,6 +168,36 @@ jobs:
       - name: 🛡️ Run Guardrails
         run: python scripts/ci_guardrails.py
 
+      - name: 🧭 Fitness F1 - No app imports inside microservices (strict)
+        run: python scripts/fitness/check_no_app_imports_in_microservices.py --strict
+
+      - name: 🧭 Fitness F2 - Default routing forbids legacy targets
+        run: python scripts/fitness/check_default_routing_no_legacy_targets.py
+
+      - name: 🧭 Fitness F3 - Docs/runtime parity
+        run: python scripts/fitness/check_docs_runtime_parity.py
+
+      - name: 🧭 Fitness F3.1 - Route registry parity
+        run: python scripts/fitness/check_route_registry_parity.py
+
+      - name: 🧭 Fitness F3.1a - Gateway registry alignment
+        run: python scripts/fitness/check_gateway_route_registry_alignment.py
+
+      - name: 🧭 Fitness F3.1b - Service catalog parity
+        run: python scripts/fitness/check_service_catalog_parity.py
+
+      - name: 🧭 Fitness F3.2 - Tracing gate baseline
+        run: python scripts/fitness/check_tracing_gate.py
+
+      - name: 🧭 Fitness F3.3 - Break-glass expiry enforcement
+        run: python scripts/fitness/check_breakglass_expiry_enforcement.py
+
+      - name: 🧭 Fitness F4 - Copy-coupling overlap gate (phase 2b strict-decrease)
+        run: python scripts/fitness/check_overmind_copy_coupling.py
+
+      - name: 🧭 Fitness F4 - Copy-coupling overlap scoreboard
+        run: python scripts/fitness/generate_cutover_scoreboard.py
+
       - name: 🧭 Fitness #1 - CORE_KERNEL ACL isolation
         run: python scripts/fitness/check_core_kernel_acl.py
 
@@ -188,6 +218,13 @@ jobs:
 
       - name: 📊 Fitness #8 - Legacy traffic 30d hard-zero
         run: python scripts/fitness/check_legacy_traffic_zero_window.py
+
+      - name: 📦 Upload cutover scoreboard artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cutover-scoreboard
+          path: docs/diagnostics/CUTOVER_SCOREBOARD.md
+          retention-days: 7
 
 
   # ===========================================================================
