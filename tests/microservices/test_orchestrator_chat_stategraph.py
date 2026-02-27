@@ -39,7 +39,7 @@ class _FakeLangGraphService:
 
 def test_chat_http_messages_uses_stategraph(monkeypatch) -> None:
     """يتأكد أن POST /api/chat/messages يعيد استجابة موحدة من مسار StateGraph."""
-    monkeypatch.setattr(routes, "create_langgraph_service", lambda: _FakeLangGraphService())
+    monkeypatch.setattr(routes, "create_langgraph_service", _FakeLangGraphService)
 
     client = TestClient(app)
     response = client.post("/api/chat/messages", json={"question": "hello"})
@@ -53,7 +53,7 @@ def test_chat_http_messages_uses_stategraph(monkeypatch) -> None:
 
 def test_chat_ws_customer_uses_stategraph(monkeypatch) -> None:
     """يتأكد أن WS العميل يمر عبر نفس مسار StateGraph ويرجع route_id الصحيح."""
-    monkeypatch.setattr(routes, "create_langgraph_service", lambda: _FakeLangGraphService())
+    monkeypatch.setattr(routes, "create_langgraph_service", _FakeLangGraphService)
 
     with TestClient(app).websocket_connect("/api/chat/ws") as ws:
         ws.send_json({"question": "hello"})
@@ -66,7 +66,7 @@ def test_chat_ws_customer_uses_stategraph(monkeypatch) -> None:
 
 def test_chat_ws_admin_uses_stategraph(monkeypatch) -> None:
     """يتأكد أن WS الإداري يستخدم StateGraph ويرجع route_id الإداري."""
-    monkeypatch.setattr(routes, "create_langgraph_service", lambda: _FakeLangGraphService())
+    monkeypatch.setattr(routes, "create_langgraph_service", _FakeLangGraphService)
 
     with TestClient(app).websocket_connect("/admin/api/chat/ws") as ws:
         ws.send_json({"question": "hello"})
