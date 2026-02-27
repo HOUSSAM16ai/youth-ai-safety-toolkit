@@ -1,8 +1,8 @@
 # tests/governance/test_smoke_journeys.py
 
+
 import pytest
 from httpx import AsyncClient, Response
-from unittest.mock import MagicMock
 
 # This requires the services to be running (which they are in CI/Compose)
 # For this script to work locally, we need to mock or assume URLs.
