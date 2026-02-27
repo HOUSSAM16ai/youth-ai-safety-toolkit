@@ -9,6 +9,7 @@ from httpx import AsyncClient
 
 GATEWAY_URL = "http://localhost:8000"
 
+
 @pytest.mark.asyncio
 async def test_gateway_health():
     """Verify Gateway is up and responding."""
@@ -20,6 +21,7 @@ async def test_gateway_health():
             assert data["status"] in ["ok", "degraded"]
         except Exception:
             pytest.skip("Gateway not running locally, skipping integration smoke test")
+
 
 @pytest.mark.asyncio
 async def test_chat_http_route():
