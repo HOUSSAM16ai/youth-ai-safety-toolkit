@@ -1,5 +1,5 @@
 """
-Dec-POMDP canonical knowledge module (Copied from app/services/overmind/dec_pomdp_proof.py).
+Dec-POMDP canonical knowledge module.
 Provides pure functions for building proof summaries and detecting related questions.
 """
 

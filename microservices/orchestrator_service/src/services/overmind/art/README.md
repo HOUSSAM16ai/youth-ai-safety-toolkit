@@ -37,8 +37,8 @@ This module brings **Harvard CS73 "Code, Data, and Art"** principles to the Over
 ### Basic Usage
 
 ```python
-from app.services.overmind.art.integration import OvermindArtIntegration
-from app.services.overmind.art.styles import ArtStyle
+from microservices.orchestrator_service.src.services.overmind.art.integration import OvermindArtIntegration
+from microservices.orchestrator_service.src.services.overmind.art.styles import ArtStyle
 
 # Create integration with desired style
 integration = OvermindArtIntegration(ArtStyle.CYBERPUNK)
@@ -58,7 +58,7 @@ visualizations = integration.visualize_code_intelligence(analysis)
 ### One-Liner
 
 ```python
-from app.services.overmind.art.integration import create_art_from_overmind_data
+from microservices.orchestrator_service.src.services.overmind.art.integration import create_art_from_overmind_data
 
 art = create_art_from_overmind_data(your_data, ArtStyle.NATURE)
 ```
@@ -102,7 +102,7 @@ Algorithm-based creative visuals:
 ## 🎨 Module Structure
 
 ```
-app/services/overmind/art/
+microservices/orchestrator_service/src/services/overmind/art/
 ├── __init__.py          # Public API exports
 ├── styles.py            # Color theory & themes
 ├── visualizer.py        # Data → Art transformations
@@ -117,8 +117,8 @@ app/services/overmind/art/
 ### Example 1: Visualize Mission Journey
 
 ```python
-from app.services.overmind.art.integration import OvermindArtIntegration
-from app.services.overmind.art.styles import ArtStyle
+from microservices.orchestrator_service.src.services.overmind.art.integration import OvermindArtIntegration
+from microservices.orchestrator_service.src.services.overmind.art.styles import ArtStyle
 
 integration = OvermindArtIntegration(ArtStyle.MODERN)
 

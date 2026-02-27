@@ -21,8 +21,8 @@ class Settings(BaseSettings):
     # Per-route cutover flags (Phase 0 defaults keep behavior unchanged)
 
     # Progressive rollout for conversation target (0 -> 5 -> 25 -> 100)
-    ROUTE_CHAT_HTTP_CONVERSATION_ROLLOUT_PERCENT: int = 0
-    ROUTE_CHAT_WS_CONVERSATION_ROLLOUT_PERCENT: int = 0
+    ROUTE_CHAT_HTTP_CONVERSATION_ROLLOUT_PERCENT: int = 100
+    ROUTE_CHAT_WS_CONVERSATION_ROLLOUT_PERCENT: int = 100
 
     # Candidate target for WS cutover (kept disabled by default in PR#1)
     CONVERSATION_WS_URL: str = "ws://conversation-service:8010"

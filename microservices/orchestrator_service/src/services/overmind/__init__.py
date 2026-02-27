@@ -8,7 +8,7 @@
 #   interface. It exposes the key components and services from the sub-packages,
 #   providing a clean, unified entry point for the rest of the application.
 #
-#   By importing from here (e.g., `from app.overmind import orchestrator`), other parts
+#   By importing from here (e.g., `from microservices.orchestrator_service.src.services.overmind import orchestrator`), other parts
 #   of the system do not need to know the internal structure of the Overmind package,
 #   making our architecture more modular and easier to refactor in the future.
 #

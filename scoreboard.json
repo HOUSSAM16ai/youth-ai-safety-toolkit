@@ -1,0 +1,9 @@
+{
+  "app_import_count": 0,
+  "legacy_routes_count": 5,
+  "ws_legacy_targets_count": 0,
+  "core_kernel_in_default_profile": false,
+  "contract_gate": true,
+  "tracing_gate": false,
+  "ports_consistency": true
+}
