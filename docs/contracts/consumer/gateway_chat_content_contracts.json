@@ -3,8 +3,7 @@
   "consumer": "api-gateway",
   "providers": [
     "orchestrator-service",
-    "research-agent",
-    "conversation-service"
+    "research-agent"
   ],
   "http": [
     {
@@ -50,7 +49,7 @@
   "websocket": [
     {
       "route": "/api/chat/ws",
-      "provider_default": "conversation-service",
+      "provider_default": "orchestrator-service",
       "versioning": {
         "subprotocol": "jwt",
         "query_fallback": "token",
@@ -68,7 +67,7 @@
     },
     {
       "route": "/admin/api/chat/ws",
-      "provider_default": "conversation-service",
+      "provider_default": "orchestrator-service",
       "versioning": {
         "subprotocol": "jwt",
         "query_fallback": "token",

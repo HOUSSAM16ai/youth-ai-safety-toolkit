@@ -66,13 +66,13 @@
     },
     {
       "public_path": "/api/chat/ws",
-      "owner": "legacy",
+      "owner": "orchestrator-service",
       "legacy_flag": false,
       "sunset_date": "2026-06-30"
     },
     {
       "public_path": "/admin/api/chat/ws",
-      "owner": "legacy",
+      "owner": "orchestrator-service",
       "legacy_flag": false,
       "sunset_date": "2026-06-30"
     },

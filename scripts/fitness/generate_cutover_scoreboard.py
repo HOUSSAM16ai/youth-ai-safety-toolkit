@@ -11,11 +11,13 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 REGISTRY = REPO_ROOT / "config/route_ownership_registry.json"
 DEFAULT_COMPOSE = REPO_ROOT / "docker-compose.yml"
 SCOREBOARD_MD = REPO_ROOT / "docs/diagnostics/CUTOVER_SCOREBOARD.md"
+SCOREBOARD_JSON = REPO_ROOT / "scoreboard.json"
 CONTRACT_GATE_SCRIPT = REPO_ROOT / "scripts/fitness/check_contracts_verified.py"
 TRACING_GATE_SCRIPT = REPO_ROOT / "scripts/fitness/check_tracing_gate.py"
 DOCS_RUNTIME_PARITY_SCRIPT = REPO_ROOT / "scripts/fitness/check_docs_runtime_parity.py"
 BREAKGLASS_GATE_SCRIPT = REPO_ROOT / "scripts/fitness/check_breakglass_expiry_enforcement.py"
 OVERMIND_COUPLING_GATE_SCRIPT = REPO_ROOT / "scripts/fitness/check_overmind_copy_coupling.py"
+STATEGRAPH_BACKBONE_GATE_SCRIPT = REPO_ROOT / "scripts/fitness/check_stategraph_runtime_backbone.py"
 OVERMIND_BASELINE_FILE = REPO_ROOT / "config/overmind_copy_coupling_baseline.json"
 MICROSERVICE_CATALOG_FILE = REPO_ROOT / "config/microservice_catalog.json"
 
@@ -82,6 +84,16 @@ def _run_gate(script_path: Path) -> bool:
     return result.returncode == 0
 
 
+def _owner_for_route_id(routes: list[dict[str, object]], route_id: str) -> str:
+    """يعيد مالك المسار عبر route_id أو قيمة unknown عندما لا يكون معرفًا."""
+    for route in routes:
+        if route.get("route_id") == route_id:
+            owner = route.get("owner")
+            if isinstance(owner, str) and owner.strip():
+                return owner
+    return "unknown"
+
+
 def main() -> int:
     registry = json.loads(REGISTRY.read_text(encoding="utf-8"))
     routes: list[dict[str, object]] = registry["routes"]
@@ -90,7 +102,7 @@ def main() -> int:
     ws_legacy_default = [item for item in legacy_default if item.get("protocol") == "websocket"]
 
     default_text = DEFAULT_COMPOSE.read_text(encoding="utf-8")
-    core_kernel_in_default_profile = (
+    monolith_required_for_default_runtime = (
         "core-kernel:" in default_text or "postgres-core:" in default_text
     )
     emergency_legacy_expiry_enforced = _run_gate(BREAKGLASS_GATE_SCRIPT)
@@ -102,9 +114,19 @@ def main() -> int:
     contract_gate = _run_gate(CONTRACT_GATE_SCRIPT)
     tracing_gate = _run_gate(TRACING_GATE_SCRIPT)
     overmind_coupling_gate = _run_gate(OVERMIND_COUPLING_GATE_SCRIPT)
+    stategraph_backbone_gate = _run_gate(STATEGRAPH_BACKBONE_GATE_SCRIPT)
     overmind_policy = json.loads(OVERMIND_BASELINE_FILE.read_text(encoding="utf-8"))
     overmind_phase = str(overmind_policy.get("phase", "unknown"))
     overmind_mode = str(overmind_policy.get("policy", "unknown"))
+
+    normal_chat_owner = _owner_for_route_id(routes, "chat_http")
+    super_agent_owner = _owner_for_route_id(routes, "missions_root")
+    single_brain_architecture = normal_chat_owner == super_agent_owner
+    stategraph_is_runtime_backbone = (
+        single_brain_architecture
+        and super_agent_owner in {"orchestrator-service", "orchestrator-platform"}
+        and stategraph_backbone_gate
+    )
 
     content = """# Cutover Scoreboard
 
@@ -112,11 +134,15 @@ def main() -> int:
 | metric | value |
 |---|---:|
 | legacy_routes_count | {legacy_routes_count} |
-| ws_legacy_targets_count | {ws_legacy_targets_count} |
-| core_kernel_in_default_profile | {core_kernel_in_default_profile} |
+| legacy_ws_targets_count | {legacy_ws_targets_count} |
+| monolith_required_for_default_runtime | {monolith_required_for_default_runtime} |
 | emergency_legacy_expiry_enforced | {emergency_legacy_expiry_enforced} |
+| normal_chat_owner | {normal_chat_owner} |
+| super_agent_owner | {super_agent_owner} |
+| single_brain_architecture | {single_brain_architecture} |
 | app_import_count_in_microservices | {app_import_count_in_microservices} |
 | active_copy_coupling_overlap_metric | {active_copy_coupling_overlap_metric} |
+| stategraph_is_runtime_backbone | {stategraph_is_runtime_backbone} |
 | docs_runtime_parity | {docs_runtime_parity} |
 | contract_gate | {contract_gate} |
 | tracing_gate | {tracing_gate} |
@@ -141,11 +167,15 @@ def main() -> int:
 {lifecycle_drift_lines}
 """.format(
         legacy_routes_count=len(legacy_default),
-        ws_legacy_targets_count=len(ws_legacy_default),
-        core_kernel_in_default_profile=str(core_kernel_in_default_profile).lower(),
+        legacy_ws_targets_count=len(ws_legacy_default),
+        monolith_required_for_default_runtime=str(monolith_required_for_default_runtime).lower(),
         emergency_legacy_expiry_enforced=str(emergency_legacy_expiry_enforced).lower(),
+        normal_chat_owner=normal_chat_owner,
+        super_agent_owner=super_agent_owner,
+        single_brain_architecture=str(single_brain_architecture).lower(),
         app_import_count_in_microservices=app_import_count,
         active_copy_coupling_overlap_metric=overlap_metric,
+        stategraph_is_runtime_backbone=str(stategraph_is_runtime_backbone).lower(),
         docs_runtime_parity=str(docs_runtime_parity).lower(),
         contract_gate=str(contract_gate).lower(),
         tracing_gate=str(tracing_gate).lower(),
@@ -158,7 +188,25 @@ def main() -> int:
     )
 
     SCOREBOARD_MD.write_text(content, encoding="utf-8")
+    scoreboard_payload = {
+        "legacy_routes_count": len(legacy_default),
+        "legacy_ws_targets_count": len(ws_legacy_default),
+        "monolith_required_for_default_runtime": monolith_required_for_default_runtime,
+        "normal_chat_owner": normal_chat_owner,
+        "super_agent_owner": super_agent_owner,
+        "single_brain_architecture": single_brain_architecture,
+        "app_import_count_in_microservices": app_import_count,
+        "active_overmind_duplication_metric": overlap_metric,
+        "stategraph_is_runtime_backbone": stategraph_is_runtime_backbone,
+        "contract_gate": contract_gate,
+        "tracing_gate": tracing_gate,
+    }
+    SCOREBOARD_JSON.write_text(
+        json.dumps(scoreboard_payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
     print(f"✅ Generated {SCOREBOARD_MD.relative_to(REPO_ROOT)}")
+    print(f"✅ Generated {SCOREBOARD_JSON.relative_to(REPO_ROOT)}")
     return 0
 
 

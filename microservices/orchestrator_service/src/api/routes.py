@@ -28,11 +28,13 @@ from microservices.orchestrator_service.src.services.overmind.agents.orchestrato
     OrchestratorAgent,
 )
 from microservices.orchestrator_service.src.services.overmind.domain.api_schemas import (
+    LangGraphRunRequest,
     MissionCreate,
     MissionEventResponse,
     MissionResponse,
 )
 from microservices.orchestrator_service.src.services.overmind.entrypoint import start_mission
+from microservices.orchestrator_service.src.services.overmind.factory import create_langgraph_service
 from microservices.orchestrator_service.src.services.overmind.state import MissionStateManager
 from microservices.orchestrator_service.src.services.overmind.utils.tools import tool_registry
 
@@ -50,6 +52,110 @@ class ChatRequest(BaseModel):
     history_messages: list[dict[str, str]] = []
     context: dict[str, Any] = {}
 
+
+
+
+def _extract_chat_objective(payload: dict[str, object]) -> str | None:
+    """يستخلص الهدف النصي للدردشة من حمولة عامة بشكل صريح وآمن."""
+    question = payload.get("question")
+    if isinstance(question, str) and question.strip():
+        return question.strip()
+    objective = payload.get("objective")
+    if isinstance(objective, str) and objective.strip():
+        return objective.strip()
+    return None
+
+
+async def _run_chat_langgraph(
+    objective: str,
+    context: dict[str, str | int | float | bool | None],
+) -> dict[str, object]:
+    """يشغّل LangGraph كعمود فقري لرحلة chat ويعيد حمولة موحدة قابلة للبث."""
+    service = create_langgraph_service()
+    request = LangGraphRunRequest(objective=objective, context=context)
+    run_data = await service.run(request)
+    execution_summary = run_data.execution or {}
+    response_text = str(execution_summary.get("summary") or objective)
+    return {
+        "status": "ok",
+        "response": response_text,
+        "run_id": run_data.run_id,
+        "timeline": [event.model_dump(mode="json") for event in run_data.timeline],
+        "graph_mode": "stategraph",
+    }
+
+
+@router.get("/api/chat/messages", summary="Chat Health Endpoint")
+async def chat_messages_health_endpoint() -> dict[str, str]:
+    """يوفر نقطة صحة توافقية لمسار chat ضمن سلطة orchestrator الموحدة."""
+    return {
+        "status": "ok",
+        "service": "orchestrator-service",
+        "control_plane": "stategraph",
+    }
+
+
+@router.post("/api/chat/messages", summary="StateGraph Chat Endpoint")
+async def chat_messages_endpoint(payload: dict[str, object]) -> dict[str, object]:
+    """ينفّذ رسالة chat عبر خدمة LangGraph ويعيد نتيجة تشغيل موحدة."""
+    objective = _extract_chat_objective(payload)
+    if objective is None:
+        raise HTTPException(status_code=422, detail="question/objective is required")
+
+    context_payload = payload.get("context")
+    context: dict[str, str | int | float | bool | None] = {}
+    if isinstance(context_payload, dict):
+        for key, value in context_payload.items():
+            if not isinstance(key, str):
+                continue
+            if isinstance(value, str | int | float | bool) or value is None:
+                context[key] = value
+
+    return await _run_chat_langgraph(objective, context)
+
+
+@router.websocket("/api/chat/ws")
+async def chat_ws_stategraph(websocket: WebSocket) -> None:
+    """يشغّل WebSocket chat فوق LangGraph لضمان توحيد مسار التنفيذ مع mission."""
+    await websocket.accept()
+    try:
+        while True:
+            incoming = await websocket.receive_json()
+            if not isinstance(incoming, dict):
+                await websocket.send_json({"status": "error", "message": "invalid payload"})
+                continue
+            objective = _extract_chat_objective(incoming)
+            if objective is None:
+                await websocket.send_json({"status": "error", "message": "question/objective required"})
+                continue
+
+            result = await _run_chat_langgraph(objective, {})
+            result["route_id"] = "chat_ws_customer"
+            await websocket.send_json(result)
+    except WebSocketDisconnect:
+        logger.info("Customer chat websocket disconnected")
+
+
+@router.websocket("/admin/api/chat/ws")
+async def admin_chat_ws_stategraph(websocket: WebSocket) -> None:
+    """يشغّل WebSocket الإداري عبر LangGraph بنفس السلطة الموحدة للـ control-plane."""
+    await websocket.accept()
+    try:
+        while True:
+            incoming = await websocket.receive_json()
+            if not isinstance(incoming, dict):
+                await websocket.send_json({"status": "error", "message": "invalid payload"})
+                continue
+            objective = _extract_chat_objective(incoming)
+            if objective is None:
+                await websocket.send_json({"status": "error", "message": "question/objective required"})
+                continue
+
+            result = await _run_chat_langgraph(objective, {})
+            result["route_id"] = "chat_ws_admin"
+            await websocket.send_json(result)
+    except WebSocketDisconnect:
+        logger.info("Admin chat websocket disconnected")
 
 def _get_mission_status_payload(status: str) -> dict[str, str | None]:
     if status == "partial_success":

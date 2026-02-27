@@ -4,11 +4,15 @@
 | metric | value |
 |---|---:|
 | legacy_routes_count | 0 |
-| ws_legacy_targets_count | 0 |
-| core_kernel_in_default_profile | false |
+| legacy_ws_targets_count | 0 |
+| monolith_required_for_default_runtime | false |
 | emergency_legacy_expiry_enforced | true |
+| normal_chat_owner | orchestrator-service |
+| super_agent_owner | orchestrator-service |
+| single_brain_architecture | true |
 | app_import_count_in_microservices | 0 |
 | active_copy_coupling_overlap_metric | 108 |
+| stategraph_is_runtime_backbone | true |
 | docs_runtime_parity | true |
 | contract_gate | true |
 | tracing_gate | true |

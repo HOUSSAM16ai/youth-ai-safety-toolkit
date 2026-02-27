@@ -1,0 +1,77 @@
+"""اختبارات سلوكية لمسارات chat داخل orchestrator مع عمود StateGraph."""
+
+from __future__ import annotations
+
+from fastapi.testclient import TestClient
+
+from microservices.orchestrator_service.main import app
+from microservices.orchestrator_service.src.api import routes
+
+
+class _FakeTimelineEvent:
+    """يمثل حدثًا زمنيًا بسيطًا متوافقًا مع واجهة النموذج."""
+
+    def __init__(self, agent: str) -> None:
+        self._agent = agent
+
+    def model_dump(self, mode: str = "json") -> dict[str, str]:
+        """يعيد تمثيل الحدث بصيغة قاموس JSON."""
+        return {"agent": self._agent, "mode": mode}
+
+
+class _FakeRunData:
+    """يمثل نتيجة تشغيل مبسطة لمحاكاة LangGraph."""
+
+    def __init__(self) -> None:
+        self.run_id = "run-test"
+        self.execution = {"summary": "stategraph-response"}
+        self.timeline = [_FakeTimelineEvent("supervisor")]
+
+
+class _FakeLangGraphService:
+    """خدمة مزيفة تعيد نتيجة ثابتة للتحقق من سلوك المسارات."""
+
+    async def run(self, payload: object) -> _FakeRunData:
+        """تشغّل محاكاة وتعيد بيانات ثابتة دون تبعيات خارجية."""
+        _ = payload
+        return _FakeRunData()
+
+
+def test_chat_http_messages_uses_stategraph(monkeypatch) -> None:
+    """يتأكد أن POST /api/chat/messages يعيد استجابة موحدة من مسار StateGraph."""
+    monkeypatch.setattr(routes, "create_langgraph_service", lambda: _FakeLangGraphService())
+
+    client = TestClient(app)
+    response = client.post("/api/chat/messages", json={"question": "hello"})
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "ok"
+    assert payload["response"] == "stategraph-response"
+    assert payload["graph_mode"] == "stategraph"
+
+
+def test_chat_ws_customer_uses_stategraph(monkeypatch) -> None:
+    """يتأكد أن WS العميل يمر عبر نفس مسار StateGraph ويرجع route_id الصحيح."""
+    monkeypatch.setattr(routes, "create_langgraph_service", lambda: _FakeLangGraphService())
+
+    with TestClient(app).websocket_connect("/api/chat/ws") as ws:
+        ws.send_json({"question": "hello"})
+        payload = ws.receive_json()
+
+    assert payload["status"] == "ok"
+    assert payload["route_id"] == "chat_ws_customer"
+    assert payload["graph_mode"] == "stategraph"
+
+
+def test_chat_ws_admin_uses_stategraph(monkeypatch) -> None:
+    """يتأكد أن WS الإداري يستخدم StateGraph ويرجع route_id الإداري."""
+    monkeypatch.setattr(routes, "create_langgraph_service", lambda: _FakeLangGraphService())
+
+    with TestClient(app).websocket_connect("/admin/api/chat/ws") as ws:
+        ws.send_json({"question": "hello"})
+        payload = ws.receive_json()
+
+    assert payload["status"] == "ok"
+    assert payload["route_id"] == "chat_ws_admin"
+    assert payload["graph_mode"] == "stategraph"
