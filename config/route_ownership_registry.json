@@ -105,7 +105,7 @@
       "route_id": "chat_http",
       "protocol": "http",
       "public_path": "/api/chat/{path:path}",
-      "owner": "conversation-platform",
+      "owner": "orchestrator-service",
       "target_service": "orchestrator-service",
       "default_profile": true,
       "legacy_target": false
@@ -114,8 +114,8 @@
       "route_id": "chat_ws_customer",
       "protocol": "websocket",
       "public_path": "/api/chat/ws",
-      "owner": "conversation-platform",
-      "target_service": "conversation-service",
+      "owner": "orchestrator-service",
+      "target_service": "orchestrator-service",
       "default_profile": true,
       "legacy_target": false
     },
@@ -123,8 +123,8 @@
       "route_id": "chat_ws_admin",
       "protocol": "websocket",
       "public_path": "/admin/api/chat/ws",
-      "owner": "conversation-platform",
-      "target_service": "conversation-service",
+      "owner": "orchestrator-service",
+      "target_service": "orchestrator-service",
       "default_profile": true,
       "legacy_target": false
     },

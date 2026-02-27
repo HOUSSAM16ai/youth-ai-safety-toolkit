@@ -175,6 +175,12 @@ jobs:
       - name: 🧭 Fitness F2 - Default routing forbids legacy targets
         run: python scripts/fitness/check_default_routing_no_legacy_targets.py
 
+      - name: 🧭 Fitness F2.1 - Single-brain control-plane gate
+        run: python scripts/fitness/check_single_brain_control_plane.py
+
+      - name: 🧭 Fitness F2.2 - StateGraph runtime backbone gate
+        run: python scripts/fitness/check_stategraph_runtime_backbone.py
+
       - name: 🧭 Fitness F3 - Docs/runtime parity
         run: python scripts/fitness/check_docs_runtime_parity.py
 

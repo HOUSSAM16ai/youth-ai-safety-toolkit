@@ -1,9 +1,13 @@
 {
-  "app_import_count": 0,
-  "legacy_routes_count": 5,
-  "ws_legacy_targets_count": 0,
-  "core_kernel_in_default_profile": false,
+  "legacy_routes_count": 0,
+  "legacy_ws_targets_count": 0,
+  "monolith_required_for_default_runtime": false,
+  "normal_chat_owner": "orchestrator-service",
+  "super_agent_owner": "orchestrator-service",
+  "single_brain_architecture": true,
+  "app_import_count_in_microservices": 0,
+  "active_overmind_duplication_metric": 108,
+  "stategraph_is_runtime_backbone": true,
   "contract_gate": true,
-  "tracing_gate": false,
-  "ports_consistency": true
+  "tracing_gate": true
 }
