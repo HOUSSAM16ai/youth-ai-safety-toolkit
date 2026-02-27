@@ -430,58 +430,6 @@ services:
       timeout: 10s
       retries: 3
 
-services:
-  # ==========================================
-  # Infrastructure Services
-  # ==========================================
-
-  # Postgres Core - For Monolith/Core Kernel
-  postgres-core:
-    profiles: ["legacy", "emergency"]
-    image: postgres:15-alpine
-    container_name: cogniforge-postgres-core
-    restart: unless-stopped
-    ports:
-      - "5432:5432"
-    networks:
-      - cogniforge-network
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
-      POSTGRES_DB: core_db
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d core_db"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  # Core Kernel - The Monolith Core (Reality Kernel)
-  core-kernel:
-    profiles: ["legacy", "emergency"]
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: cogniforge-core-kernel
-    restart: unless-stopped
-    ports:
-      - "8004:8000"
-    networks:
-      - cogniforge-network
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres-core:5432/core_db
-      ENVIRONMENT: ${ENVIRONMENT:-production}
-      # Point to microservices
-      # External API Keys (Passed from Host/Secrets)
-      TAVILY_API_KEY: ${TAVILY_API_KEY:-}
-      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
-      FIRECRAWL_API_KEY: ${FIRECRAWL_API_KEY:-}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      LEGACY_APPROVAL_TICKET: ${LEGACY_APPROVAL_TICKET:-CHG-REQUIRED}
-      LEGACY_EXPIRES_AT: ${LEGACY_EXPIRES_AT:-REQUIRED-ISO8601}
-    depends_on:
-      postgres-core:
-        condition: service_healthy
-
 networks:
   cogniforge-network:
     external: true
