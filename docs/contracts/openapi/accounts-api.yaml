@@ -461,8 +461,9 @@ components:
             $ref: '#/components/schemas/Account'
           description: يوضح هذا الحقل قيمة data.
         pagination:
+          allOf:
+            - $ref: '#/components/schemas/PaginationInfo'
           description: 'كائن يحتوي معلومات الترقيم: المؤشرات، عدد العناصر، وحالة وجود صفحات إضافية.'
-          $ref: '#/components/schemas/PaginationInfo'
       example:
         data:
         - *id001
