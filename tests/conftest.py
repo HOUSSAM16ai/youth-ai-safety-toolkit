@@ -18,7 +18,7 @@ os.environ.setdefault("LOG_LEVEL", "DEBUG")
 os.environ.setdefault("PROJECT_NAME", "CogniForgeTest")
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
 # Set a consistent SECRET_KEY for all tests and microservices
-os.environ["SECRET_KEY"] = "test-secret-key-for-ci-pipeline"
+os.environ["SECRET_KEY"] = "test-secret-key-for-ci-pipeline-secure-length"
 os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
 
 project_root = Path(__file__).resolve().parents[1]

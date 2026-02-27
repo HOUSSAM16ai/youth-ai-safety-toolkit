@@ -13,8 +13,12 @@ MS_OVERMIND = REPO_ROOT / "microservices/orchestrator_service/src/services/overm
 
 def _overlap_count() -> int:
     """يحسب عدد الملفات المشتركة نسخًا بالمسار النسبي بين الشجرتين."""
-    app_files = {p.relative_to(APP_OVERMIND).as_posix() for p in APP_OVERMIND.rglob("*") if p.is_file()}
-    ms_files = {p.relative_to(MS_OVERMIND).as_posix() for p in MS_OVERMIND.rglob("*") if p.is_file()}
+    app_files = {
+        p.relative_to(APP_OVERMIND).as_posix() for p in APP_OVERMIND.rglob("*") if p.is_file()
+    }
+    ms_files = {
+        p.relative_to(MS_OVERMIND).as_posix() for p in MS_OVERMIND.rglob("*") if p.is_file()
+    }
     return len(app_files & ms_files)
 
 

@@ -74,11 +74,13 @@ def _service_lifecycle_drift() -> list[str]:
     return drifts
 
 
-
 def _run_gate(script_path: Path) -> bool:
     """يشغّل بوابة لياقة منفصلة ويعيد حالة النجاح دون رفع استثناء."""
-    result = subprocess.run(["python", str(script_path)], cwd=REPO_ROOT, check=False, capture_output=True)
+    result = subprocess.run(
+        ["python", str(script_path)], cwd=REPO_ROOT, check=False, capture_output=True
+    )
     return result.returncode == 0
+
 
 def main() -> int:
     registry = json.loads(REGISTRY.read_text(encoding="utf-8"))
@@ -88,7 +90,9 @@ def main() -> int:
     ws_legacy_default = [item for item in legacy_default if item.get("protocol") == "websocket"]
 
     default_text = DEFAULT_COMPOSE.read_text(encoding="utf-8")
-    core_kernel_in_default_profile = "core-kernel:" in default_text or "postgres-core:" in default_text
+    core_kernel_in_default_profile = (
+        "core-kernel:" in default_text or "postgres-core:" in default_text
+    )
     emergency_legacy_expiry_enforced = _run_gate(BREAKGLASS_GATE_SCRIPT)
 
     app_import_count = _count_app_imports_in_microservices()
