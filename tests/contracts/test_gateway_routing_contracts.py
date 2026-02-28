@@ -25,7 +25,7 @@ def test_chat_route_defaults_to_orchestrator_when_legacy_flag_disabled(monkeypat
     main.app.dependency_overrides.clear()
 
     assert response.status_code == 200
-    assert calls == [(settings.ORCHESTRATOR_SERVICE_URL, "api/chat/messages")]
+    assert calls == [(settings.CONVERSATION_SERVICE_URL, "api/chat/messages")]
 
 
 def test_content_route_defaults_to_research_when_legacy_flag_disabled(monkeypatch) -> None:
