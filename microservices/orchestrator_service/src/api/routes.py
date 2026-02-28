@@ -33,12 +33,14 @@ from microservices.orchestrator_service.src.services.overmind.domain.api_schemas
     MissionEventResponse,
     MissionResponse,
 )
-from microservices.orchestrator_service.src.services.overmind.utils.mission_complex import handle_mission_complex_stream
 from microservices.orchestrator_service.src.services.overmind.entrypoint import start_mission
 from microservices.orchestrator_service.src.services.overmind.factory import (
     create_langgraph_service,
 )
 from microservices.orchestrator_service.src.services.overmind.state import MissionStateManager
+from microservices.orchestrator_service.src.services.overmind.utils.mission_complex import (
+    handle_mission_complex_stream,
+)
 from microservices.orchestrator_service.src.services.overmind.utils.tools import tool_registry
 
 logger = logging.getLogger(__name__)
