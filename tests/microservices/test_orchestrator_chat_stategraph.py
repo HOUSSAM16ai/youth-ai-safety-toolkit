@@ -52,10 +52,18 @@ def test_chat_http_messages_uses_stategraph(monkeypatch) -> None:
 
 
 import jwt
+
 from microservices.orchestrator_service.src.core.config import get_settings
 
+
 def get_auth_headers():
-    return [("Authorization".encode("utf-8"), f"Bearer {jwt.encode({'sub': 'test-user', 'user_id': 1}, get_settings().SECRET_KEY, algorithm='HS256')}".encode("utf-8"))]
+    return [
+        (
+            b"Authorization",
+            f"Bearer {jwt.encode({'sub': 'test-user', 'user_id': 1}, get_settings().SECRET_KEY, algorithm='HS256')}".encode(),
+        )
+    ]
+
 
 def test_chat_ws_customer_uses_stategraph(monkeypatch) -> None:
     """يتأكد أن WS العميل يمر عبر نفس مسار StateGraph ويرجع route_id الصحيح."""
