@@ -13,6 +13,7 @@ from sqlalchemy import Column, DateTime, String, func
 from sqlalchemy.orm import relationship
 from sqlmodel import Field, Relationship, SQLModel
 
+from microservices.orchestrator_service.src.models.mission import OrchestratorSQLModel
 from .common import CaseInsensitiveEnum, FlexibleEnum, utc_now
 
 if TYPE_CHECKING:
@@ -31,7 +32,7 @@ class UserStatus(CaseInsensitiveEnum):
     DISABLED = "disabled"
 
 
-class User(SQLModel, table=True):
+class User(OrchestratorSQLModel, table=True):
     __tablename__ = "users"
     id: int | None = Field(default=None, primary_key=True)
     external_id: str = Field(

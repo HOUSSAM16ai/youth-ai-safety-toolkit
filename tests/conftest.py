@@ -267,9 +267,9 @@ def db_lifecycle(event_loop: asyncio.AbstractEventLoop, request: pytest.FixtureR
             request.node.fspath
         )
 
-        if is_microservice_test:
-            from contextlib import suppress
+        from contextlib import suppress
 
+        if is_microservice_test:
             with suppress(ImportError):
                 # Import microservice models explicitly to ensure schema is correct
                 # This ensures that even if Monolith models aren't loaded, these are.
@@ -293,16 +293,35 @@ def db_lifecycle(event_loop: asyncio.AbstractEventLoop, request: pytest.FixtureR
 
         engine = _get_engine()
 
+        # To avoid Table already defined errors when testing monolith vs microservices
+        # we will use the specific metadata registries where appropriate.
+        if is_microservice_test:
+            from microservices.orchestrator_service.src.models.mission import OrchestratorSQLModel
+            import microservices.orchestrator_service.src.core.domain.user  # noqa: F401
+            import microservices.orchestrator_service.src.core.domain.chat  # noqa: F401
+            import microservices.orchestrator_service.src.models.mission  # noqa: F401
+            target_metadata = OrchestratorSQLModel.metadata
+        else:
+            with suppress(ImportError):
+                import app.core.domain.models  # noqa: F401
+                import app.core.domain.user  # noqa: F401
+                import app.core.domain.auth  # noqa: F401
+                import app.core.domain.audit  # noqa: F401
+                import app.models  # noqa: F401
+                import app.models.user  # noqa: F401
+            target_metadata = SQLModel.metadata
+
         # 1. Drop all tables to ensure clean slate (avoids FK issues)
         async with engine.begin() as connection:
-            await connection.run_sync(SQLModel.metadata.drop_all)
+            await connection.run_sync(target_metadata.drop_all)
 
         # 2. Recreate schema
         async with engine.begin() as connection:
-            await connection.run_sync(SQLModel.metadata.create_all)
+            await connection.run_sync(target_metadata.create_all)
 
         # 3. Validate and fix (adds default data or structural adjustments if needed)
-        await validate_and_fix_schema(auto_fix=True)
+        if not is_microservice_test:
+            await validate_and_fix_schema(auto_fix=True)
 
     _run_async(event_loop, _reset_db())
 

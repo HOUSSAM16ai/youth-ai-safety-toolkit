@@ -12,6 +12,7 @@ from sqlalchemy import Column, DateTime, Text, func
 from sqlalchemy.orm import relationship
 from sqlmodel import Field, Relationship, SQLModel
 
+from microservices.orchestrator_service.src.models.mission import OrchestratorSQLModel
 from .common import CaseInsensitiveEnum, FlexibleEnum, JSONText, utc_now
 
 if TYPE_CHECKING:
@@ -29,7 +30,7 @@ class MessageRole(CaseInsensitiveEnum):
     SYSTEM = "system"
 
 
-class AdminConversation(SQLModel, table=True):
+class AdminConversation(OrchestratorSQLModel, table=True):
     __tablename__ = "admin_conversations"
     id: int | None = Field(default=None, primary_key=True)
     title: str = Field(max_length=500)
@@ -51,7 +52,7 @@ class AdminConversation(SQLModel, table=True):
     )
 
 
-class AdminMessage(SQLModel, table=True):
+class AdminMessage(OrchestratorSQLModel, table=True):
     __tablename__ = "admin_messages"
     id: int | None = Field(default=None, primary_key=True)
     conversation_id: int = Field(foreign_key="admin_conversations.id", index=True)
@@ -68,7 +69,7 @@ class AdminMessage(SQLModel, table=True):
     )
 
 
-class CustomerConversation(SQLModel, table=True):
+class CustomerConversation(OrchestratorSQLModel, table=True):
     """
     Standard Customer Conversation.
     """
@@ -91,7 +92,7 @@ class CustomerConversation(SQLModel, table=True):
     )
 
 
-class CustomerMessage(SQLModel, table=True):
+class CustomerMessage(OrchestratorSQLModel, table=True):
     """
     Standard Customer Message with policy flags.
     """
