@@ -32,7 +32,9 @@ async def websocket_proxy(client_ws: WebSocket, target_url: str):
     headers.pop("connection", None)
 
     try:
-        async with websockets.connect(target_url, extra_headers=headers, subprotocols=subprotocols_list) as target_ws:
+        async with websockets.connect(
+            target_url, extra_headers=headers, subprotocols=subprotocols_list
+        ) as target_ws:
             logger.info(f"WebSocket connected to {target_url}")
 
             async def client_to_target():

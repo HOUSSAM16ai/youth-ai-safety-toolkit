@@ -377,7 +377,9 @@ async def chat_ws_proxy(websocket: WebSocket):
     route_id = "chat_ws_customer"
     logger.info("Chat WebSocket route_id=%s legacy_flag=false", route_id)
     _record_ws_session_metric(route_id)
-    target_url = settings.ORCHESTRATOR_SERVICE_URL.replace("http", "ws", 1).rstrip("/") + "/api/chat/ws"
+    target_url = (
+        settings.ORCHESTRATOR_SERVICE_URL.replace("http", "ws", 1).rstrip("/") + "/api/chat/ws"
+    )
     await websocket_proxy(websocket, target_url)
 
 
@@ -390,7 +392,10 @@ async def admin_chat_ws_proxy(websocket: WebSocket):
     route_id = "chat_ws_admin"
     logger.info("Chat WebSocket route_id=%s legacy_flag=false", route_id)
     _record_ws_session_metric(route_id)
-    target_url = settings.ORCHESTRATOR_SERVICE_URL.replace("http", "ws", 1).rstrip("/") + "/admin/api/chat/ws"
+    target_url = (
+        settings.ORCHESTRATOR_SERVICE_URL.replace("http", "ws", 1).rstrip("/")
+        + "/admin/api/chat/ws"
+    )
     await websocket_proxy(websocket, target_url)
 
 

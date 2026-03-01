@@ -7,18 +7,14 @@
 
 from collections.abc import Callable
 
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.routers.ws_auth import extract_websocket_auth
 from app.api.schemas.customer_chat import CustomerConversationDetails, CustomerConversationSummary
-from app.core.config import get_settings
 from app.core.database import async_session_factory, get_db
 from app.core.di import get_logger
 from app.core.domain.user import User
 from app.deps.auth import CurrentUser, require_permissions
-from app.infrastructure.clients.orchestrator_client import orchestrator_client
-from app.services.auth.token_decoder import decode_user_id
 from app.services.boundaries.customer_chat_boundary_service import CustomerChatBoundaryService
 from app.services.chat.dispatcher import ChatRoleDispatcher, build_chat_dispatcher
 from app.services.rbac import QA_SUBMIT
@@ -73,7 +69,6 @@ def get_customer_service(db: AsyncSession = Depends(get_db)) -> CustomerChatBoun
 def get_chat_dispatcher(db: AsyncSession = Depends(get_db)) -> ChatRoleDispatcher:
     """تبعية للحصول على موزّع الدردشة حسب الدور."""
     return build_chat_dispatcher(db)
-
 
 
 @router.get(
