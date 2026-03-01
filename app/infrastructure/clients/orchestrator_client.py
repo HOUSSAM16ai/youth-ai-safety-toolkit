@@ -8,8 +8,10 @@ from __future__ import annotations
 
 import json
 import logging
+import socket
 from collections.abc import AsyncGenerator
 from typing import Any, Final
+from urllib.parse import urlparse
 
 import httpx
 from pydantic import BaseModel
@@ -20,6 +22,42 @@ from app.core.settings.base import get_settings
 logger = logging.getLogger("orchestrator-client")
 
 DEFAULT_ORCHESTRATOR_URL: Final[str] = "http://orchestrator-service:8006"
+LOCAL_ORCHESTRATOR_URL: Final[str] = "http://localhost:8006"
+DOCKER_ORCHESTRATOR_HOSTS: Final[set[str]] = {"orchestrator-service", "orchestrator_service"}
+
+
+def _is_host_resolvable(host: str | None) -> bool:
+    """يتحقق من قابلية حل اسم المضيف ضمن بيئة التشغيل الحالية."""
+
+    if host is None:
+        return False
+
+    try:
+        socket.getaddrinfo(host, None)
+    except socket.gaierror:
+        return False
+
+    return True
+
+
+def _resolve_runtime_orchestrator_url(configured_url: str) -> str:
+    """يختار عنوان orchestrator القابل للوصول وفق نمط التشغيل الحالي."""
+
+    parsed = urlparse(configured_url)
+    host = parsed.hostname
+
+    if host not in DOCKER_ORCHESTRATOR_HOSTS:
+        return configured_url
+
+    if _is_host_resolvable(host):
+        return configured_url
+
+    logger.error(
+        "Runtime DNS mismatch: host '%s' is not resolvable; falling back to %s",
+        host,
+        LOCAL_ORCHESTRATOR_URL,
+    )
+    return LOCAL_ORCHESTRATOR_URL
 
 
 class MissionResponse(BaseModel):
@@ -45,8 +83,9 @@ class OrchestratorClient:
         # The Monolith (Core Kernel) might not have it set in its env if not updated.
         # But we assume it should be reachable.
         env_url = getattr(settings, "ORCHESTRATOR_SERVICE_URL", None)
-        resolved_url = base_url or env_url or DEFAULT_ORCHESTRATOR_URL
-        self.base_url = resolved_url.rstrip("/")
+        configured_url = base_url or env_url or DEFAULT_ORCHESTRATOR_URL
+        runtime_url = _resolve_runtime_orchestrator_url(configured_url)
+        self.base_url = runtime_url.rstrip("/")
         self.config = HTTPClientConfig(
             name="orchestrator-client",
             timeout=60.0,
