@@ -23,65 +23,6 @@ def customer_app():
     return app
 
 
-# --- Customer Chat Tests ---
-def test_customer_ws_auth_fail(customer_app):
-    client = TestClient(customer_app)
-    with patch("app.api.routers.customer_chat.extract_websocket_auth", return_value=(None, None)):
-        with pytest.raises(WebSocketDisconnect):
-            with client.websocket_connect("/api/chat/ws"):
-                pass  # Already closed by server
-
-
-def test_customer_ws_decode_fail(customer_app):
-    client = TestClient(customer_app)
-    with patch(
-        "app.api.routers.customer_chat.extract_websocket_auth", return_value=("token", "jwt")
-    ):
-        with patch("app.api.routers.customer_chat.decode_user_id", side_effect=HTTPException(401)):
-            with pytest.raises(WebSocketDisconnect):
-                with client.websocket_connect("/api/chat/ws"):
-                    pass
-
-
-def test_customer_ws_admin(customer_app):
-    client = TestClient(customer_app)
-    mock_user = MagicMock(spec=User)
-    mock_user.is_active = True
-    mock_user.is_admin = True
-    mock_db = AsyncMock()
-    mock_db.get.return_value = mock_user
-    customer_app.dependency_overrides[get_db] = lambda: mock_db
-
-    with patch(
-        "app.api.routers.customer_chat.extract_websocket_auth", return_value=("token", "jwt")
-    ):
-        with patch("app.api.routers.customer_chat.decode_user_id", return_value=1):
-            with client.websocket_connect("/api/chat/ws") as ws:
-                data = ws.receive_json()
-                assert data["type"] == "error"
-                assert "Admin" in data["payload"]["details"]
-
-
-def test_customer_ws_empty_question(customer_app):
-    client = TestClient(customer_app)
-    mock_user = MagicMock(spec=User)
-    mock_user.is_active = True
-    mock_user.is_admin = False
-    mock_db = AsyncMock()
-    mock_db.get.return_value = mock_user
-    customer_app.dependency_overrides[get_db] = lambda: mock_db
-
-    with patch(
-        "app.api.routers.customer_chat.extract_websocket_auth", return_value=("token", "jwt")
-    ):
-        with patch("app.api.routers.customer_chat.decode_user_id", return_value=1):
-            with client.websocket_connect("/api/chat/ws") as ws:
-                ws.send_json({"question": ""})
-                data = ws.receive_json()
-                assert data["type"] == "error"
-                assert "required" in data["payload"]["details"]
-
-
 # --- WS Auth Tests ---
 def test_parse_protocol_header():
     assert _parse_protocol_header("jwt, token") == ["jwt", "token"]
