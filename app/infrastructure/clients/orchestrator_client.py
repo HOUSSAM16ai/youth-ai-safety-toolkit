@@ -46,18 +46,26 @@ def _resolve_runtime_orchestrator_url(configured_url: str) -> str:
     parsed = urlparse(configured_url)
     host = parsed.hostname
 
-    if host not in DOCKER_ORCHESTRATOR_HOSTS:
-        return configured_url
+    if host is None:
+        raise RuntimeError("Invalid ORCHESTRATOR_SERVICE_URL: missing host")
 
     if _is_host_resolvable(host):
         return configured_url
 
-    logger.error(
-        "Runtime DNS mismatch: host '%s' is not resolvable; falling back to %s",
-        host,
-        LOCAL_ORCHESTRATOR_URL,
+    if host in DOCKER_ORCHESTRATOR_HOSTS:
+        fallback_host = urlparse(LOCAL_ORCHESTRATOR_URL).hostname
+        if fallback_host is not None and _is_host_resolvable(fallback_host):
+            logger.error(
+                "Runtime DNS mismatch: host '%s' is not resolvable; falling back to %s",
+                host,
+                LOCAL_ORCHESTRATOR_URL,
+            )
+            return LOCAL_ORCHESTRATOR_URL
+
+    raise RuntimeError(
+        f"Orchestrator runtime target '{host}' is not resolvable in current mode. "
+        "Set ORCHESTRATOR_SERVICE_URL to a resolvable host for this runtime."
     )
-    return LOCAL_ORCHESTRATOR_URL
 
 
 class MissionResponse(BaseModel):

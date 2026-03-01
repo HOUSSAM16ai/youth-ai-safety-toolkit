@@ -58,6 +58,7 @@
 - إضافة Runtime URL resolver في `OrchestratorClient`:
   - إذا العنوان موجه إلى alias Docker (`orchestrator-service`) وكان غير قابل للحل في runtime الحالي، التحويل الآمن إلى `http://localhost:8006`.
   - تسجيل خطأ واضح لتشخيص mismatch بدل فشل صامت.
+  - فشل سريع برسالة تشغيلية صريحة إذا كان الهدف غير قابل للحل ولا يوجد fallback صالح.
 
 ### Phase 3 (Verification)
 - تشغيل smoke tests لمسارات admin/customer/super-agent + routing + runtime resolution.
@@ -88,6 +89,7 @@
   - host غير docker alias (يبقى كما هو)
   - alias غير قابل للحل (fallback localhost)
   - alias قابل للحل (يبقى docker host)
+  - مضيف غير docker وغير قابل للحل (RuntimeError fail-fast)
 
 **Symptom addressed:** ضمان عدم عودة حادثة runtime resolution.
 
