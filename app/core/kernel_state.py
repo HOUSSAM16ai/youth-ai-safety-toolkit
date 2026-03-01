@@ -40,7 +40,6 @@ def build_app_state() -> AppStateServices:
     """
     return AppStateServices(
         agent_plan_registry=AgentPlanRegistry(),
-
         langgraph_service=create_langgraph_service(),
         event_bus=get_event_bus(),
     )
