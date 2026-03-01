@@ -3,7 +3,7 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from fastapi import FastAPI, WebSocketDisconnect
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.api.routers.admin import router
@@ -23,7 +23,6 @@ def client(app):
     return TestClient(app)
 
 
-
 async def test_get_admin_user_count_success(client):
     from app.deps.auth import CurrentUser, get_current_user
 
@@ -38,7 +37,6 @@ async def test_get_admin_user_count_success(client):
         response = client.get("/admin/users/count")
         assert response.status_code == 200
         assert response.json()["count"] == 100
-
 
 
 async def test_get_admin_user_count_failure(client):
@@ -57,6 +55,3 @@ async def test_get_admin_user_count_failure(client):
         response = client.get("/admin/users/count")
         assert response.status_code == 503
         assert "User Service unavailable" in response.json()["detail"]
-
-
-

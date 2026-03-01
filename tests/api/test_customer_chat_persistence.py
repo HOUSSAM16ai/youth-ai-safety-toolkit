@@ -1,19 +1,8 @@
-from collections.abc import AsyncGenerator
-from unittest.mock import patch
-
 import jwt
-import pytest
-from fastapi.testclient import TestClient
-from httpx import ASGITransport, AsyncClient
-from sqlalchemy import select, text
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
-from app.core.domain.chat import CustomerConversation
-from app.core.domain.models import CustomerMessage, MessageRole
-from app.core.domain.user import User
 from app.core.settings.base import get_settings
-from app.infrastructure.clients.orchestrator_client import orchestrator_client
 
 
 async def _create_user_and_token(db_session: AsyncSession, email: str) -> str:
@@ -62,6 +51,3 @@ def _consume_stream_until_terminal(websocket: object) -> list[dict[str, object]]
         if event_type in {"assistant_final", "assistant_error", "assistant_fallback", "error"}:
             break
     return messages
-
-
-

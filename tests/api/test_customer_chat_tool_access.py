@@ -1,13 +1,4 @@
-from collections.abc import AsyncGenerator
-from unittest.mock import patch
-
-import pytest
-from fastapi.testclient import TestClient
-from httpx import ASGITransport, AsyncClient
-
-from app.core.ai_gateway import get_ai_client
-from app.core.database import get_db
-from app.infrastructure.clients.orchestrator_client import orchestrator_client
+from httpx import AsyncClient
 
 
 async def _register_and_login(ac: AsyncClient, email: str) -> str:
@@ -25,6 +16,3 @@ async def _register_and_login(ac: AsyncClient, email: str) -> str:
     )
     assert login_resp.status_code == 200
     return login_resp.json()["access_token"]
-
-
-
