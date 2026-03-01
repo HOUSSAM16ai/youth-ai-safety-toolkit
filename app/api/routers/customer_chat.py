@@ -7,14 +7,18 @@
 
 from collections.abc import Callable
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.routers.ws_auth import extract_websocket_auth
 from app.api.schemas.customer_chat import CustomerConversationDetails, CustomerConversationSummary
+from app.core.config import get_settings
 from app.core.database import async_session_factory, get_db
 from app.core.di import get_logger
 from app.core.domain.user import User
 from app.deps.auth import CurrentUser, require_permissions
+from app.infrastructure.clients.orchestrator_client import orchestrator_client
+from app.services.auth.token_decoder import decode_user_id
 from app.services.boundaries.customer_chat_boundary_service import CustomerChatBoundaryService
 from app.services.chat.dispatcher import ChatRoleDispatcher, build_chat_dispatcher
 from app.services.rbac import QA_SUBMIT
@@ -69,6 +73,116 @@ def get_customer_service(db: AsyncSession = Depends(get_db)) -> CustomerChatBoun
 def get_chat_dispatcher(db: AsyncSession = Depends(get_db)) -> ChatRoleDispatcher:
     """تبعية للحصول على موزّع الدردشة حسب الدور."""
     return build_chat_dispatcher(db)
+
+
+@router.websocket("/ws")
+async def chat_stream_ws(
+    websocket: WebSocket,
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """
+    قناة WebSocket لبث محادثة تعليمية للمستخدم القياسي.
+    """
+    token, selected_protocol = extract_websocket_auth(websocket)
+    if not token:
+        await websocket.close(code=4401)
+        return
+
+    try:
+        user_id = decode_user_id(token, get_settings().SECRET_KEY)
+    except HTTPException:
+        await websocket.close(code=4401)
+        return
+
+    actor = await db.get(User, user_id)
+    if actor is None or not actor.is_active:
+        await websocket.close(code=4401)
+        return
+
+    await websocket.accept(subprotocol=selected_protocol)
+
+    if actor.is_admin:
+        await websocket.send_json(
+            {
+                "type": "error",
+                "payload": {
+                    "details": "Admin accounts must use the admin chat endpoint.",
+                    "status_code": 403,
+                },
+            }
+        )
+        await websocket.close(code=4403)
+        return
+
+    try:
+        while True:
+            payload = await websocket.receive_json()
+            question = str(payload.get("question", "")).strip()
+            if not question:
+                await websocket.send_json(
+                    {"type": "error", "payload": {"details": "Question is required."}}
+                )
+                continue
+
+            mission_type = payload.get("mission_type")
+            context = {}
+            if mission_type:
+                context["intent"] = mission_type
+
+            content_delivered = False
+
+            try:
+                # Use OrchestratorClient (Microservice)
+                async for event in orchestrator_client.chat_with_agent(
+                    question=question,
+                    user_id=actor.id,
+                    conversation_id=payload.get("conversation_id"),
+                    history_messages=[],  # Managed by Microservice or empty for now
+                    context=context,
+                ):
+                    if isinstance(event, dict):
+                        evt_type = str(event.get("type", ""))
+                        if evt_type in (
+                            "assistant_delta",
+                            "assistant_final",
+                            "assistant_error",
+                            "tool_result_summary",
+                        ):
+                            content_delivered = True
+                        await websocket.send_json(event)
+                    else:
+                        content_delivered = True
+                        await websocket.send_json(
+                            {"type": "assistant_delta", "payload": {"content": str(event)}}
+                        )
+
+            except Exception as exc:
+                logger.error(f"Error in chat stream: {exc}", exc_info=True)
+                await websocket.send_json(
+                    {
+                        "type": "error",
+                        "payload": {"details": str(exc), "status_code": 500},
+                    }
+                )
+                continue
+
+            # Output Contract: Ensure something always appears
+            if not content_delivered:
+                logger.warning(
+                    "Output Guard triggered: Stream ended without content.",
+                    extra={"user_id": actor.id},
+                )
+                await websocket.send_json(
+                    {
+                        "type": "assistant_fallback",
+                        "payload": {
+                            "content": "عذراً، لم أتمكن من استخراج نتيجة نهائية لهذه العملية. يرجى المحاولة مرة أخرى أو صياغة الطلب بشكل أوضح."
+                        },
+                    }
+                )
+
+    except WebSocketDisconnect:
+        logger.info("Customer WebSocket disconnected")
 
 
 @router.get(

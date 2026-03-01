@@ -3,7 +3,7 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocketDisconnect
 from fastapi.testclient import TestClient
 
 from app.api.routers.admin import router
@@ -23,6 +23,7 @@ def client(app):
     return TestClient(app)
 
 
+@pytest.mark.asyncio
 async def test_get_admin_user_count_success(client):
     from app.deps.auth import CurrentUser, get_current_user
 
@@ -39,6 +40,7 @@ async def test_get_admin_user_count_success(client):
         assert response.json()["count"] == 100
 
 
+@pytest.mark.asyncio
 async def test_get_admin_user_count_failure(client):
     from app.deps.auth import CurrentUser, get_current_user
 
@@ -55,3 +57,16 @@ async def test_get_admin_user_count_failure(client):
         response = client.get("/admin/users/count")
         assert response.status_code == 503
         assert "User Service unavailable" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_admin_ws_auth_fail(app):
+    client = TestClient(app)
+    with pytest.raises(WebSocketDisconnect) as exc:
+        with client.websocket_connect("/admin/api/chat/ws"):
+            pass
+    assert exc.value.code == 4401
+
+
+# WebSocket testing in FastAPI TestClient is synchronous-looking but handles async.
+# Testing the full stream might be complex, so let's at least cover the auth failure paths.
