@@ -47,7 +47,9 @@ def _resolve_runtime_orchestrator_url(configured_url: str) -> str:
     host = parsed.hostname
 
     if host is None:
-        raise RuntimeError("[RUNTIME_TARGET_UNRESOLVABLE] Invalid ORCHESTRATOR_SERVICE_URL: missing host")
+        raise RuntimeError(
+            "[RUNTIME_TARGET_UNRESOLVABLE] Invalid ORCHESTRATOR_SERVICE_URL: missing host"
+        )
 
     if _is_host_resolvable(host):
         return configured_url

@@ -46,7 +46,9 @@ def _normalize_intent_name(raw_intent: object) -> str | None:
     return normalized.upper()
 
 
-def _build_request_context(payload: dict[str, object], policy: ChatWebSocketPolicy) -> dict[str, object]:
+def _build_request_context(
+    payload: dict[str, object], policy: ChatWebSocketPolicy
+) -> dict[str, object]:
     """يبني سياق الطلب المرسل إلى طبقة orchestrator مع تطبيع النية."""
 
     context: dict[str, object] = {"route_id": policy.route_id}
@@ -219,4 +221,3 @@ async def stream_chat_via_orchestrator(
 
     except WebSocketDisconnect:
         logger.info("Chat WebSocket disconnected route_id=%s", policy.route_id)
-

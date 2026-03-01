@@ -10,9 +10,10 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import Column, DateTime, Text, func
 from sqlalchemy.orm import relationship
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship
 
 from microservices.orchestrator_service.src.models.mission import OrchestratorSQLModel
+
 from .common import CaseInsensitiveEnum, FlexibleEnum, JSONText, utc_now
 
 if TYPE_CHECKING:

@@ -273,7 +273,7 @@ def db_lifecycle(event_loop: asyncio.AbstractEventLoop, request: pytest.FixtureR
             with suppress(ImportError):
                 # Import microservice models explicitly to ensure schema is correct
                 # This ensures that even if Monolith models aren't loaded, these are.
-                import microservices.user_service.models  # noqa: F401
+                import microservices.user_service.models
 
         # Deduplicate indexes to handle potential accumulation from multiple test runs
         # or conflicts between Monolith and Microservice models extending the same table
@@ -296,18 +296,19 @@ def db_lifecycle(event_loop: asyncio.AbstractEventLoop, request: pytest.FixtureR
         # To avoid Table already defined errors when testing monolith vs microservices
         # we will use the specific metadata registries where appropriate.
         if is_microservice_test:
-            from microservices.orchestrator_service.src.models.mission import OrchestratorSQLModel
-            import microservices.orchestrator_service.src.core.domain.user  # noqa: F401
-            import microservices.orchestrator_service.src.core.domain.chat  # noqa: F401
+            import microservices.orchestrator_service.src.core.domain.chat
+            import microservices.orchestrator_service.src.core.domain.user
             import microservices.orchestrator_service.src.models.mission  # noqa: F401
+            from microservices.orchestrator_service.src.models.mission import OrchestratorSQLModel
+
             target_metadata = OrchestratorSQLModel.metadata
         else:
             with suppress(ImportError):
-                import app.core.domain.models  # noqa: F401
-                import app.core.domain.user  # noqa: F401
-                import app.core.domain.auth  # noqa: F401
-                import app.core.domain.audit  # noqa: F401
-                import app.models  # noqa: F401
+                import app.core.domain.audit
+                import app.core.domain.auth
+                import app.core.domain.models
+                import app.core.domain.user
+                import app.models
                 import app.models.user  # noqa: F401
             target_metadata = SQLModel.metadata
 

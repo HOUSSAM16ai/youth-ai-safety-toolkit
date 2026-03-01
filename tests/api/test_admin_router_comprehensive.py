@@ -3,7 +3,7 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.api.routers.admin import (
@@ -138,6 +138,7 @@ def test_chat_stream_ws_orchestrator_error(app):
         "app.api.routers.admin.extract_websocket_auth", return_value=("valid_token", "json")
     ):
         with patch("app.api.routers.admin.decode_user_id", return_value=1):
+
             async def _orchestrator_error(*args, **kwargs):
                 yield {
                     "type": "assistant_error",

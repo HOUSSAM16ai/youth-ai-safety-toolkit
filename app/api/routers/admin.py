@@ -19,16 +19,15 @@ from fastapi import APIRouter, Depends, HTTPException, WebSocket
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.schemas.admin import ConversationDetailsResponse, ConversationSummaryResponse
 from app.api.routers.ws_auth import extract_websocket_auth
-from app.core.ai_gateway import get_ai_client
+from app.api.schemas.admin import ConversationDetailsResponse, ConversationSummaryResponse
 from app.core.database import async_session_factory, get_db
 from app.core.di import get_logger
 from app.core.domain.user import User
 from app.deps.auth import CurrentUser, get_current_user, require_roles
 from app.infrastructure.clients.user_client import user_client
-from app.services.boundaries.admin_chat_boundary_service import AdminChatBoundaryService
 from app.services.auth.token_decoder import decode_user_id
+from app.services.boundaries.admin_chat_boundary_service import AdminChatBoundaryService
 from app.services.chat.dispatcher import ChatRoleDispatcher, build_chat_dispatcher
 from app.services.chat.websocket_authority import ChatWebSocketPolicy, stream_chat_via_orchestrator
 from app.services.rbac import ADMIN_ROLE
@@ -134,8 +133,6 @@ def get_chat_dispatcher(db: AsyncSession = Depends(get_db)) -> ChatRoleDispatche
     """تبعية توافقية لموزّع الدردشة حفاظًا على عقود الاختبارات الحالية."""
 
     return build_chat_dispatcher(db)
-
-
 
 
 # -----------------------------------------------------------------------------
