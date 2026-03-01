@@ -8,8 +8,8 @@ from microservices.api_gateway import main
 from microservices.api_gateway.config import settings
 
 
-def test_chat_ws_routes_to_conversation_when_rollout_full(monkeypatch) -> None:
-    """يتأكد أن WS chat يوجّه إلى Conversation عند rollout=100."""
+def test_chat_ws_always_routes_to_orchestrator_even_if_rollout_full(monkeypatch) -> None:
+    """يتأكد أن WS chat يستخدم orchestrator كمالك وحيد حتى لو كانت نسبة rollout كاملة."""
     routed_targets: list[str] = []
 
     async def fake_ws_proxy(websocket, target_url: str) -> None:
@@ -19,13 +19,13 @@ def test_chat_ws_routes_to_conversation_when_rollout_full(monkeypatch) -> None:
         await websocket.close()
 
     monkeypatch.setattr(main, "websocket_proxy", fake_ws_proxy)
-    monkeypatch.setattr(settings, "CONVERSATION_WS_URL", "ws://conversation-service:8010")
     monkeypatch.setattr(settings, "ROUTE_CHAT_WS_CONVERSATION_ROLLOUT_PERCENT", 100)
+    monkeypatch.setattr(settings, "ORCHESTRATOR_SERVICE_URL", "http://orchestrator-service:8006")
 
     with TestClient(main.app).websocket_connect("/api/chat/ws") as ws:
         assert ws.receive_text() == "ok"
 
-    assert routed_targets == ["ws://conversation-service:8010/api/chat/ws"]
+    assert routed_targets == ["ws://orchestrator-service:8006/api/chat/ws"]
 
 
 def test_chat_ws_routes_to_orchestrator_when_rollout_zero(monkeypatch) -> None:

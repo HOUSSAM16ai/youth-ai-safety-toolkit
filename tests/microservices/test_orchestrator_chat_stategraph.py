@@ -31,9 +31,12 @@ class _FakeRunData:
 class _FakeLangGraphService:
     """خدمة مزيفة تعيد نتيجة ثابتة للتحقق من سلوك المسارات."""
 
+    def __init__(self) -> None:
+        self.last_payload: object | None = None
+
     async def run(self, payload: object) -> _FakeRunData:
         """تشغّل محاكاة وتعيد بيانات ثابتة دون تبعيات خارجية."""
-        _ = payload
+        self.last_payload = payload
         return _FakeRunData()
 
 
@@ -91,3 +94,43 @@ def test_chat_ws_admin_uses_stategraph(monkeypatch) -> None:
     assert payload["status"] == "ok"
     assert payload["route_id"] == "chat_ws_admin"
     assert payload["graph_mode"] == "stategraph"
+
+
+def test_chat_ws_customer_routes_mission_complex_from_metadata(monkeypatch) -> None:
+    """يتأكد أن metadata.mission_type يفعّل مسار المهمة الخارقة في WS العميل."""
+
+    async def _fake_mission_stream(question: str, context: dict[str, object], user_id: int):
+        _ = (question, context, user_id)
+        yield '{"type":"RUN_STARTED","payload":{"mode":"standard"}}\n'
+
+    monkeypatch.setattr(routes, "handle_mission_complex_stream", _fake_mission_stream)
+
+    token = jwt.encode({"sub": "1", "user_id": 1}, get_settings().SECRET_KEY, algorithm="HS256")
+    with TestClient(app).websocket_connect(f"/api/chat/ws?token={token}") as ws:
+        ws.send_json({"question": "hello", "metadata": {"mission_type": "mission_complex"}})
+        payload = ws.receive_json()
+
+    assert payload["type"] == "RUN_STARTED"
+
+
+def test_chat_ws_admin_passes_sanitized_context(monkeypatch) -> None:
+    """يتأكد أن WS الأدمن يمرر سياقًا منقحًا إلى StateGraph ويحذف القيم غير القابلة للتسلسل."""
+
+    fake_service = _FakeLangGraphService()
+    monkeypatch.setattr(routes, "create_langgraph_service", lambda: fake_service)
+
+    token = jwt.encode({"sub": "1", "user_id": 1}, get_settings().SECRET_KEY, algorithm="HS256")
+    with TestClient(app).websocket_connect(f"/admin/api/chat/ws?token={token}") as ws:
+        ws.send_json(
+            {
+                "question": "hello",
+                "context": {"course": "alg", "meta": {"nested": True}},
+            }
+        )
+        payload = ws.receive_json()
+
+    assert payload["status"] == "ok"
+    request_payload = fake_service.last_payload
+    assert request_payload is not None
+    assert getattr(request_payload, "context", {}).get("course") == "alg"
+    assert "meta" not in getattr(request_payload, "context", {})

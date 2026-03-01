@@ -1,5 +1,4 @@
 import asyncio
-import hashlib
 import logging
 from contextlib import asynccontextmanager
 
@@ -37,38 +36,13 @@ def _record_ws_session_metric(route_id: str) -> None:
     )
 
 
-def _rollout_bucket(identity: str) -> int:
-    """يولّد Bucket حتمي بين 0 و99 لدعم canary تدريجي آمن وقابل للإرجاع."""
-    digest = hashlib.sha256(identity.encode("utf-8")).hexdigest()
-    return int(digest[:8], 16) % 100
-
-
-def _should_route_to_conversation(identity: str, rollout_percent: int) -> bool:
-    """يحدد قرار التوجيه التدريجي إلى Conversation Service وفق نسبة مئوية مضبوطة."""
-    normalized = max(0, min(100, rollout_percent))
-    if normalized == 0:
-        return False
-    if normalized == 100:
-        return True
-    return _rollout_bucket(identity) < normalized
-
-
 def _resolve_chat_ws_target(route_id: str, upstream_path: str) -> str:
-    """يحدد هدف WS الحديث بين orchestrator وconversation وفق canary تدريجي."""
-    identity = f"{route_id}:{upstream_path}"
-    use_conversation = _should_route_to_conversation(
-        identity, settings.ROUTE_CHAT_WS_CONVERSATION_ROLLOUT_PERCENT
-    )
-    if use_conversation:
-        candidate = settings.CONVERSATION_WS_URL.rstrip("/")
-        logger.info("chat_ws_candidate route_id=%s legacy=false target=%s", route_id, candidate)
-        return f"{candidate}/{upstream_path}"
+    """يحدد هدف WS الموحد على orchestrator لضمان سلطة تشغيل واحدة لمسار live."""
 
-    fallback_target = settings.ORCHESTRATOR_SERVICE_URL.replace("http", "ws", 1).rstrip("/")
-    logger.info(
-        "chat_ws_orchestrator route_id=%s legacy=false target=%s", route_id, fallback_target
-    )
-    return f"{fallback_target}/{upstream_path}"
+    _ = route_id
+    target = settings.ORCHESTRATOR_SERVICE_URL.replace("http", "ws", 1).rstrip("/")
+    logger.info("chat_ws_orchestrator_single_owner legacy=false target=%s", target)
+    return f"{target}/{upstream_path}"
 
 
 @asynccontextmanager
@@ -350,19 +324,12 @@ async def security_proxy(path: str, request: Request) -> StreamingResponse:
 async def chat_http_proxy(path: str, request: Request) -> StreamingResponse:
     """
     HTTP Chat Proxy (Modern Target).
-    TARGET: Orchestrator Service / Conversation Service
+    TARGET: Orchestrator Service (Single Owner)
     """
     logger.info("Route accessed: /api/chat/%s (modern routing)", path)
-    identity = request.headers.get("x-request-id", request.url.path)
-    target_url = settings.ORCHESTRATOR_SERVICE_URL
-    if _should_route_to_conversation(
-        identity, settings.ROUTE_CHAT_HTTP_CONVERSATION_ROLLOUT_PERCENT
-    ):
-        target_url = settings.CONVERSATION_SERVICE_URL
-
     return await proxy_handler.forward(
         request,
-        target_url,
+        settings.ORCHESTRATOR_SERVICE_URL,
         f"api/chat/{path}",
         service_token=create_service_token(),
     )
@@ -372,7 +339,7 @@ async def chat_http_proxy(path: str, request: Request) -> StreamingResponse:
 async def chat_ws_proxy(websocket: WebSocket):
     """
     Customer Chat WebSocket (Modern Target).
-    TARGET: Orchestrator Service / Conversation Service
+    TARGET: Orchestrator Service (Single Owner)
     """
     route_id = "chat_ws_customer"
     logger.info("Chat WebSocket route_id=%s legacy_flag=false", route_id)
@@ -385,7 +352,7 @@ async def chat_ws_proxy(websocket: WebSocket):
 async def admin_chat_ws_proxy(websocket: WebSocket):
     """
     Admin Chat WebSocket (Modern Target).
-    TARGET: Orchestrator Service / Conversation Service
+    TARGET: Orchestrator Service (Single Owner)
     """
     route_id = "chat_ws_admin"
     logger.info("Chat WebSocket route_id=%s legacy_flag=false", route_id)
