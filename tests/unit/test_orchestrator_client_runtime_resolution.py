@@ -43,6 +43,7 @@ def test_runtime_url_fails_fast_when_non_docker_host_is_unresolvable(monkeypatch
     try:
         module._resolve_runtime_orchestrator_url("http://orchestrator.internal:8006")
     except RuntimeError as exc:
+        assert "[RUNTIME_TARGET_UNRESOLVABLE]" in str(exc)
         assert "not resolvable" in str(exc)
     else:
         raise AssertionError("Expected RuntimeError for unresolvable non-docker host")
