@@ -13,7 +13,13 @@ async def websocket_proxy(client_ws: WebSocket, target_url: str):
     Proxies a WebSocket connection from the client to the target URL.
     Handles bi-directional communication and connection lifecycle.
     """
-    await client_ws.accept()
+    # Accept the client connection first, using the requested subprotocol if provided
+    subprotocol = client_ws.headers.get("sec-websocket-protocol")
+    subprotocols_list = [p.strip() for p in subprotocol.split(",")] if subprotocol else []
+
+    # We must match the accepted subprotocol with the client
+    accepted_subprotocol = subprotocols_list[0] if subprotocols_list else None
+    await client_ws.accept(subprotocol=accepted_subprotocol)
 
     # Extract headers to forward (e.g., Auth)
     # We filter out hop-by-hop headers that shouldn't be forwarded
@@ -26,7 +32,7 @@ async def websocket_proxy(client_ws: WebSocket, target_url: str):
     headers.pop("connection", None)
 
     try:
-        async with websockets.connect(target_url, extra_headers=headers) as target_ws:
+        async with websockets.connect(target_url, extra_headers=headers, subprotocols=subprotocols_list) as target_ws:
             logger.info(f"WebSocket connected to {target_url}")
 
             async def client_to_target():

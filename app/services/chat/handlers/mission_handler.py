@@ -297,46 +297,15 @@ async def handle_mission(
     user_id: int,
     conversation_id: int,
 ) -> AsyncGenerator[str, None]:
-    """Handle complex mission request with Overmind and polling."""
-    start_time = time.time()
-
-    async for error_msg in _check_preconditions(context, user_id):
-        if error_msg:
-            yield error_msg
-            return
-
-    yield "🚀 **إنشاء مهمة Overmind**\n\n"
-    yield f"**الهدف:** {objective[:150]}{'...' if len(objective) > 150 else ''}\n\n"
-
-    if not context.async_overmind or not context.async_overmind.available:
-        yield "⚠️ نظام Overmind غير متاح.\n"
-        yield "سأحاول المساعدة بدون تنفيذ المهام التلقائية.\n\n"
-        return
-
-    yield "⏳ جارٍ إنشاء المهمة...\n\n"
-
-    circuit = get_circuit_breaker("mission")
-    result = await _create_mission(context, objective, user_id, circuit)
-
-    if not result or not result.get("ok"):
-        error = result.get("error", "خطأ غير معروف") if result else "خطأ غير معروف"
-        if error == "timeout":
-            yield "⏱️ انتهت المهلة أثناء إنشاء المهمة.\n"
-        else:
-            yield f"❌ خطأ: {ErrorSanitizer.sanitize(error)}\n"
-        return
-
-    mission_id = result.get("mission_id")
-    yield f"✅ تم إنشاء المهمة #{mission_id}\n"
-    yield f"📋 الحالة: {result.get('status', 'pending')}\n\n"
-
-    await _link_mission_to_conversation(conversation_id, mission_id)
-
-    yield "📊 **متابعة تقدم المهمة:**\n\n"
-    async for status_msg in _poll_mission_status(context, mission_id):
-        yield status_msg
-
-    logger.debug(f"mission handler completed in {(time.time() - start_time) * 1000:.2f}ms")
+    """
+    Handle complex mission request with Overmind and polling.
+    DEPRECATED: Super Agent dispatch via monolith HTTP bridge is strictly disabled.
+    All mission dispatch must be routed through API Gateway to Orchestrator Service.
+    """
+    yield "❌ **خطأ معماري:** تم تعطيل مسار المهمة الداخلي.\n"
+    yield "يجب توجيه كافة اتصالات WebSocket مباشرة إلى `orchestrator-service`.\n"
+    yield "يرجى التحقق من إعدادات الـ API Gateway."
+    return
 
 
 async def _link_mission_to_conversation(conversation_id: int, mission_id: int):

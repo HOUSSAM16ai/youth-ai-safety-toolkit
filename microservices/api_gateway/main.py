@@ -372,12 +372,12 @@ async def chat_http_proxy(path: str, request: Request) -> StreamingResponse:
 async def chat_ws_proxy(websocket: WebSocket):
     """
     Customer Chat WebSocket (Modern Target).
-    TARGET: Orchestrator Service / Conversation Service
+    TARGET: Orchestrator Service
     """
     route_id = "chat_ws_customer"
     logger.info("Chat WebSocket route_id=%s legacy_flag=false", route_id)
     _record_ws_session_metric(route_id)
-    target_url = _resolve_chat_ws_target(route_id, "api/chat/ws")
+    target_url = settings.ORCHESTRATOR_SERVICE_URL.replace("http", "ws", 1).rstrip("/") + "/api/chat/ws"
     await websocket_proxy(websocket, target_url)
 
 
@@ -385,12 +385,12 @@ async def chat_ws_proxy(websocket: WebSocket):
 async def admin_chat_ws_proxy(websocket: WebSocket):
     """
     Admin Chat WebSocket (Modern Target).
-    TARGET: Orchestrator Service / Conversation Service
+    TARGET: Orchestrator Service
     """
     route_id = "chat_ws_admin"
     logger.info("Chat WebSocket route_id=%s legacy_flag=false", route_id)
     _record_ws_session_metric(route_id)
-    target_url = _resolve_chat_ws_target(route_id, "admin/api/chat/ws")
+    target_url = settings.ORCHESTRATOR_SERVICE_URL.replace("http", "ws", 1).rstrip("/") + "/admin/api/chat/ws"
     await websocket_proxy(websocket, target_url)
 
 

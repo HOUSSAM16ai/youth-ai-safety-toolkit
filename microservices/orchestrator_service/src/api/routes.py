@@ -146,8 +146,13 @@ async def chat_ws_stategraph(websocket: WebSocket) -> None:
                 continue
 
             # Route mission_complex
+            # Frontend might send mission_type at the root or inside metadata
+            mission_type = incoming.get("mission_type")
             metadata = incoming.get("metadata", {})
-            if isinstance(metadata, dict) and metadata.get("mission_type") == "mission_complex":
+            if isinstance(metadata, dict) and not mission_type:
+                mission_type = metadata.get("mission_type")
+
+            if mission_type == "mission_complex":
                 async for chunk in handle_mission_complex_stream(objective, {}, user_id=user_id):
                     # handle_mission_complex_stream yields JSON string chunks
                     await websocket.send_text(chunk)
@@ -189,8 +194,13 @@ async def admin_chat_ws_stategraph(websocket: WebSocket) -> None:
                 continue
 
             # Route mission_complex
+            # Frontend might send mission_type at the root or inside metadata
+            mission_type = incoming.get("mission_type")
             metadata = incoming.get("metadata", {})
-            if isinstance(metadata, dict) and metadata.get("mission_type") == "mission_complex":
+            if isinstance(metadata, dict) and not mission_type:
+                mission_type = metadata.get("mission_type")
+
+            if mission_type == "mission_complex":
                 async for chunk in handle_mission_complex_stream(objective, {}, user_id=user_id):
                     # handle_mission_complex_stream yields JSON string chunks
                     await websocket.send_text(chunk)
