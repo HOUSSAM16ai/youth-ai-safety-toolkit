@@ -135,8 +135,6 @@ def get_chat_dispatcher(db: AsyncSession = Depends(get_db)) -> ChatRoleDispatche
     return build_chat_dispatcher(db)
 
 
-
-
 # -----------------------------------------------------------------------------
 # Endpoints
 # -----------------------------------------------------------------------------

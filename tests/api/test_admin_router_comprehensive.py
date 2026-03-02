@@ -7,7 +7,6 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.api.routers.admin import (
-    get_ai_client,
     get_chat_dispatcher,
     get_current_user_id,
     get_db,
@@ -130,7 +129,6 @@ def test_chat_stream_ws_orchestrator_error(app):
     def mock_dependency_factory():
         return MagicMock()
 
-    app.dependency_overrides[get_ai_client] = mock_dependency_factory
     app.dependency_overrides[get_chat_dispatcher] = mock_dependency_factory
     app.dependency_overrides[get_session_factory] = lambda: AsyncMock
 
@@ -138,6 +136,7 @@ def test_chat_stream_ws_orchestrator_error(app):
         "app.api.routers.admin.extract_websocket_auth", return_value=("valid_token", "json")
     ):
         with patch("app.api.routers.admin.decode_user_id", return_value=1):
+
             async def _orchestrator_error(*args, **kwargs):
                 yield {
                     "type": "assistant_error",

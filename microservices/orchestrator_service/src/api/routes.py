@@ -45,8 +45,6 @@ router = APIRouter(
 )
 
 
-
-
 def _normalize_intent_hint(raw_intent: object) -> str | None:
     """يطبّع تلميح النية القادمة من العميل إلى صيغة موحدة."""
 
@@ -78,6 +76,7 @@ def _json_line(payload: dict[str, object]) -> str:
 
     return json.dumps(payload) + "\n"
 
+
 class ChatRequest(BaseModel):
     question: str
     user_id: int
@@ -86,9 +85,9 @@ class ChatRequest(BaseModel):
     context: dict[str, Any] = Field(default_factory=dict)
 
 
-
-
-def _sanitize_langgraph_context(payload: dict[str, object]) -> dict[str, str | int | float | bool | None]:
+def _sanitize_langgraph_context(
+    payload: dict[str, object],
+) -> dict[str, str | int | float | bool | None]:
     """ينظف السياق قبل تمريره إلى StateGraph لضمان قابلية التسلسل."""
 
     context: dict[str, str | int | float | bool | None] = {}
@@ -98,7 +97,6 @@ def _sanitize_langgraph_context(payload: dict[str, object]) -> dict[str, str | i
         if isinstance(value, str | int | float | bool) or value is None:
             context[key] = value
     return context
-
 
 
 def _extract_ws_context(incoming: dict[str, object]) -> dict[str, str | int | float | bool | None]:
@@ -119,6 +117,7 @@ def _extract_ws_context(incoming: dict[str, object]) -> dict[str, str | int | fl
         context["intent"] = normalized_intent
 
     return context
+
 
 def _extract_chat_objective(payload: dict[str, object]) -> str | None:
     """يستخلص الهدف النصي للدردشة من حمولة عامة بشكل صريح وآمن."""
