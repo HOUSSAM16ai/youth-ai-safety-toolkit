@@ -362,6 +362,59 @@ def test_app(static_dir: Path) -> FastAPI:
     return app
 
 
+from datetime import UTC, datetime, timedelta
+
+import jwt
+
+
+@pytest.fixture
+def register_and_login_test_user():
+    """ينشئ مستخدم اختبار مباشرةً ويعيد رمز JWT صالحًا دون الاعتماد على خدمات خارجية."""
+
+    async def _register(db_session, email: str = "test-user@example.com") -> str:
+        from sqlalchemy import text
+
+        from app.core.config import get_settings
+
+        insert_statement = text(
+            """
+            INSERT INTO users (
+                external_id,
+                full_name,
+                email,
+                password_hash,
+                is_admin,
+                is_active,
+                status
+            )
+            VALUES (:external_id, :full_name, :email, :password_hash, :is_admin, :is_active, :status)
+            """
+        )
+        result = await db_session.execute(
+            insert_statement,
+            {
+                "external_id": email,
+                "full_name": "Student User",
+                "email": email,
+                "password_hash": "dummy_hash",
+                "is_admin": False,
+                "is_active": True,
+                "status": "active",
+            },
+        )
+        await db_session.commit()
+        user_id = result.lastrowid
+
+        payload = {
+            "sub": str(user_id),
+            "type": "access",
+            "exp": datetime.now(UTC) + timedelta(hours=1),
+        }
+        return jwt.encode(payload, get_settings().SECRET_KEY, algorithm="HS256")
+
+    return _register
+
+
 @pytest.fixture
 def client(test_app) -> TestClient:
     """عميل HTTP متزامن للاختبارات السريعة."""
