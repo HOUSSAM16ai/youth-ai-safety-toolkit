@@ -12,7 +12,7 @@ from fastapi import (
     WebSocketDisconnect,
 )
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from microservices.orchestrator_service.src.core.config import get_settings
@@ -23,10 +23,6 @@ from microservices.orchestrator_service.src.core.security import (
     extract_websocket_auth,
 )
 from microservices.orchestrator_service.src.models.mission import Mission
-from microservices.orchestrator_service.src.services.llm.client import get_ai_client
-from microservices.orchestrator_service.src.services.overmind.agents.orchestrator import (
-    OrchestratorAgent,
-)
 from microservices.orchestrator_service.src.services.overmind.domain.api_schemas import (
     LangGraphRunRequest,
     MissionCreate,
@@ -41,7 +37,6 @@ from microservices.orchestrator_service.src.services.overmind.state import Missi
 from microservices.orchestrator_service.src.services.overmind.utils.mission_complex import (
     handle_mission_complex_stream,
 )
-from microservices.orchestrator_service.src.services.overmind.utils.tools import tool_registry
 
 logger = logging.getLogger(__name__)
 
@@ -50,13 +45,80 @@ router = APIRouter(
 )
 
 
+
+
+def _normalize_intent_hint(raw_intent: object) -> str | None:
+    """يطبّع تلميح النية القادمة من العميل إلى صيغة موحدة."""
+
+    if not isinstance(raw_intent, str):
+        return None
+    normalized = raw_intent.strip()
+    if not normalized:
+        return None
+    alias_map = {
+        "mission_complex": "MISSION_COMPLEX",
+        "deep_analysis": "DEEP_ANALYSIS",
+        "code_search": "CODE_SEARCH",
+        "chat": "DEFAULT",
+    }
+    return alias_map.get(normalized.lower(), normalized.upper())
+
+
+def _is_mission_complex_context(context: dict[str, object]) -> bool:
+    """يتحقق من وجوب تفعيل مسار المهمة الخارقة من سياق الطلب."""
+
+    intent_hint = _normalize_intent_hint(context.get("intent"))
+    return intent_hint == "MISSION_COMPLEX"
+
+
+def _json_line(payload: dict[str, object]) -> str:
+    """يحوّل الحمولة إلى سطر NDJSON متوافق مع عميل الدردشة."""
+
+    import json
+
+    return json.dumps(payload) + "\n"
+
 class ChatRequest(BaseModel):
     question: str
     user_id: int
     conversation_id: int | None = None
-    history_messages: list[dict[str, str]] = []
-    context: dict[str, Any] = {}
+    history_messages: list[dict[str, str]] = Field(default_factory=list)
+    context: dict[str, Any] = Field(default_factory=dict)
 
+
+
+
+def _sanitize_langgraph_context(payload: dict[str, object]) -> dict[str, str | int | float | bool | None]:
+    """ينظف السياق قبل تمريره إلى StateGraph لضمان قابلية التسلسل."""
+
+    context: dict[str, str | int | float | bool | None] = {}
+    for key, value in payload.items():
+        if not isinstance(key, str):
+            continue
+        if isinstance(value, str | int | float | bool) or value is None:
+            context[key] = value
+    return context
+
+
+
+def _extract_ws_context(incoming: dict[str, object]) -> dict[str, str | int | float | bool | None]:
+    """يستخلص سياق WebSocket ويطبّعه لضمان اتساق التنفيذ الحي."""
+
+    context_payload = incoming.get("context")
+    context: dict[str, str | int | float | bool | None] = {}
+    if isinstance(context_payload, dict):
+        context = _sanitize_langgraph_context(context_payload)
+
+    normalized_intent = _normalize_intent_hint(incoming.get("mission_type"))
+    if normalized_intent is None:
+        metadata = incoming.get("metadata")
+        if isinstance(metadata, dict):
+            normalized_intent = _normalize_intent_hint(metadata.get("mission_type"))
+
+    if normalized_intent is not None:
+        context["intent"] = normalized_intent
+
+    return context
 
 def _extract_chat_objective(payload: dict[str, object]) -> str | None:
     """يستخلص الهدف النصي للدردشة من حمولة عامة بشكل صريح وآمن."""
@@ -108,11 +170,7 @@ async def chat_messages_endpoint(payload: dict[str, object]) -> dict[str, object
     context_payload = payload.get("context")
     context: dict[str, str | int | float | bool | None] = {}
     if isinstance(context_payload, dict):
-        for key, value in context_payload.items():
-            if not isinstance(key, str):
-                continue
-            if isinstance(value, str | int | float | bool) or value is None:
-                context[key] = value
+        context = _sanitize_langgraph_context(context_payload)
 
     return await _run_chat_langgraph(objective, context)
 
@@ -145,18 +203,17 @@ async def chat_ws_stategraph(websocket: WebSocket) -> None:
                 )
                 continue
 
-            # Route mission_complex
-            metadata = incoming.get("metadata", {})
-            mission_type = incoming.get("mission_type")
-            if (
-                isinstance(metadata, dict) and metadata.get("mission_type") == "mission_complex"
-            ) or mission_type == "mission_complex":
-                async for chunk in handle_mission_complex_stream(objective, {}, user_id=user_id):
-                    # handle_mission_complex_stream yields JSON string chunks
+            ws_context = _extract_ws_context(incoming)
+            if _is_mission_complex_context({"intent": ws_context.get("intent")}):
+                async for chunk in handle_mission_complex_stream(
+                    objective,
+                    ws_context,
+                    user_id=user_id,
+                ):
                     await websocket.send_text(chunk)
                 continue
 
-            result = await _run_chat_langgraph(objective, {})
+            result = await _run_chat_langgraph(objective, ws_context)
             result["route_id"] = "chat_ws_customer"
             await websocket.send_json(result)
     except WebSocketDisconnect:
@@ -191,18 +248,17 @@ async def admin_chat_ws_stategraph(websocket: WebSocket) -> None:
                 )
                 continue
 
-            # Route mission_complex
-            metadata = incoming.get("metadata", {})
-            mission_type = incoming.get("mission_type")
-            if (
-                isinstance(metadata, dict) and metadata.get("mission_type") == "mission_complex"
-            ) or mission_type == "mission_complex":
-                async for chunk in handle_mission_complex_stream(objective, {}, user_id=user_id):
-                    # handle_mission_complex_stream yields JSON string chunks
+            ws_context = _extract_ws_context(incoming)
+            if _is_mission_complex_context({"intent": ws_context.get("intent")}):
+                async for chunk in handle_mission_complex_stream(
+                    objective,
+                    ws_context,
+                    user_id=user_id,
+                ):
                     await websocket.send_text(chunk)
                 continue
 
-            result = await _run_chat_langgraph(objective, {})
+            result = await _run_chat_langgraph(objective, ws_context)
             result["route_id"] = "chat_ws_admin"
             await websocket.send_json(result)
     except WebSocketDisconnect:
@@ -239,9 +295,6 @@ async def chat_with_agent_endpoint(
     """
     logger.info(f"Agent Chat Request: {request.question[:50]}... User: {request.user_id}")
 
-    ai_client = get_ai_client()
-    agent = OrchestratorAgent(ai_client, tool_registry)
-
     # Prepare context
     context = request.context.copy()
     context.update(
@@ -254,12 +307,42 @@ async def chat_with_agent_endpoint(
 
     async def _stream_generator():
         try:
-            run_result = agent.run(request.question, context=context)
-            async for chunk in run_result:
-                yield chunk
+            sanitized_context = _sanitize_langgraph_context(context)
+            normalized_intent = _normalize_intent_hint(context.get("intent"))
+            if normalized_intent is not None:
+                sanitized_context["intent"] = normalized_intent
+
+            if _is_mission_complex_context(context):
+                async for chunk in handle_mission_complex_stream(
+                    request.question,
+                    context=sanitized_context,
+                    user_id=request.user_id,
+                ):
+                    yield chunk
+                return
+
+            run_payload = await _run_chat_langgraph(request.question, sanitized_context)
+            response_text = str(run_payload.get("response", ""))
+            yield _json_line({"type": "assistant_delta", "payload": {"content": response_text}})
+            yield _json_line(
+                {
+                    "type": "assistant_final",
+                    "payload": {
+                        "content": response_text,
+                        "graph_mode": run_payload.get("graph_mode"),
+                        "run_id": run_payload.get("run_id"),
+                        "timeline": run_payload.get("timeline", []),
+                    },
+                }
+            )
         except Exception as e:
             logger.error(f"Agent Chat Error: {e}", exc_info=True)
-            yield f"Error: {e}"
+            yield _json_line(
+                {
+                    "type": "assistant_error",
+                    "payload": {"content": f"Error: {e}"},
+                }
+            )
 
     return StreamingResponse(_stream_generator(), media_type="text/plain")
 

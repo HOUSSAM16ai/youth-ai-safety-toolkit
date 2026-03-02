@@ -138,9 +138,15 @@ def test_chat_stream_ws_orchestrator_error(app):
         "app.api.routers.admin.extract_websocket_auth", return_value=("valid_token", "json")
     ):
         with patch("app.api.routers.admin.decode_user_id", return_value=1):
+            async def _orchestrator_error(*args, **kwargs):
+                yield {
+                    "type": "assistant_error",
+                    "payload": {"content": "Orchestrator error"},
+                }
+
             with patch(
-                "app.services.chat.orchestrator.ChatOrchestrator.dispatch",
-                side_effect=HTTPException(status_code=400, detail="Orchestrator error"),
+                "app.services.chat.websocket_authority.orchestrator_client.chat_with_agent",
+                return_value=_orchestrator_error(),
             ):
                 with client.websocket_connect("/admin/api/chat/ws") as websocket:
                     websocket.send_json({"question": "test"})
