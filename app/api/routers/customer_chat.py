@@ -10,14 +10,14 @@ from collections.abc import Callable
 from fastapi import APIRouter, Depends, HTTPException, WebSocket
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.schemas.customer_chat import CustomerConversationDetails, CustomerConversationSummary
 from app.api.routers.ws_auth import extract_websocket_auth
+from app.api.schemas.customer_chat import CustomerConversationDetails, CustomerConversationSummary
 from app.core.database import async_session_factory, get_db
 from app.core.di import get_logger
 from app.core.domain.user import User
 from app.deps.auth import CurrentUser, require_permissions
-from app.services.boundaries.customer_chat_boundary_service import CustomerChatBoundaryService
 from app.services.auth.token_decoder import decode_user_id
+from app.services.boundaries.customer_chat_boundary_service import CustomerChatBoundaryService
 from app.services.chat.websocket_authority import ChatWebSocketPolicy, stream_chat_via_orchestrator
 from app.services.rbac import QA_SUBMIT
 
