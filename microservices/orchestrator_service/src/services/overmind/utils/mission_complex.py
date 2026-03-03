@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 MISSION_EVENT_WAIT_TIMEOUT_SECONDS = 5.0
 MISSION_EVENT_MAX_IDLE_CYCLES = 3
+MISSION_EVENT_MAX_RECOVERY_CYCLES = 24
 
 
 async def _get_terminal_event_from_persistence(mission_id: int) -> dict[str, object] | None:
@@ -56,6 +57,22 @@ async def _get_terminal_event_from_persistence(mission_id: int) -> dict[str, obj
             }
 
     return None
+
+
+async def _is_mission_still_active(mission_id: int) -> bool:
+    """يتحقق إن كانت المهمة لا تزال قيد التنفيذ عند غياب أحداث البث اللحظي."""
+    async with async_session_factory() as session:
+        state_manager = MissionStateManager(session)
+        mission = await state_manager.get_mission(mission_id)
+        if mission is None:
+            return False
+        return mission.status in {
+            MissionStatus.PENDING,
+            MissionStatus.PLANNING,
+            MissionStatus.PLANNED,
+            MissionStatus.RUNNING,
+            MissionStatus.ADAPTING,
+        }
 
 
 async def handle_mission_complex_stream(
@@ -130,17 +147,26 @@ async def handle_mission_complex_stream(
         # Subscribe to Events
         event_bus = get_event_bus()
         subscription = event_bus.subscribe(f"mission:{mission_id}")
-        event_iterator = subscription.__aiter__()
+        queue: asyncio.Queue[dict[str, object] | None] = asyncio.Queue()
+
+        async def _pump_events() -> None:
+            """يضخ أحداث الاشتراك إلى طابور محلي لمنع إغلاق المولد بسبب timeout."""
+            try:
+                async for event in subscription:
+                    if isinstance(event, dict):
+                        await queue.put(event)
+            finally:
+                await queue.put(None)
+
+        pump_task = asyncio.create_task(_pump_events())
 
         processed_final = False
         idle_cycles = 0
+        recovery_cycles = 0
 
         while True:
             try:
-                event = await asyncio.wait_for(
-                    event_iterator.__anext__(),
-                    timeout=MISSION_EVENT_WAIT_TIMEOUT_SECONDS,
-                )
+                event = await asyncio.wait_for(queue.get(), timeout=MISSION_EVENT_WAIT_TIMEOUT_SECONDS)
                 idle_cycles = 0
             except TimeoutError:
                 idle_cycles += 1
@@ -150,6 +176,17 @@ async def handle_mission_complex_stream(
                 if terminal_event is not None:
                     yield terminal_event
                     break
+                recovery_cycles += 1
+                if recovery_cycles < MISSION_EVENT_MAX_RECOVERY_CYCLES:
+                    if await _is_mission_still_active(mission_id):
+                        yield {
+                            "type": "assistant_delta",
+                            "payload": {
+                                "content": "⏳ لا تزال المهمة قيد التنفيذ... جاري استرجاع الحالة النهائية من نظام المهام.\n"
+                            },
+                        }
+                        idle_cycles = 0
+                        continue
                 yield {
                     "type": "assistant_error",
                     "payload": {
@@ -158,6 +195,9 @@ async def handle_mission_complex_stream(
                 }
                 break
             except StopAsyncIteration:
+                break
+
+            if event is None:
                 break
 
             # Event comes as a dict from Redis/EventBus
@@ -221,6 +261,9 @@ async def handle_mission_complex_stream(
             "payload": {"content": "\n🛑 **حدث خطأ حرج أثناء تنفيذ المهمة.**\n"},
         }
     finally:
+        pump_task_instance = locals().get("pump_task")
+        if pump_task_instance is not None and not pump_task_instance.done():
+            pump_task_instance.cancel()
         subscription_instance = locals().get("subscription")
         if subscription_instance is not None and hasattr(subscription_instance, "aclose"):
             await subscription_instance.aclose()

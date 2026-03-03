@@ -52,11 +52,17 @@ async def test_mission_complex_emits_timeout_error_when_event_bus_is_idle(monkey
         _ = mission_id
         return None
 
+    async def fake_not_active(mission_id: int) -> bool:
+        _ = mission_id
+        return False
+
     monkeypatch.setattr(mission_complex, "start_mission", fake_start_mission)
     monkeypatch.setattr(mission_complex, "get_event_bus", lambda: _FakeEventBus())
     monkeypatch.setattr(mission_complex, "_get_terminal_event_from_persistence", fake_no_terminal_event)
+    monkeypatch.setattr(mission_complex, "_is_mission_still_active", fake_not_active)
     monkeypatch.setattr(mission_complex, "MISSION_EVENT_WAIT_TIMEOUT_SECONDS", 0.01)
     monkeypatch.setattr(mission_complex, "MISSION_EVENT_MAX_IDLE_CYCLES", 1)
+    monkeypatch.setattr(mission_complex, "MISSION_EVENT_MAX_RECOVERY_CYCLES", 1)
 
     events: list[dict[str, object]] = []
     async for event in mission_complex.handle_mission_complex_stream(
@@ -109,3 +115,53 @@ async def test_mission_complex_reads_terminal_result_from_persistence_on_idle(mo
     payload = terminal_event.get("payload")
     assert isinstance(payload, dict)
     assert payload.get("content") == "result from db"
+
+
+@pytest.mark.asyncio
+async def test_mission_complex_waits_when_persistence_shows_active_then_emits_final(monkeypatch) -> None:
+    """يتأكد أن التدفق لا يفشل مبكرًا إذا كانت المهمة ما تزال نشطة ثم ينهي بنتيجة نهائية."""
+
+    async def fake_start_mission(**kwargs: object) -> _FakeMission:
+        _ = kwargs
+        return _FakeMission(777)
+
+    class _TerminalProbe:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        async def terminal_event(self, mission_id: int) -> dict[str, object] | None:
+            _ = mission_id
+            self.calls += 1
+            if self.calls < 2:
+                return None
+            return {"type": "assistant_final", "payload": {"content": "final after wait"}}
+
+    probe = _TerminalProbe()
+
+    async def fake_is_active(mission_id: int) -> bool:
+        _ = mission_id
+        return True
+
+    monkeypatch.setattr(mission_complex, "start_mission", fake_start_mission)
+    monkeypatch.setattr(mission_complex, "get_event_bus", lambda: _FakeEventBusIdleOnce())
+    monkeypatch.setattr(mission_complex, "_get_terminal_event_from_persistence", probe.terminal_event)
+    monkeypatch.setattr(mission_complex, "_is_mission_still_active", fake_is_active)
+    monkeypatch.setattr(mission_complex, "MISSION_EVENT_WAIT_TIMEOUT_SECONDS", 0.01)
+    monkeypatch.setattr(mission_complex, "MISSION_EVENT_MAX_IDLE_CYCLES", 1)
+    monkeypatch.setattr(mission_complex, "MISSION_EVENT_MAX_RECOVERY_CYCLES", 3)
+
+    events: list[dict[str, object]] = []
+    async for event in mission_complex.handle_mission_complex_stream(
+        question="run",
+        context={"conversation_id": 1},
+        user_id=10,
+    ):
+        events.append(event)
+        if event.get("type") in {"assistant_final", "assistant_error"}:
+            break
+
+    assert any(event.get("type") == "assistant_delta" for event in events)
+    assert events[-1]["type"] == "assistant_final"
+    payload = events[-1].get("payload")
+    assert isinstance(payload, dict)
+    assert payload.get("content") == "final after wait"
