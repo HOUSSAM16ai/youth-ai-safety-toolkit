@@ -63,28 +63,52 @@ def test_chat_ws_customer_uses_stategraph(monkeypatch) -> None:
     """يتأكد أن WS العميل يمر عبر نفس مسار StateGraph ويرجع route_id الصحيح."""
     monkeypatch.setattr(routes, "create_langgraph_service", _FakeLangGraphService)
 
+    async def fake_ensure_conversation(**kwargs):
+        return 123
+    monkeypatch.setattr(routes, "_ensure_conversation", fake_ensure_conversation)
+
+    async def fake_persist_assistant_message(**kwargs):
+        pass
+    monkeypatch.setattr(routes, "_persist_assistant_message", fake_persist_assistant_message)
+
     token = jwt.encode({"sub": "1", "user_id": 1}, get_settings().SECRET_KEY, algorithm="HS256")
     with TestClient(app).websocket_connect(f"/api/chat/ws?token={token}") as ws:
         ws.send_json({"question": "hello"})
+        init_event = ws.receive_json()
         payload = ws.receive_json()
 
-    assert payload["status"] == "ok"
-    assert payload["route_id"] == "chat_ws_customer"
-    assert payload["graph_mode"] == "stategraph"
+    assert init_event["type"] == "conversation_init"
+    assert init_event["payload"]["conversation_id"] == 123
+    assert payload["type"] == "assistant_final"
+    assert payload["payload"]["status"] == "ok"
+    assert payload["payload"]["route_id"] == "chat_ws_customer"
+    assert payload["payload"]["graph_mode"] == "stategraph"
 
 
 def test_chat_ws_admin_uses_stategraph(monkeypatch) -> None:
     """يتأكد أن WS الإداري يستخدم StateGraph ويرجع route_id الإداري."""
     monkeypatch.setattr(routes, "create_langgraph_service", _FakeLangGraphService)
 
+    async def fake_ensure_conversation(**kwargs):
+        return 456
+    monkeypatch.setattr(routes, "_ensure_conversation", fake_ensure_conversation)
+
+    async def fake_persist_assistant_message(**kwargs):
+        pass
+    monkeypatch.setattr(routes, "_persist_assistant_message", fake_persist_assistant_message)
+
     token = jwt.encode({"sub": "1", "user_id": 1}, get_settings().SECRET_KEY, algorithm="HS256")
     with TestClient(app).websocket_connect(f"/admin/api/chat/ws?token={token}") as ws:
         ws.send_json({"question": "hello"})
+        init_event = ws.receive_json()
         payload = ws.receive_json()
 
-    assert payload["status"] == "ok"
-    assert payload["route_id"] == "chat_ws_admin"
-    assert payload["graph_mode"] == "stategraph"
+    assert init_event["type"] == "conversation_init"
+    assert init_event["payload"]["conversation_id"] == 456
+    assert payload["type"] == "assistant_final"
+    assert payload["payload"]["status"] == "ok"
+    assert payload["payload"]["route_id"] == "chat_ws_admin"
+    assert payload["payload"]["graph_mode"] == "stategraph"
 
 
 def test_chat_ws_customer_mission_complex_uses_json_contract(monkeypatch) -> None:

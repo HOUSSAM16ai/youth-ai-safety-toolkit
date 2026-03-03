@@ -364,9 +364,51 @@ async def chat_ws_stategraph(websocket: WebSocket) -> None:
                 )
                 continue
 
+            requested_conversation_id = incoming.get("conversation_id")
+            conversation_id = (
+                requested_conversation_id if isinstance(requested_conversation_id, int) else None
+            )
+            try:
+                conversation_id = await _ensure_conversation(
+                    chat_scope="customer",
+                    user_id=user_id,
+                    question=objective,
+                    requested_conversation_id=conversation_id,
+                )
+            except HTTPException as error:
+                await websocket.send_json({"type": "assistant_error", "payload": {"content": error.detail}})
+                continue
+
+            await websocket.send_json(
+                {
+                    "type": "conversation_init",
+                    "payload": {"conversation_id": conversation_id},
+                }
+            )
+
             result = await _run_chat_langgraph(objective, {})
-            result["route_id"] = "chat_ws_customer"
-            await websocket.send_json(result)
+
+            # Unify contract with Super Agent
+            await websocket.send_json(
+                {
+                    "type": "assistant_final",
+                    "payload": {
+                        "content": result.get("response", ""),
+                        "status": result.get("status", "ok"),
+                        "run_id": result.get("run_id"),
+                        "timeline": result.get("timeline", []),
+                        "graph_mode": result.get("graph_mode", "stategraph"),
+                        "route_id": "chat_ws_customer"
+                    }
+                }
+            )
+
+            await _persist_assistant_message(
+                chat_scope="customer",
+                conversation_id=conversation_id,
+                content=str(result.get("response", "")),
+                mission_id=None,
+            )
     except WebSocketDisconnect:
         logger.info("Customer chat websocket disconnected")
 
@@ -409,9 +451,51 @@ async def admin_chat_ws_stategraph(websocket: WebSocket) -> None:
                 )
                 continue
 
+            requested_conversation_id = incoming.get("conversation_id")
+            conversation_id = (
+                requested_conversation_id if isinstance(requested_conversation_id, int) else None
+            )
+            try:
+                conversation_id = await _ensure_conversation(
+                    chat_scope="admin",
+                    user_id=user_id,
+                    question=objective,
+                    requested_conversation_id=conversation_id,
+                )
+            except HTTPException as error:
+                await websocket.send_json({"type": "assistant_error", "payload": {"content": error.detail}})
+                continue
+
+            await websocket.send_json(
+                {
+                    "type": "conversation_init",
+                    "payload": {"conversation_id": conversation_id},
+                }
+            )
+
             result = await _run_chat_langgraph(objective, {})
-            result["route_id"] = "chat_ws_admin"
-            await websocket.send_json(result)
+
+            # Unify contract with Super Agent
+            await websocket.send_json(
+                {
+                    "type": "assistant_final",
+                    "payload": {
+                        "content": result.get("response", ""),
+                        "status": result.get("status", "ok"),
+                        "run_id": result.get("run_id"),
+                        "timeline": result.get("timeline", []),
+                        "graph_mode": result.get("graph_mode", "stategraph"),
+                        "route_id": "chat_ws_admin"
+                    }
+                }
+            )
+
+            await _persist_assistant_message(
+                chat_scope="admin",
+                conversation_id=conversation_id,
+                content=str(result.get("response", "")),
+                mission_id=None,
+            )
     except WebSocketDisconnect:
         logger.info("Admin chat websocket disconnected")
 
