@@ -577,8 +577,8 @@ const { useState, useEffect, useRef, useCallback, memo } = React;
                 }
 
                 const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-                const wsUrl = `${wsBase}/api/chat/ws?token=${encodeURIComponent(token)}`;
-                const socket = new WebSocket(wsUrl);
+                const wsUrl = `${wsBase}/api/chat/ws`;
+                const socket = new WebSocket(wsUrl, ['jwt', token]);
                 socketRef.current = socket;
 
                 let assistantMessage = '';
@@ -917,8 +917,8 @@ const { useState, useEffect, useRef, useCallback, memo } = React;
                 }
 
                 const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-                const wsUrl = `${wsBase}/admin/api/chat/ws?token=${encodeURIComponent(token)}`;
-                const socket = new WebSocket(wsUrl);
+                const wsUrl = `${wsBase}/admin/api/chat/ws`;
+                const socket = new WebSocket(wsUrl, ['jwt', token]);
                 socketRef.current = socket;
 
                 let assistantMessage = '';
