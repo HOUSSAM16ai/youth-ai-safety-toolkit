@@ -35,23 +35,19 @@ async def websocket_proxy(client_ws: WebSocket, target_url: str):
         [p.strip() for p in requested_protocols if p.strip()] if requested_protocols else None
     )
 
-    # Handle compatibility between different websockets module versions
-    connect_kwargs = {"subprotocols": subprotocols}
     try:
-        import websockets.version
+        try:
+            # Try websockets >= 14 format
+            target_ws_context = websockets.connect(
+                target_url, additional_headers=headers, subprotocols=subprotocols
+            )
+        except TypeError:
+            # Fallback to websockets < 14 format
+            target_ws_context = websockets.connect(
+                target_url, extra_headers=headers, subprotocols=subprotocols
+            )
 
-        ws_version = getattr(websockets.version, "version", "0")
-        major_version = int(ws_version.split(".")[0])
-        if major_version >= 14:
-            connect_kwargs["additional_headers"] = headers
-        else:
-            connect_kwargs["extra_headers"] = headers
-    except Exception:
-        # Fallback for unexpected versions
-        connect_kwargs["extra_headers"] = headers
-
-    try:
-        async with websockets.connect(target_url, **connect_kwargs) as target_ws:
+        async with target_ws_context as target_ws:
             logger.info(f"WebSocket connected to {target_url}")
 
             async def client_to_target():
