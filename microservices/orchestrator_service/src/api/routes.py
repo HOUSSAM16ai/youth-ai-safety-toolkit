@@ -437,10 +437,24 @@ async def chat_ws_stategraph(websocket: WebSocket) -> None:
                 }
             )
 
+            context_payload = incoming.get("context")
+            context: dict[str, str | int | float | bool | None] = {}
+            if isinstance(context_payload, dict):
+                for key, value in context_payload.items():
+                    if not isinstance(key, str):
+                        continue
+                    if isinstance(value, str | int | float | bool) or value is None:
+                        context[key] = value
+
+            if "mission_type" in incoming:
+                context["mission_type"] = incoming["mission_type"]
+            elif "metadata" in incoming and isinstance(incoming["metadata"], dict) and "mission_type" in incoming["metadata"]:
+                context["mission_type"] = incoming["metadata"]["mission_type"]
+
             await _stream_chat_langgraph(
                 websocket,
                 objective=objective,
-                context={},
+                context=context,
                 chat_scope="customer",
                 conversation_id=conversation_id,
             )
@@ -501,10 +515,24 @@ async def admin_chat_ws_stategraph(websocket: WebSocket) -> None:
                 }
             )
 
+            context_payload = incoming.get("context")
+            context: dict[str, str | int | float | bool | None] = {}
+            if isinstance(context_payload, dict):
+                for key, value in context_payload.items():
+                    if not isinstance(key, str):
+                        continue
+                    if isinstance(value, str | int | float | bool) or value is None:
+                        context[key] = value
+
+            if "mission_type" in incoming:
+                context["mission_type"] = incoming["mission_type"]
+            elif "metadata" in incoming and isinstance(incoming["metadata"], dict) and "mission_type" in incoming["metadata"]:
+                context["mission_type"] = incoming["metadata"]["mission_type"]
+
             await _stream_chat_langgraph(
                 websocket,
                 objective=objective,
-                context={},
+                context=context,
                 chat_scope="admin",
                 conversation_id=conversation_id,
             )
