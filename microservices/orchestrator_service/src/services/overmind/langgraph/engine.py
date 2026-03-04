@@ -86,9 +86,36 @@ class SupervisorOrchestrator:
             return SupervisorDecision(next_step="end", reason="تم اكتشاف حلقة وتم إنهاء المراجعة.")
 
         shared_memory = state.get("shared_memory", {})
+        context = state.get("context", {})
 
+        # Classification / Routing Phase based on intent mode
+        mode = context.get("mission_type", "mission_complex")
+        if mode == "auto":
+            objective = state.get("objective", "").lower()
+            if any(k in objective for k in ["بحث", "مهمة", "mission", "خطة", "استراتيجية"]):
+                mode = "mission_complex"
+            elif any(
+                k in objective for k in ["فكر", "كيف", "لماذا", "اشرح", "reason", "why", "how"]
+            ):
+                mode = "reasoning"
+            else:
+                mode = "simple"
+
+        if mode == "simple":
+            if state.get("execution") is None:
+                return SupervisorDecision(next_step="simple_responder", reason="تنفيذ دردشة عادية.")
+            return SupervisorDecision(next_step="end", reason="تم إنهاء الدردشة العادية.")
+
+        if mode == "reasoning":
+            if state.get("execution") is None:
+                return SupervisorDecision(
+                    next_step="reasoning_responder", reason="تنفيذ دردشة مع تفكير عميق."
+                )
+            return SupervisorDecision(next_step="end", reason="تم إنهاء التفكير العميق.")
+
+        # Default mission_complex flow
         # Force Research Check
-        force_research = state.get("context", {}).get("force_research")
+        force_research = context.get("force_research")
         if force_research and not shared_memory.get("research_performed"):
             return SupervisorDecision(
                 next_step="contextualizer", reason="طلب بحث إلزامي (Force Research)."
@@ -230,6 +257,8 @@ class LangGraphOvermindEngine:
         graph.add_node("operator", self._operator_node)
         graph.add_node("auditor", self._auditor_node)
         graph.add_node("loop_controller", self._loop_controller_node)
+        graph.add_node("simple_responder", self._simple_responder_node)
+        graph.add_node("reasoning_responder", self._reasoning_responder_node)
 
         graph.set_entry_point("supervisor")
         graph.add_conditional_edges(
@@ -242,6 +271,8 @@ class LangGraphOvermindEngine:
                 "operator": "operator",
                 "auditor": "auditor",
                 "loop_controller": "loop_controller",
+                "simple_responder": "simple_responder",
+                "reasoning_responder": "reasoning_responder",
                 "end": END,
             },
         )
@@ -251,6 +282,8 @@ class LangGraphOvermindEngine:
         graph.add_edge("operator", "supervisor")
         graph.add_edge("auditor", "supervisor")
         graph.add_edge("loop_controller", "supervisor")
+        graph.add_edge("simple_responder", "supervisor")
+        graph.add_edge("reasoning_responder", "supervisor")
 
         return graph.compile()
 
@@ -285,6 +318,8 @@ class LangGraphOvermindEngine:
             "operator",
             "auditor",
             "loop_controller",
+            "simple_responder",
+            "reasoning_responder",
         }:
             return next_step
         return "end"
@@ -478,6 +513,67 @@ class LangGraphOvermindEngine:
                 "supervisor",
                 {"status": "routed", "next_step": decision.next_step, "reason": decision.reason},
             ),
+        }
+
+    async def _simple_responder_node(self, state: LangGraphState) -> dict[str, object]:
+        """
+        عقدة الرد البسيط للمحادثات العادية (Ordinary Chat).
+        """
+        from microservices.orchestrator_service.src.core.ai_gateway import get_ai_client
+
+        if self._observer:
+            await self._observer("phase_start", {"phase": "SIMPLE_CHAT", "agent": "Responder"})
+
+        ai_client = get_ai_client()
+        response = await ai_client.chat(state["objective"])
+        answer_text = (
+            str(response.message.content) if hasattr(response, "message") else str(response)
+        )
+
+        if self._observer:
+            await self._observer("phase_completed", {"phase": "SIMPLE_CHAT", "agent": "Responder"})
+
+        return {
+            "execution": {
+                "status": "success",
+                "results": [{"tool": "chat", "result": answer_text}],
+            },
+            "answer": answer_text,
+            "timeline": self._append_timeline(state, "simple_responder", {"status": "responded"}),
+        }
+
+    async def _reasoning_responder_node(self, state: LangGraphState) -> dict[str, object]:
+        """
+        عقدة الرد بالتفكير العميق (Reasoning Chat).
+        """
+        from microservices.orchestrator_service.src.core.ai_gateway import get_ai_client
+
+        if self._observer:
+            await self._observer(
+                "phase_start", {"phase": "REASONING", "agent": "ReasoningResponder"}
+            )
+
+        ai_client = get_ai_client()
+
+        # Here we simulate deep reasoning by giving a targeted prompt.
+        prompt = f"قم بالتفكير المعمق خطوة بخطوة للرد على:\n{state['objective']}"
+        response = await ai_client.chat(prompt)
+        answer_text = (
+            str(response.message.content) if hasattr(response, "message") else str(response)
+        )
+
+        if self._observer:
+            await self._observer(
+                "phase_completed", {"phase": "REASONING", "agent": "ReasoningResponder"}
+            )
+
+        return {
+            "execution": {
+                "status": "success",
+                "results": [{"tool": "reasoning", "result": answer_text}],
+            },
+            "answer": answer_text,
+            "timeline": self._append_timeline(state, "reasoning_responder", {"status": "reasoned"}),
         }
 
     async def _loop_controller_node(self, state: LangGraphState) -> dict[str, object]:

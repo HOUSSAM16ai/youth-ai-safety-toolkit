@@ -30,9 +30,27 @@ class _FakeRunData:
         self.execution = {"summary": "stategraph-response"}
         self.timeline = [_FakeTimelineEvent("supervisor")]
 
+    state: typing.ClassVar[dict] = {
+        "execution": {"results": [{"result": "stategraph-response"}]},
+        "answer": "stategraph-response",
+        "timeline": [{"agent": "supervisor", "payload": {}}],
+    }
+
+
+class _FakeEngine:
+    async def run(self, **kwargs) -> _FakeRunData:
+        # Check if observer is passed and call it
+        observer = kwargs.get("observer")
+        if observer:
+            await observer("phase_start", {"phase": "FAKE_PHASE"})
+        return _FakeRunData()
+
 
 class _FakeLangGraphService:
     """خدمة مزيفة تعيد نتيجة ثابتة للتحقق من سلوك المسارات."""
+
+    def __init__(self):
+        self.engine = _FakeEngine()
 
     async def run(self, payload: object) -> _FakeRunData:
         """تشغّل محاكاة وتعيد بيانات ثابتة دون تبعيات خارجية."""
@@ -53,6 +71,8 @@ def test_chat_http_messages_uses_stategraph(monkeypatch) -> None:
     assert payload["response"] == "stategraph-response"
     assert payload["graph_mode"] == "stategraph"
 
+
+import typing
 
 import jwt
 
@@ -77,10 +97,12 @@ def test_chat_ws_customer_uses_stategraph(monkeypatch) -> None:
     with TestClient(app).websocket_connect(f"/api/chat/ws?token={token}") as ws:
         ws.send_json({"question": "hello"})
         init_event = ws.receive_json()
+        delta_event = ws.receive_json()
         payload = ws.receive_json()
 
     assert init_event["type"] == "conversation_init"
     assert init_event["payload"]["conversation_id"] == 123
+    assert delta_event["type"] == "assistant_delta"
     assert payload["type"] == "assistant_final"
     assert payload["payload"]["status"] == "ok"
     assert payload["payload"]["route_id"] == "chat_ws_customer"
@@ -105,10 +127,12 @@ def test_chat_ws_admin_uses_stategraph(monkeypatch) -> None:
     with TestClient(app).websocket_connect(f"/admin/api/chat/ws?token={token}") as ws:
         ws.send_json({"question": "hello"})
         init_event = ws.receive_json()
+        delta_event = ws.receive_json()
         payload = ws.receive_json()
 
     assert init_event["type"] == "conversation_init"
     assert init_event["payload"]["conversation_id"] == 456
+    assert delta_event["type"] == "assistant_delta"
     assert payload["type"] == "assistant_final"
     assert payload["payload"]["status"] == "ok"
     assert payload["payload"]["route_id"] == "chat_ws_admin"
