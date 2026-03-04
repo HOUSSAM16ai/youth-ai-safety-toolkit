@@ -179,12 +179,13 @@ async def _persist_assistant_message(
 
 
 import asyncio
+from typing import Any
 
 
 async def _stream_chat_langgraph(
     websocket: WebSocket,
     objective: str,
-    context: dict[str, object],
+    context: dict[str, Any],
     chat_scope: str,
     conversation_id: int,
 ) -> None:
@@ -339,7 +340,7 @@ async def _stream_chat_langgraph(
 
 async def _run_chat_langgraph(
     objective: str,
-    context: dict[str, object],
+    context: dict[str, Any],
 ) -> dict[str, object]:
     """يشغّل LangGraph كعمود فقري لرحلة chat ويعيد حمولة موحدة قابلة للبث (HTTP legacy fallback)."""
     service = create_langgraph_service()
@@ -374,7 +375,7 @@ async def chat_messages_endpoint(payload: dict[str, object]) -> dict[str, object
         raise HTTPException(status_code=422, detail="question/objective is required")
 
     context_payload = payload.get("context")
-    context: dict[str, object] = {}
+    context: dict[str, Any] = {}
     if isinstance(context_payload, dict):
         for key, value in context_payload.items():
             if not isinstance(key, str):
@@ -437,7 +438,7 @@ async def chat_ws_stategraph(websocket: WebSocket) -> None:
             )
 
             context_payload = incoming.get("context")
-            context: dict[str, object] = {}
+            context: dict[str, Any] = {}
             if isinstance(context_payload, dict):
                 for key, value in context_payload.items():
                     if not isinstance(key, str):
@@ -518,7 +519,7 @@ async def admin_chat_ws_stategraph(websocket: WebSocket) -> None:
             )
 
             context_payload = incoming.get("context")
-            context: dict[str, object] = {}
+            context: dict[str, Any] = {}
             if isinstance(context_payload, dict):
                 for key, value in context_payload.items():
                     if not isinstance(key, str):
