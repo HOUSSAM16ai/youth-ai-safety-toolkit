@@ -278,11 +278,105 @@ async def _stream_mission_complex_events(
         )
 
 
+import asyncio
+
+
+async def _stream_chat_langgraph(
+    websocket: WebSocket,
+    objective: str,
+    context: dict[str, str | int | float | bool | None],
+    chat_scope: str,
+    conversation_id: int,
+) -> None:
+    """يشغّل LangGraph لمسارات simple/reasoning مباشرة ويبث الأحداث."""
+    service = create_langgraph_service()
+    queue: asyncio.Queue[dict[str, object]] = asyncio.Queue()
+
+    async def _observer(evt_type: str, payload: dict[str, object]) -> None:
+        await queue.put({"type": evt_type, "payload": payload})
+
+    async def _runner():
+        try:
+            # Add implicit simple mode if not set
+            if "mission_type" not in context:
+                context["mission_type"] = "auto"
+
+            run_data = await service.engine.run(
+                run_id="sync-run",
+                objective=objective,
+                context=context,
+                constraints=[],
+                priority="normal",
+                observer=_observer,
+            )
+            await queue.put({"type": "__DONE__", "result": run_data})
+        except Exception as e:
+            await queue.put({"type": "__ERROR__", "error": str(e)})
+
+    task = asyncio.create_task(_runner())
+    _task_ref = task  # store reference to avoid GC
+
+    final_content = ""
+    while True:
+        evt = await queue.get()
+        if evt["type"] == "__DONE__":
+            run_data = evt["result"]
+            execution = getattr(run_data, "state", {}).get("execution", {})
+            results_list = execution.get("results", []) if isinstance(execution, dict) else []
+
+            if results_list and isinstance(results_list[0], dict):
+                response_text = str(results_list[0].get("result", ""))
+            else:
+                response_text = str(getattr(run_data, "state", {}).get("answer") or objective)
+
+            final_content = response_text
+            await websocket.send_json(
+                {
+                    "type": "assistant_final",
+                    "payload": {
+                        "content": response_text,
+                        "status": "ok",
+                        "run_id": getattr(run_data, "run_id", "sync-run"),
+                        "timeline": getattr(run_data, "state", {}).get("timeline", []),
+                        "graph_mode": "stategraph",
+                        "route_id": f"chat_ws_{chat_scope}",
+                    },
+                }
+            )
+            break
+        if evt["type"] == "__ERROR__":
+            final_content = f"❌ خطأ أثناء التنفيذ: {evt['error']}"
+            await websocket.send_json(
+                {"type": "assistant_error", "payload": {"content": final_content}}
+            )
+            break
+        if evt["type"] == "phase_start":
+            phase_name = evt["payload"].get("phase", "") if isinstance(evt["payload"], dict) else ""
+            await websocket.send_json(
+                {
+                    "type": "assistant_delta",
+                    "payload": {"content": f"🔄 جاري التنفيذ: {phase_name}\n"},
+                }
+            )
+        elif evt["type"] == "phase_completed":
+            continue
+        else:
+            await websocket.send_json(evt)
+
+    if final_content.strip():
+        await _persist_assistant_message(
+            chat_scope=chat_scope,
+            conversation_id=conversation_id,
+            content=final_content,
+            mission_id=None,
+        )
+
+
 async def _run_chat_langgraph(
     objective: str,
     context: dict[str, str | int | float | bool | None],
 ) -> dict[str, object]:
-    """يشغّل LangGraph كعمود فقري لرحلة chat ويعيد حمولة موحدة قابلة للبث."""
+    """يشغّل LangGraph كعمود فقري لرحلة chat ويعيد حمولة موحدة قابلة للبث (HTTP legacy fallback)."""
     service = create_langgraph_service()
     request = LangGraphRunRequest(objective=objective, context=context)
     run_data = await service.run(request)
@@ -388,29 +482,14 @@ async def chat_ws_stategraph(websocket: WebSocket) -> None:
                 }
             )
 
-            result = await _run_chat_langgraph(objective, {})
-
-            # Unify contract with Super Agent
-            await websocket.send_json(
-                {
-                    "type": "assistant_final",
-                    "payload": {
-                        "content": result.get("response", ""),
-                        "status": result.get("status", "ok"),
-                        "run_id": result.get("run_id"),
-                        "timeline": result.get("timeline", []),
-                        "graph_mode": result.get("graph_mode", "stategraph"),
-                        "route_id": "chat_ws_customer",
-                    },
-                }
-            )
-
-            await _persist_assistant_message(
+            await _stream_chat_langgraph(
+                websocket,
+                objective=objective,
+                context={},
                 chat_scope="customer",
                 conversation_id=conversation_id,
-                content=str(result.get("response", "")),
-                mission_id=None,
             )
+
     except WebSocketDisconnect:
         logger.info("Customer chat websocket disconnected")
 
@@ -477,29 +556,14 @@ async def admin_chat_ws_stategraph(websocket: WebSocket) -> None:
                 }
             )
 
-            result = await _run_chat_langgraph(objective, {})
-
-            # Unify contract with Super Agent
-            await websocket.send_json(
-                {
-                    "type": "assistant_final",
-                    "payload": {
-                        "content": result.get("response", ""),
-                        "status": result.get("status", "ok"),
-                        "run_id": result.get("run_id"),
-                        "timeline": result.get("timeline", []),
-                        "graph_mode": result.get("graph_mode", "stategraph"),
-                        "route_id": "chat_ws_admin",
-                    },
-                }
-            )
-
-            await _persist_assistant_message(
+            await _stream_chat_langgraph(
+                websocket,
+                objective=objective,
+                context={},
                 chat_scope="admin",
                 conversation_id=conversation_id,
-                content=str(result.get("response", "")),
-                mission_id=None,
             )
+
     except WebSocketDisconnect:
         logger.info("Admin chat websocket disconnected")
 
