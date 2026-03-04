@@ -303,6 +303,32 @@ async def admin_ai_config_proxy(request: Request) -> StreamingResponse:
     )
 
 
+@app.websocket("/api/chat/ws")
+async def chat_ws_proxy(websocket: WebSocket):
+    """
+    Customer Chat WebSocket (Modern Target).
+    TARGET: Orchestrator Service / Conversation Service
+    """
+    route_id = "chat_ws_customer"
+    logger.info("Chat WebSocket route_id=%s legacy_flag=false", route_id)
+    _record_ws_session_metric(route_id)
+    target_url = _resolve_chat_ws_target(route_id, "api/chat/ws")
+    await websocket_proxy(websocket, target_url)
+
+
+@app.websocket("/admin/api/chat/ws")
+async def admin_chat_ws_proxy(websocket: WebSocket):
+    """
+    Admin Chat WebSocket (Modern Target).
+    TARGET: Orchestrator Service / Conversation Service
+    """
+    route_id = "chat_ws_admin"
+    logger.info("Chat WebSocket route_id=%s legacy_flag=false", route_id)
+    _record_ws_session_metric(route_id)
+    target_url = _resolve_chat_ws_target(route_id, "admin/api/chat/ws")
+    await websocket_proxy(websocket, target_url)
+
+
 @app.api_route(
     "/admin/{path:path}",
     methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
@@ -366,32 +392,6 @@ async def chat_http_proxy(path: str, request: Request) -> StreamingResponse:
         f"api/chat/{path}",
         service_token=create_service_token(),
     )
-
-
-@app.websocket("/api/chat/ws")
-async def chat_ws_proxy(websocket: WebSocket):
-    """
-    Customer Chat WebSocket (Modern Target).
-    TARGET: Orchestrator Service / Conversation Service
-    """
-    route_id = "chat_ws_customer"
-    logger.info("Chat WebSocket route_id=%s legacy_flag=false", route_id)
-    _record_ws_session_metric(route_id)
-    target_url = _resolve_chat_ws_target(route_id, "api/chat/ws")
-    await websocket_proxy(websocket, target_url)
-
-
-@app.websocket("/admin/api/chat/ws")
-async def admin_chat_ws_proxy(websocket: WebSocket):
-    """
-    Admin Chat WebSocket (Modern Target).
-    TARGET: Orchestrator Service / Conversation Service
-    """
-    route_id = "chat_ws_admin"
-    logger.info("Chat WebSocket route_id=%s legacy_flag=false", route_id)
-    _record_ws_session_metric(route_id)
-    target_url = _resolve_chat_ws_target(route_id, "admin/api/chat/ws")
-    await websocket_proxy(websocket, target_url)
 
 
 @app.api_route(
