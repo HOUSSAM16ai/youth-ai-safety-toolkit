@@ -29,13 +29,29 @@ async def websocket_proxy(client_ws: WebSocket, target_url: str):
     headers.pop("upgrade", None)
     headers.pop("connection", None)
 
-    # Passing subprotocols to websockets.connect correctly
-    subprotocols = [selected_protocol] if selected_protocol else None
+    # Passing all requested subprotocols to websockets.connect correctly to preserve tokens
+    # (e.g., ['jwt', '<token>']) rather than just the first selected protocol.
+    subprotocols = (
+        [p.strip() for p in requested_protocols if p.strip()] if requested_protocols else None
+    )
+
+    # Handle compatibility between different websockets module versions
+    connect_kwargs = {"subprotocols": subprotocols}
+    try:
+        import websockets.version
+
+        ws_version = getattr(websockets.version, "version", "0")
+        major_version = int(ws_version.split(".")[0])
+        if major_version >= 14:
+            connect_kwargs["additional_headers"] = headers
+        else:
+            connect_kwargs["extra_headers"] = headers
+    except Exception:
+        # Fallback for unexpected versions
+        connect_kwargs["extra_headers"] = headers
 
     try:
-        async with websockets.connect(
-            target_url, extra_headers=headers, subprotocols=subprotocols
-        ) as target_ws:
+        async with websockets.connect(target_url, **connect_kwargs) as target_ws:
             logger.info(f"WebSocket connected to {target_url}")
 
             async def client_to_target():
