@@ -69,33 +69,6 @@ def _extract_chat_objective(payload: dict[str, object]) -> str | None:
     return None
 
 
-def _is_mission_complex(payload: dict[str, object]) -> bool:
-    """يتحقق من مسار المهمة الخارقة عبر mission_type المباشر أو داخل metadata."""
-    mission_type = payload.get("mission_type")
-    if isinstance(mission_type, str) and mission_type.strip().lower() == "mission_complex":
-        return True
-
-    metadata = payload.get("metadata")
-    if isinstance(metadata, dict):
-        metadata_type = metadata.get("mission_type")
-        if isinstance(metadata_type, str) and metadata_type.strip().lower() == "mission_complex":
-            return True
-    return False
-
-
-def _extract_mission_context(payload: dict[str, object]) -> dict[str, object]:
-    """يبني سياق المهمة بشكل صريح مع الحفاظ على conversation_id وmetadata."""
-    context: dict[str, object] = {}
-    if isinstance(payload.get("metadata"), dict):
-        context["metadata"] = payload["metadata"]
-
-    conversation_id = payload.get("conversation_id")
-    if isinstance(conversation_id, int):
-        context["conversation_id"] = conversation_id
-    context["mission_type"] = "mission_complex"
-    return context
-
-
 async def _ensure_conversation(
     *,
     chat_scope: str,
@@ -208,76 +181,6 @@ async def _persist_assistant_message(
         await session.commit()
 
 
-async def _stream_mission_complex_events(
-    websocket: WebSocket,
-    *,
-    incoming: dict[str, object],
-    objective: str,
-    user_id: int,
-    chat_scope: str,
-) -> None:
-    """يوحّد بث mission_complex عبر send_json ويحافظ على الربط مع التاريخ."""
-    requested_conversation_id = incoming.get("conversation_id")
-    conversation_id = (
-        requested_conversation_id if isinstance(requested_conversation_id, int) else None
-    )
-    try:
-        conversation_id = await _ensure_conversation(
-            chat_scope=chat_scope,
-            user_id=user_id,
-            question=objective,
-            requested_conversation_id=conversation_id,
-        )
-    except HTTPException as error:
-        await websocket.send_json({"type": "assistant_error", "payload": {"content": error.detail}})
-        return
-    context = _extract_mission_context(incoming)
-    context["conversation_id"] = conversation_id
-    context["chat_scope"] = chat_scope
-
-    await websocket.send_json(
-        {
-            "type": "conversation_init",
-            "payload": {"conversation_id": conversation_id},
-        }
-    )
-
-    mission_id: int | None = None
-    final_content = ""
-    terminal_event_emitted = False
-    async for event in handle_mission_complex_stream(objective, context, user_id=user_id):
-        await websocket.send_json(event)
-        event_type = str(event.get("type", ""))
-        payload = event.get("payload")
-        payload_dict = payload if isinstance(payload, dict) else {}
-        if event_type == "mission_created":
-            candidate_id = payload_dict.get("mission_id")
-            if isinstance(candidate_id, int):
-                mission_id = candidate_id
-        if event_type in {"assistant_final", "assistant_error"}:
-            terminal_event_emitted = True
-            content = payload_dict.get("content")
-            if isinstance(content, str):
-                final_content = content
-
-    if not terminal_event_emitted:
-        final_content = "تعذر إكمال المهمة الخارقة بسبب انقطاع غير متوقع في البث."
-        await websocket.send_json(
-            {
-                "type": "assistant_error",
-                "payload": {"content": final_content},
-            }
-        )
-
-    if final_content.strip():
-        await _persist_assistant_message(
-            chat_scope=chat_scope,
-            conversation_id=conversation_id,
-            content=final_content,
-            mission_id=mission_id,
-        )
-
-
 import asyncio
 
 
@@ -316,6 +219,21 @@ async def _stream_chat_langgraph(
     task = asyncio.create_task(_runner())
     _task_ref = task  # store reference to avoid GC
 
+    from datetime import datetime, UTC
+    now = datetime.now(UTC).isoformat()
+    await websocket.send_json(
+        {
+            "type": "RUN_STARTED",
+            "payload": {
+                "run_id": "sync-run",
+                "seq": 1,
+                "timestamp": now,
+                "iteration": 0,
+                "mode": context.get("mission_type", "auto"),
+            },
+        }
+    )
+
     final_content = ""
     while True:
         evt = await queue.get()
@@ -352,6 +270,19 @@ async def _stream_chat_langgraph(
             break
         if evt["type"] == "phase_start":
             phase_name = evt["payload"].get("phase", "") if isinstance(evt["payload"], dict) else ""
+            agent_name = evt["payload"].get("agent", "") if isinstance(evt["payload"], dict) else ""
+            await websocket.send_json(
+                {
+                    "type": "PHASE_STARTED",
+                    "payload": {
+                        "run_id": "sync-run",
+                        "seq": 2,
+                        "phase": phase_name,
+                        "agent": agent_name,
+                        "timestamp": datetime.now(UTC).isoformat(),
+                    },
+                }
+            )
             await websocket.send_json(
                 {
                     "type": "assistant_delta",
@@ -359,9 +290,39 @@ async def _stream_chat_langgraph(
                 }
             )
         elif evt["type"] == "phase_completed":
-            continue
+            phase_name = evt["payload"].get("phase", "") if isinstance(evt["payload"], dict) else ""
+            agent_name = evt["payload"].get("agent", "") if isinstance(evt["payload"], dict) else ""
+            await websocket.send_json(
+                {
+                    "type": "PHASE_COMPLETED",
+                    "payload": {
+                        "run_id": "sync-run",
+                        "seq": 3,
+                        "phase": phase_name,
+                        "agent": agent_name,
+                        "timestamp": datetime.now(UTC).isoformat(),
+                    },
+                }
+            )
+        elif evt["type"] == "loop_start":
+            iteration = evt["payload"].get("iteration", 0) if isinstance(evt["payload"], dict) else 0
+            mode = evt["payload"].get("graph_mode", "standard") if isinstance(evt["payload"], dict) else "standard"
+            await websocket.send_json(
+                {
+                    "type": "RUN_STARTED",
+                    "payload": {
+                        "run_id": f"sync-run:{iteration}",
+                        "seq": 4,
+                        "timestamp": datetime.now(UTC).isoformat(),
+                        "iteration": iteration,
+                        "mode": mode,
+                    },
+                }
+            )
         else:
             await websocket.send_json(evt)
+
+    await websocket.send_json({"type": "complete", "payload": {}})
 
     if final_content.strip():
         await _persist_assistant_message(
@@ -448,16 +409,6 @@ async def chat_ws_stategraph(websocket: WebSocket) -> None:
                 )
                 continue
 
-            if _is_mission_complex(incoming):
-                await _stream_mission_complex_events(
-                    websocket,
-                    incoming=incoming,
-                    objective=objective,
-                    user_id=user_id,
-                    chat_scope="customer",
-                )
-                continue
-
             requested_conversation_id = incoming.get("conversation_id")
             conversation_id = (
                 requested_conversation_id if isinstance(requested_conversation_id, int) else None
@@ -519,16 +470,6 @@ async def admin_chat_ws_stategraph(websocket: WebSocket) -> None:
             if objective is None:
                 await websocket.send_json(
                     {"status": "error", "message": "question/objective required"}
-                )
-                continue
-
-            if _is_mission_complex(incoming):
-                await _stream_mission_complex_events(
-                    websocket,
-                    incoming=incoming,
-                    objective=objective,
-                    user_id=user_id,
-                    chat_scope="admin",
                 )
                 continue
 
