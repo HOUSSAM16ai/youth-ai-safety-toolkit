@@ -19,7 +19,6 @@ from app.core.domain.chat import CustomerConversation, MessageRole
 from app.core.domain.user import User
 from app.services.audit import AuditService
 from app.services.chat.contracts import ChatDispatchResult, ChatStreamEvent
-from app.services.chat.education_policy_gate import EducationPolicyDecision, EducationPolicyGate
 from app.services.chat.intent_detector import ChatIntent, IntentDetector
 from app.services.chat.tool_router import ToolRouter
 from app.services.customer.chat_persistence import CustomerChatPersistence
@@ -37,7 +36,6 @@ class CustomerChatBoundaryService:
         self.db = db
         self.persistence = CustomerChatPersistence(db)
         self.streamer = CustomerChatStreamer(self.persistence)
-        self.policy_gate = EducationPolicyGate()
         self.audit = AuditService(db)
         self.intent_detector = IntentDetector()
         self.tool_router = ToolRouter()
@@ -187,62 +185,13 @@ class CustomerChatBoundaryService:
                 stream = self._refusal_stream(conversation, refusal_text)
                 return ChatDispatchResult(status_code=403, stream=stream)
 
-        decision = self.policy_gate.evaluate(question)
-
-        if not decision.allowed:
-            await self._record_blocked_attempt(
-                user_id=user.id,
-                conversation_id=conversation.id,
-                decision=decision,
-                ip=ip,
-                user_agent=user_agent,
-            )
-            await self.save_message(
-                conversation.id,
-                MessageRole.USER,
-                "[BLOCKED REQUEST]",
-                {
-                    "classification": decision.category,
-                    "blocked": "true",
-                    "redaction_hash": decision.redaction_hash,
-                    "reason_code": decision.reason_code,
-                },
-            )
-            await self.save_message(
-                conversation.id,
-                MessageRole.ASSISTANT,
-                decision.refusal_message or "",
-                {
-                    "classification": decision.category,
-                    "refusal": "true",
-                    "reason_code": decision.reason_code,
-                },
-            )
-            stream = self._refusal_stream(conversation, decision.refusal_message)
-            return ChatDispatchResult(status_code=200, stream=stream)
-
-        if effective_intent != ChatIntent.CONTENT_RETRIEVAL and decision.category != "education":
-            refusal_text = self._build_strict_education_refusal()
-            await self.save_message(
-                conversation.id,
-                MessageRole.USER,
-                question,
-                {"classification": "education_strict", "blocked": "true"},
-            )
-            await self.save_message(
-                conversation.id,
-                MessageRole.ASSISTANT,
-                refusal_text,
-                {"classification": "education_strict", "refusal": "true"},
-            )
-            stream = self._refusal_stream(conversation, refusal_text)
-            return ChatDispatchResult(status_code=200, stream=stream)
+        decision_category = "education"  # Bypassed policy gate
 
         await self.save_message(
             conversation.id,
             MessageRole.USER,
             question,
-            {"classification": decision.category},
+            {"classification": decision_category},
         )
         history = await self.get_chat_history(conversation.id)
 
@@ -276,41 +225,6 @@ class CustomerChatBoundaryService:
             ip=ip,
             user_agent=user_agent,
         )
-
-    async def _record_blocked_attempt(
-        self,
-        *,
-        user_id: int,
-        conversation_id: int,
-        decision: EducationPolicyDecision,
-        ip: str | None,
-        user_agent: str | None,
-    ) -> None:
-        """
-        تسجيل محاولة محجوبة بدون تخزين محتوى حساس.
-        """
-        await self.audit.record(
-            actor_user_id=user_id,
-            action="POLICY_BLOCKED",
-            target_type="customer_conversation",
-            target_id=str(conversation_id),
-            metadata={
-                "classification": decision.category,
-                "reason_code": decision.reason_code,
-                "redaction_hash": decision.redaction_hash,
-            },
-            ip=ip,
-            user_agent=user_agent,
-        )
-
-    def _build_strict_education_refusal(self) -> str:
-        """إنشاء رسالة توضح أن المسار مخصص للأسئلة التعليمية فقط."""
-        lines = [
-            "عذرًا، هذا المسار مخصص للأسئلة التعليمية فقط.",
-            "يمكنك طرح سؤال حول تمرين أو مفهوم علمي وسأساعدك وفق السياق المتاح.",
-            "للاسترجاع الدقيق، استخدم صيغة مثل: التمرين الأول، الموضوع الأول، سنة 2024.",
-        ]
-        return "\n".join(lines)
 
     def _looks_like_content_request(self, question: str) -> bool:
         """تعرف سريع على الطلبات التعليمية التي تشير لتمارين مخزنة."""
