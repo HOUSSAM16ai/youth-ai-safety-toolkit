@@ -38,7 +38,9 @@ class OperatorAgent(AgentExecutor):
     4. تقديم استشارات حول قابلية التنفيذ والموارد.
     """
 
-    def __init__(self, task_executor: TaskExecutorProtocol, ai_client: AIClient | None = None) -> None:
+    def __init__(
+        self, task_executor: TaskExecutorProtocol, ai_client: AIClient | None = None
+    ) -> None:
         """
         تهيئة المنفذ.
 
