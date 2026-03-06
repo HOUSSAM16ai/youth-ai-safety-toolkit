@@ -18,12 +18,11 @@ import re
 from app.core.ai_gateway import AIClient
 from app.core.di import get_logger
 from app.core.domain.mission import Task, TaskStatus
-from app.core.protocols import AgentExecutor, CollaborationContext
+from app.core.protocols import AgentExecutor, CollaborationContext, TaskExecutorProtocol
 from app.services.overmind.dec_pomdp_proof import (
     build_dec_pomdp_consultation_payload,
     is_dec_pomdp_proof_question,
 )
-from app.services.overmind.executor import TaskExecutor
 
 logger = get_logger(__name__)
 
@@ -39,7 +38,7 @@ class OperatorAgent(AgentExecutor):
     4. تقديم استشارات حول قابلية التنفيذ والموارد.
     """
 
-    def __init__(self, task_executor: TaskExecutor, ai_client: AIClient | None = None) -> None:
+    def __init__(self, task_executor: TaskExecutorProtocol, ai_client: AIClient | None = None) -> None:
         """
         تهيئة المنفذ.
 
