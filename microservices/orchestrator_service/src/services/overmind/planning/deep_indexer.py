@@ -3,7 +3,7 @@ Deep Indexer for Overmind Planning.
 -----------------------------------
 This module provides functionality to build a deep structural index of the codebase
 and summarize it for LLM consumption. It restores missing functionality required by
-MissionComplexHandler and DeepAnalysisHandler.
+DeepAnalysisHandler.
 """
 
 import logging
