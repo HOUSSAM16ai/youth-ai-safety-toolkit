@@ -130,18 +130,15 @@ def format_search_response(
     confidence: float,
     source: str,
 ) -> str:
-    # 🏛️ [INTERNAL DB]  → found / not found
-    # 🌐 [WEB SEARCH]   → used / not used
-    # 🔀 [HYBRID MODE]  → active / inactive
-    # 📊 [CONFIDENCE]   → 0.00 → 1.00
-    # 📌 [SOURCE]       → exact source name
     header = (
-        f"🏛️ [INTERNAL DB]  → {'found' if internal_used else 'not found'}\n"
-        f"🌐 [WEB SEARCH]   → {'used' if web_used else 'not used'}\n"
-        f"🔀 [HYBRID MODE]  → {'active' if hybrid_mode else 'inactive'}\n"
-        f"📊 [CONFIDENCE]   → {confidence:.2f}\n"
-        f"📌 [SOURCE]       → {source}\n\n"
+        f"🏛️ [قاعدة البيانات الداخلية]  → {'تم العثور' if internal_used else 'لم يتم العثور'}\n"
+        f"🌐 [البحث عبر الويب]   → {'مُستخدم' if web_used else 'غير مُستخدم'}\n"
+        f"🔀 [الوضع الهجين]  → {'نشط' if hybrid_mode else 'غير نشط'}\n"
+        f"📊 [درجة الثقة]   → {confidence:.2f}\n"
+        f"📌 [المصدر]       → {source}\n\n"
     )
+    if not content:
+        content = "لا توجد تفاصيل متاحة."
     return header + content
 
 
@@ -311,13 +308,13 @@ async def search_content(
         internal_res = await _do_internal_search(
             q, limit, subject, normalized_branch, set_name, year, type
         )
-        if internal_res["found"] and internal_res["confidence"] >= 0.70:
+        if internal_res["found"]:
             internal_used = True
             final_content = internal_res["content"]
             final_confidence = internal_res["confidence"]
             final_source = internal_res["source"]
         else:
-            # Hybrid Merge (STEP 4 -> ESCALATE to Layer 2)
+            # Hybrid Merge (STEP 4 -> ESCALATE to Layer 2 ONLY when internal results = 0)
             hybrid_mode = True
             web_res = await _do_internet_search(full_query)
 

@@ -71,6 +71,17 @@ def _resolve_chat_ws_target(route_id: str, upstream_path: str) -> str:
     return f"{fallback_target}/{upstream_path}"
 
 
+import uuid
+
+from opentelemetry import trace
+
+tracer = trace.get_tracer(__name__)
+
+
+def log_telemetry(event_name: str, trace_id: str):
+    logger.info(f"TELEMETRY: {event_name} [trace_id: {trace_id}]")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -78,6 +89,24 @@ async def lifespan(app: FastAPI):
     Handles startup and shutdown events.
     """
     logger.info("Starting API Gateway...")
+    orchestrator_url = settings.ORCHESTRATOR_SERVICE_URL
+    if not orchestrator_url:
+        raise RuntimeError("ORCHESTRATOR_SERVICE_URL is missing")
+
+    # Check orchestrator health
+    for attempt in range(3):
+        try:
+            # Short timeout for health checks
+            resp = await proxy_handler.client.get(f"{orchestrator_url}/health", timeout=2.0)
+            if resp.status_code == 200:
+                log_telemetry("gateway.ready", trace_id=str(uuid.uuid4()))
+                break
+        except Exception:
+            pass
+        if attempt == 2:
+            raise RuntimeError("orchestrator-service is down")
+        await asyncio.sleep(2**attempt)
+
     yield
     logger.info("Shutting down API Gateway...")
     await proxy_handler.close()
@@ -89,6 +118,71 @@ app = FastAPI(title=settings.PROJECT_NAME, lifespan=lifespan)
 app.add_middleware(StructuredLoggingMiddleware)
 app.add_middleware(RequestIdMiddleware)
 app.add_middleware(TraceContextMiddleware)
+
+
+# --- WebSocket Routes MUST BE FIRST to avoid being shadowed by wildcard API routes ---
+
+
+@app.websocket("/api/chat/ws")
+async def chat_ws_proxy(websocket: WebSocket):
+    """
+    Customer Chat WebSocket (Modern Target).
+    TARGET: Orchestrator Service / Conversation Service
+    """
+    from opentelemetry.propagate import inject
+    from starlette.websockets import WebSocketState
+
+    route_id = "chat_ws_customer"
+    with tracer.start_as_current_span("ws.proxy", attributes={"agent": "orchestrator"}):
+        headers = {}
+        inject(headers)
+        logger.info(
+            f"Chat WebSocket route_id={route_id} legacy_flag=false traceparent={headers.get('traceparent', 'unknown')}"
+        )
+        _record_ws_session_metric(route_id)
+        target_url = _resolve_chat_ws_target(route_id, "api/chat/ws")
+        try:
+            await websocket_proxy(websocket, target_url)
+        except Exception:
+            log_telemetry("ws.proxy.failed", trace_id=str(uuid.uuid4()))
+            if websocket.client_state == WebSocketState.UNCONNECTED:
+                await websocket.accept()
+            if websocket.client_state == WebSocketState.CONNECTED:
+                await websocket.send_json(
+                    {"error": "فشل الاتصال بالوكيل الذكي", "session_id": str(uuid.uuid4())}
+                )
+                await websocket.close()
+
+
+@app.websocket("/admin/api/chat/ws")
+async def admin_chat_ws_proxy(websocket: WebSocket):
+    """
+    Admin Chat WebSocket (Modern Target).
+    TARGET: Orchestrator Service / Conversation Service
+    """
+    from opentelemetry.propagate import inject
+    from starlette.websockets import WebSocketState
+
+    route_id = "chat_ws_admin"
+    with tracer.start_as_current_span("ws.proxy", attributes={"agent": "orchestrator"}):
+        headers = {}
+        inject(headers)
+        logger.info(
+            f"Chat WebSocket route_id={route_id} legacy_flag=false traceparent={headers.get('traceparent', 'unknown')}"
+        )
+        _record_ws_session_metric(route_id)
+        target_url = _resolve_chat_ws_target(route_id, "admin/api/chat/ws")
+        try:
+            await websocket_proxy(websocket, target_url)
+        except Exception:
+            log_telemetry("ws.proxy.failed", trace_id=str(uuid.uuid4()))
+            if websocket.client_state == WebSocketState.UNCONNECTED:
+                await websocket.accept()
+            if websocket.client_state == WebSocketState.CONNECTED:
+                await websocket.send_json(
+                    {"error": "فشل الاتصال بالوكيل الإداري", "session_id": str(uuid.uuid4())}
+                )
+                await websocket.close()
 
 
 @app.get("/health")
@@ -142,32 +236,6 @@ async def gateway_health_check():
 
 
 # --- Smart Routing ---
-
-
-@app.websocket("/api/chat/ws")
-async def chat_ws_proxy(websocket: WebSocket):
-    """
-    Customer Chat WebSocket (Modern Target).
-    TARGET: Orchestrator Service / Conversation Service
-    """
-    route_id = "chat_ws_customer"
-    logger.info("Chat WebSocket route_id=%s legacy_flag=false", route_id)
-    _record_ws_session_metric(route_id)
-    target_url = _resolve_chat_ws_target(route_id, "api/chat/ws")
-    await websocket_proxy(websocket, target_url)
-
-
-@app.websocket("/admin/api/chat/ws")
-async def admin_chat_ws_proxy(websocket: WebSocket):
-    """
-    Admin Chat WebSocket (Modern Target).
-    TARGET: Orchestrator Service / Conversation Service
-    """
-    route_id = "chat_ws_admin"
-    logger.info("Chat WebSocket route_id=%s legacy_flag=false", route_id)
-    _record_ws_session_metric(route_id)
-    target_url = _resolve_chat_ws_target(route_id, "admin/api/chat/ws")
-    await websocket_proxy(websocket, target_url)
 
 
 @app.api_route(

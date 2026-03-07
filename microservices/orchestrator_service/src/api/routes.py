@@ -11,6 +11,7 @@ from fastapi import (
     WebSocketDisconnect,
 )
 from fastapi.responses import StreamingResponse
+from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -28,15 +29,12 @@ from microservices.orchestrator_service.src.services.overmind.agents.orchestrato
     OrchestratorAgent,
 )
 from microservices.orchestrator_service.src.services.overmind.domain.api_schemas import (
-    LangGraphRunRequest,
     MissionCreate,
     MissionEventResponse,
     MissionResponse,
 )
 from microservices.orchestrator_service.src.services.overmind.entrypoint import start_mission
-from microservices.orchestrator_service.src.services.overmind.factory import (
-    create_langgraph_service,
-)
+from microservices.orchestrator_service.src.services.overmind.graph.main import create_unified_graph
 from microservices.orchestrator_service.src.services.overmind.state import MissionStateManager
 from microservices.orchestrator_service.src.services.overmind.utils.tools import tool_registry
 
@@ -189,28 +187,18 @@ async def _stream_chat_langgraph(
     chat_scope: str,
     conversation_id: int,
 ) -> None:
-    """يشغّل LangGraph لمسارات simple/reasoning مباشرة ويبث الأحداث."""
-    service = create_langgraph_service()
+    """يشغّل LangGraph الموحد لمسارات البحث والإدارة ويبث الأحداث."""
     queue: asyncio.Queue[dict[str, object]] = asyncio.Queue()
-
-    async def _observer(evt_type: str, payload: dict[str, object]) -> None:
-        await queue.put({"type": evt_type, "payload": payload})
 
     async def _runner():
         try:
-            # Add implicit simple mode if not set
-            if "mission_type" not in context:
-                context["mission_type"] = "auto"
+            app_graph = create_unified_graph()
+            config = {"configurable": {"thread_id": str(conversation_id)}}
+            inputs = {"query": objective, "messages": [HumanMessage(content=objective)]}
 
-            run_data = await service.engine.run(
-                run_id="sync-run",
-                objective=objective,
-                context=context,
-                constraints=[],
-                priority="normal",
-                observer=_observer,
-            )
-            await queue.put({"type": "__DONE__", "result": run_data})
+            res = await app_graph.ainvoke(inputs, config=config)
+
+            await queue.put({"type": "__DONE__", "result": res})
         except Exception as e:
             await queue.put({"type": "__ERROR__", "error": str(e)})
 
@@ -238,13 +226,16 @@ async def _stream_chat_langgraph(
         evt = await queue.get()
         if evt["type"] == "__DONE__":
             run_data = evt["result"]
-            execution = getattr(run_data, "state", {}).get("execution", {})
-            results_list = execution.get("results", []) if isinstance(execution, dict) else []
 
-            if results_list and isinstance(results_list[0], dict):
-                response_text = str(results_list[0].get("result", ""))
+            # Extract the final response from our custom Unified Graph output
+            final_resp = run_data.get("final_response")
+
+            if isinstance(final_resp, dict):
+                import json
+
+                response_text = json.dumps(final_resp, ensure_ascii=False)
             else:
-                response_text = str(getattr(run_data, "state", {}).get("answer") or objective)
+                response_text = str(final_resp or "لا توجد تفاصيل متاحة.")
 
             final_content = response_text
             await websocket.send_json(
@@ -253,9 +244,9 @@ async def _stream_chat_langgraph(
                     "payload": {
                         "content": response_text,
                         "status": "ok",
-                        "run_id": getattr(run_data, "run_id", "sync-run"),
-                        "timeline": getattr(run_data, "state", {}).get("timeline", []),
-                        "graph_mode": "stategraph",
+                        "run_id": "sync-run",
+                        "timeline": [],
+                        "graph_mode": "unified_stategraph",
                         "route_id": f"chat_ws_{chat_scope}",
                     },
                 }
@@ -343,17 +334,26 @@ async def _run_chat_langgraph(
     context: dict[str, Any],
 ) -> dict[str, object]:
     """يشغّل LangGraph كعمود فقري لرحلة chat ويعيد حمولة موحدة قابلة للبث (HTTP legacy fallback)."""
-    service = create_langgraph_service()
-    request = LangGraphRunRequest(objective=objective, context=context)
-    run_data = await service.run(request)
-    execution_summary = run_data.execution or {}
-    response_text = str(execution_summary.get("summary") or objective)
+    app_graph = create_unified_graph()
+    config = {"configurable": {"thread_id": "http_run"}}
+    inputs = {"query": objective, "messages": [HumanMessage(content=objective)]}
+
+    res = await app_graph.ainvoke(inputs, config=config)
+    final_resp = res.get("final_response")
+
+    if isinstance(final_resp, dict):
+        import json
+
+        response_text = json.dumps(final_resp, ensure_ascii=False)
+    else:
+        response_text = str(final_resp or "لا توجد تفاصيل متاحة.")
+
     return {
         "status": "ok",
         "response": response_text,
-        "run_id": run_data.run_id,
-        "timeline": [event.model_dump(mode="json") for event in run_data.timeline],
-        "graph_mode": "stategraph",
+        "run_id": "http-run",
+        "timeline": [],
+        "graph_mode": "unified_stategraph",
     }
 
 
