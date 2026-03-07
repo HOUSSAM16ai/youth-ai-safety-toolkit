@@ -69,7 +69,7 @@
       "compose_service": "auditor-service",
       "owner": "audit-team",
       "dockerfile_required": false,
-      "expected_in_default_compose": false
+      "expected_in_default_compose": true
     }
   ]
 }
