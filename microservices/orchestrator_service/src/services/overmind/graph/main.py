@@ -128,12 +128,12 @@ class SupervisorNode:
         if emergency_intent_guard(query):
             intent = "admin"
             emit_telemetry(node_name="SupervisorNode", start_time=start_time, state=state)
-            return {"intent": intent}
+            import logging; logging.getLogger("graph").info(f"INTENT_DETECTOR result → {intent}"); return {"intent": intent}
 
         for pattern in ADMIN_PATTERNS:
             if re.search(pattern, query, re.IGNORECASE):
                 emit_telemetry(node_name="SupervisorNode", start_time=start_time, state=state)
-                return {"intent": "admin"}
+                import logging; logging.getLogger("graph").info(f"INTENT_DETECTOR result → admin"); return {"intent": "admin"}
 
         try:
             result = self.dspy_classifier(query=query)
@@ -144,13 +144,13 @@ class SupervisorNode:
                     conf = 0.0
                 if conf > 0.75:
                     emit_telemetry(node_name="SupervisorNode", start_time=start_time, state=state)
-                    return {"intent": "admin"}
+                    import logging; logging.getLogger("graph").info(f"INTENT_DETECTOR result → admin"); return {"intent": "admin"}
         except Exception:
             pass
 
         intent = "search"
         emit_telemetry(node_name="SupervisorNode", start_time=start_time, state=state)
-        return {"intent": intent}
+        import logging; logging.getLogger("graph").info(f"INTENT_DETECTOR result → {intent}"); return {"intent": intent}
 
 
 class ToolExecutorNode:
@@ -206,7 +206,12 @@ class ValidatorNode:
 
 
 def route_intent(state: AgentState) -> str:
-    return state.get("intent", "search")
+    import logging
+    logger = logging.getLogger("graph")
+    intent = state.get("intent", "search")
+    node = {"search": "query_analyzer", "admin": "admin_agent", "tool": "tool_executor"}.get(intent, "query_analyzer")
+    logger.info(f"SUPERVISOR_NODE → routing to → {node}")
+    return intent
 
 
 def check_results(state: AgentState) -> str:
@@ -218,7 +223,7 @@ def check_quality(state: AgentState) -> str:
     return "pass"
 
 
-def create_unified_graph():
+def create_unified_graph(admin_app=None):
     graph = StateGraph(AgentState)
 
     (
@@ -236,7 +241,7 @@ def create_unified_graph():
     graph.add_node("retriever", internal_retriever_node())
     graph.add_node("reranker", reranker_node())
     graph.add_node("web_fallback", web_search_fallback_node())
-    graph.add_node("admin_agent", AdminAgentNode())
+    graph.add_node("admin_agent", AdminAgentNode(admin_app=admin_app))
     graph.add_node("tool_executor", ToolExecutorNode())
     graph.add_node("synthesizer", synthesizer_node())
     graph.add_node("validator", ValidatorNode())
@@ -254,7 +259,7 @@ def create_unified_graph():
     )
 
     graph.add_edge("web_fallback", "synthesizer")
-    graph.add_edge("admin_agent", "tool_executor")
+    graph.add_edge("admin_agent", "validator")
     graph.add_edge(
         "tool_executor", "validator"
     )  # tool_executor -> validator directly, bypassing synthesizer to not break admin outputs
