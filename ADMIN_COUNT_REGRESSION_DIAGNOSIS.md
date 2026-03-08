@@ -1,143 +1,165 @@
-# التشريح الجراحي لخلل "إجابات عامة بدل العدّ الدقيق" في أسئلة الأدمن
+# التشخيص الجراحي العميق لخلل: "سؤال عدّ ملفات بايثون يعطي إجابة عامة بدل رقم دقيق"
 
-## 1) ملخص تنفيذي شديد الدقة
+## النتيجة النهائية (Executive Verdict)
 
-الخلل **ليس** في قدرة النظام على العدّ نفسها، بل في **مسار التوجيه (Routing) قبل التنفيذ**:
+الخلل **ليس** في أداة العدّ نفسها، بل في **انقسام مسارات التوجيه بين بنية legacy (`app/`) وبنية microservices (`microservices/`)**، مع اختلاف قواعد intent.
 
-1. في المسار القديم/Legacy (`/agent/chat`) يتم اكتشاف النية عبر `IntentDetector`.
-2. أنماط `ADMIN_QUERY` الحالية لا تحتوي كلمات مثل `python / بايثون / files / ملفات / count`، لذلك سؤال مثل:
-   - "كم عدد ملفات بايثون في المشروع؟"
-   يُصنَّف `DEFAULT` بدل `ADMIN_QUERY`.
-3. عند `DEFAULT` يذهب النظام إلى `chat fallback` (مساعد تعليمي عام) بدل استدعاء أدوات العدّ.
-4. النتيجة: إجابة عامة من LLM (مثل: "لا أستطيع إعطاء عدد دقيق...") بدل نتيجة shell/tool رقمية.
-
-إذن: **الانحدار Regression في طبقة Intent-Routing، لا في طبقة Tool-Execution**.
+بالتالي، عندما يمر السؤال عبر مسار `app/services/chat` يتم تصنيفه `DEFAULT` بدل `ADMIN_QUERY`، فيسقط إلى `Smart Tutor` ويولّد إجابة عامة.
 
 ---
 
-## 2) الدليل التشغيلي (Evidence) من الكود والاختبار المباشر
+## 1) تشريح مسار الفشل الفعلي (Failure Path Anatomy)
 
-### 2.1 اختبار مباشر على كاشف النية الحالي
-تم تشغيل:
+السلوك الظاهر في الصورة (رد عام + اقتراح shell) يتطابق مع fallback التعليمي، وليس مع admin tool chain.
+
+### المسار الذي يفشل:
+1. السؤال: "كم عدد ملفات بايثون في المشروع؟"
+2. `IntentDetector` في طبقة `app/services/chat` يقرأ الأنماط من `IntentPatternRegistry` افتراضيًا.
+3. أنماط `admin` المسجّلة في الـ registry لا تحتوي مفردات `python/files/count`.
+4. النتيجة تصبح `DEFAULT`.
+5. Orchestrator يرسل الطلب إلى `_handle_chat_fallback` (Smart Tutor) بدل `AdminAgent`.
+6. LLM يعطي جوابًا عامًا (لا ينفّذ tool counting فعلي).
+
+---
+
+## 2) الأدلة الجنائية من الشيفرة (Code Evidence)
+
+## A) كاشف النوايا في `app` يعتمد Registry افتراضيًا
+- `IntentDetector` يستخدم `IntentPatternRegistry.get_all()` عندما `use_registry=True` (وهي الحالة الافتراضية).  
+- هذا يعني أن الأنماط المعرّفة داخليًا في `_pattern_specs` ليست المصدر الحقيقي وقت التشغيل المعتاد.
+
+## B) Registry الإداري الحالي ناقص لنية "عدّ ملفات بايثون"
+- `register_default_patterns()` يسجل `admin_patterns` تشمل users/database/services/structure فقط.
+- لا يوجد نمط صريح لـ `python`, `بايثون`, `files`, `count files` في هذا السجل.
+
+## C) عند DEFAULT يتم إسقاط الطلب إلى Smart Tutor
+- orchestrator في `app/services/chat/agents/orchestrator.py` يمرر `ADMIN_QUERY` فقط إلى `admin_agent`.
+- غير ذلك يذهب إلى `_handle_chat_fallback`.
+- fallback معرف صراحة كـ "Smart Tutor" (تعليمي عام)، لا كقناة تنفيذ أدوات إدارية.
+
+## D) paradox مهم: مسار microservices يحتوي الأنماط الصحيحة
+- `microservices/.../intent_detector.py` يتضمن بالفعل أنماطًا لـ `python|بايثون|files|count`.
+- لذا نفس السؤال يُصنف `ADMIN_QUERY` هناك.
+
+**الاستنتاج:** لدينا **Routing Drift** بين مسارين متوازيين داخل نفس المشروع.
+
+---
+
+## 3) الأدلة التشغيلية (Runtime Proof)
+
+تم تنفيذ فحص مباشر داخل المستودع:
 
 ```bash
 python - <<'PY'
 import asyncio
-from microservices.orchestrator_service.src.services.overmind.utils.intent_detector import IntentDetector
+from app.services.chat.intent_detector import IntentDetector as AppDetector
+from microservices.orchestrator_service.src.services.overmind.utils.intent_detector import IntentDetector as MsDetector
 
 async def main():
-    d=IntentDetector()
-    for q in ["كم عدد ملفات بايثون في المشروع", "count python files", "كم عدد المستخدمين", "database tables"]:
-        r=await d.detect(q)
-        print(q, '=>', r.intent.value, r.confidence)
+    q = "كم عدد ملفات بايثون في المشروع"
+    app = await AppDetector().detect(q)
+    ms = await MsDetector().detect(q)
+    print('app:', app.intent.value, app.confidence)
+    print('microservices:', ms.intent.value, ms.confidence)
 
 asyncio.run(main())
 PY
 ```
 
-النتيجة:
-- `كم عدد ملفات بايثون في المشروع => DEFAULT`
-- `count python files => DEFAULT`
-- بينما `كم عدد المستخدمين => ADMIN_QUERY`
-- و `database tables => ADMIN_QUERY`
+النتيجة الحاسمة:
+- `app: DEFAULT 1.0`
+- `microservices: ADMIN_QUERY 0.9`
 
-**استنتاج قطعي:** العدّ الخاص بملفات بايثون لا يمر إلى قناة الأدمن في هذا المسار.
-
-### 2.2 سبب هذا السلوك من ملف الأنماط
-أنماط `ADMIN_QUERY` الحالية تركّز على users/database/services/structure، بدون `python/files/count`.
-
-### 2.3 ماذا يحدث بعد فشل التصنيف؟
-في `OrchestratorAgent`:
-- إذا لم تكن النية `ADMIN_QUERY`، ينتقل النظام إلى `_handle_chat_fallback`.
-- `_handle_chat_fallback` مبني كمعلّم عام (Smart Tutor)، ويشجّع الشرح العام وليس تنفيذ أدوات نظام.
-
-**هذه هي البوابة التي تولّد الإجابة العامة الظاهرة في الصورة.**
+هذا يثبت أن نفس السؤال يتصرف بشكل مختلف حسب البوابة/المسار.
 
 ---
 
-## 3) لماذا ظهر الخلل بعد التحول إلى Microservices؟
+## 4) لماذا "كان دقيقًا سابقًا" ثم أصبح عامًا الآن؟
 
-السبب البنيوي ليس "الميكروسيرفس بحد ذاته" بل **تعدد المسارات غير المتناظرة** بعد التفكيك:
+السبب البنيوي بعد الانتقال إلى بنية API-First متعددة المسارات:
 
-1. يوجد مسار Unified StateGraph (`/admin/api/chat/ws`) وفيه حارس حتمي للكلمات الإدارية.
-2. ويوجد مسار Legacy مباشر (`/agent/chat`) يعتمد `IntentDetector` مختلف.
-3. عند عدم اتساق القواعد بين المسارين، ستحصل ظاهرة:
-   - أحيانًا نفس السؤال يعطي عدًّا دقيقًا.
-   - وأحيانًا يعطي إجابة عامة.
+1. **قبلًا (سلوك أقرب للـ Monolith):** مصدر توجيه واحد أو شبه موحّد ⇒ احتمال أقل لانحراف النية.
+2. **الآن (Hybrid / Microservices Transition):**
+   - مسار `app` (legacy orchestration).
+   - مسار `microservices/orchestrator_service` (stategraph/admin graph).
+3. القواعد لم تبقَ متزامنة 1:1 بين المسارين.
+4. واجهة/endpoint معيّنة قد تضرب المسار legacy، فتظهر الإجابة العامة.
 
-هذا نمط شائع بعد الانتقال من Monolith إلى Microservices + multi-entrypoints: 
-**تجزؤ منطق التوجيه (Routing Drift).**
-
----
-
-## 4) الأسباب الجذرية (Root Causes) مرتبة حسب الأثر
-
-## RC-1 (حرج): فجوة تصنيف في `IntentDetector`
-- `ADMIN_QUERY` لا يطابق أسئلة "count python files".
-- النتيجة: Redirect إلى fallback chat.
-- الأثر: ضياع الدقة الرقمية بالكامل.
-
-## RC-2 (حرج/هيكلي): تعدد ممرات الإدمن بدون Contract Routing موحّد
-- وجود أكثر من بوابة تنفيذ (Legacy Agent vs Unified Graph) بقواعد مختلفة.
-- لا يوجد "Source of Truth" واحد للـ routing policy.
-- الأثر: سلوك متذبذب حسب endpoint المستخدم من الواجهة/العميل.
-
-## RC-3 (متوسط): fallback تعليمي permissive جدًا لأسئلة تتطلب أدوات
-- عند فشل intent، fallback لا يتصدى بطلب re-route بل يولّد إجابة عامة.
-- الأثر: "نجاح شكلي" UX لكنه "فشل وظيفي" في متطلبات الأدمن.
-
-## RC-4 (متوسط): عدم صرامة إجبارية End-to-End على مسار الأدمن
-- توجد محاولات صرامة ممتازة في أجزاء من النظام، لكنها ليست مفروضة على كل entrypoint.
-- الأثر: تفاوت في الالتزام بمبدأ "No tool = No answer".
+**إذن المشكلة ليست ضد فلسفة Microservices بحد ذاتها، بل ضد "ازدواجية عقود التوجيه" بدون Source of Truth موحّد.**
 
 ---
 
-## 5) مصفوفة الأعراض ↔ السبب
+## 5) الأسباب الجذرية مرتبة حسب الأثر
 
-- **عرض:** "لا أستطيع إعطاء عدد دقيق" في سؤال عدّ مباشر.
-  - **سبب مباشر:** السؤال لم يصنف `ADMIN_QUERY`.
-- **عرض:** النظام كان دقيق سابقًا (Monolith) والآن متقلب.
-  - **سبب بنيوي:** route fragmentation بعد الفصل إلى خدمات ومسارات متعددة.
-- **عرض:** بعض أسئلة الأدمن تعمل (مثل users/tables) وبعضها لا.
-  - **سبب:** أنماط `admin_queries` تغطي بعضها فقط.
+### RC-1 (حرج): Configuration Drift في Intent Rules
+- `app` runtime uses registry.
+- registry لا يغطي admin metrics الخاصة بملفات بايثون.
+- تأثير مباشر: admin question → default tutor.
+
+### RC-2 (حرج): Dual-Path Architecture بدون Contract Synchronization
+- `app` و `microservices` يحملان detectors/policies مختلفة.
+- نفس السؤال يغيّر سلوكه حسب نقطة الدخول.
+
+### RC-3 (عالٍ): fallback تعليمي permissive
+- بدلاً من "رفض حتمي + reroute" عند سؤال قياسات تشغيلية، يتم توليد جواب عام مقبول لغويًا لكنه فاشل وظيفيًا.
+
+### RC-4 (متوسط): التباس قنوات واجهة الأدمن
+- بعض الواجهات قد تستخدم `/agent/chat` أو flow لا يحقن `chat_scope=admin` بصرامة، فتزداد فرصة الوقوع في fallback.
 
 ---
 
-## 6) التشخيص النهائي (Final Diagnosis)
+## 6) أين ما زال العدّ الدقيق موجودًا؟
 
-الخلل ناتج عن **انقطاع سلسلة القرار الإداري** عند أول عقدة تصنيف في مسار Legacy:
+القدرة على العدّ الدقيق **موجودة فعلًا** في أكثر من موضع:
+- في `microservices/.../agents/admin.py`: تنفيذ `find . -name '*.py' | wc -l` عند tool `count_python_files`.
+- في `microservices/.../contracts/admin_tools.py`: `admin.count_python_files` عبر subprocess `find`.
 
-`Admin Question (python files)`
-→ `IntentDetector` لا يتعرف عليها كـ `ADMIN_QUERY`
-→ `DEFAULT`
-→ `Smart Tutor Fallback`
-→ `LLM general answer`
+إذًا العطب ليس "عدم وجود tool" بل "عدم الوصول إليه".
 
-بدل السلسلة الصحيحة:
+---
 
-`Admin Question (python files)`
+## 7) الخلاصة الجراحية (Final Surgical Diagnosis)
+
+**Diagnosis:**
+
+`Admin Metrics Query` 
+→ (legacy app intent registry missing python/file-count patterns)
+→ `DEFAULT` 
+→ `Smart Tutor fallback` 
+→ `General LLM response`
+
+بدل:
+
+`Admin Metrics Query`
 → `ADMIN_QUERY`
-→ `AdminAgent / Admin Tool Contract`
-→ `shell/tool execution`
-→ `exact numeric answer`
+→ `Admin Agent / Admin Tool Contract`
+→ `Shell/Tool execution`
+→ `Exact numeric answer`
 
 ---
 
-## 7) لماذا هذا التشخيص "جراحي" وموثوق؟
+## 8) توصيف الخلل بلغة الحوكمة المعمارية المستقبلية
 
-لأنه مبني على:
-1. فحص مسار التنفيذ الفعلي endpoint-by-endpoint.
-2. ربط السلوك المرئي في الصورة مع منطق fallback التعليمي.
-3. اختبار حي لكاشف النية أثبت الانحراف بنفس صياغة السؤال.
-4. تحليل الفارق المعماري بين المسار الموحد والمسار القديم.
+هذا الخلل يمثل:
+- **Policy Inconsistency Across Bounded Contexts**
+- **StateGraph vs Legacy Router Contract Drift**
+- **Tool-Required Query downgraded to LLM-only conversational path**
+
+وهو يتعارض مباشرة مع مبادئ:
+- API-first deterministic admin execution
+- Zero-guess operational answers
+- Fail-fast routing for metrics requests
 
 ---
 
-## 8) خلاصة تنفيذية للإدارة
+## 9) ماذا يعني هذا تشغيليًا للإدارة؟
 
-- **ما تعطل؟** ليس العدّ، بل التوجيه إلى العدّ.
-- **متى يتعطل؟** عندما يأتي السؤال بصيغة ملفات بايثون في المسار الذي يعتمد `IntentDetector` الحالي.
-- **لماذا الآن؟** بعد تفكيك المنظومة، تعددت مسارات الدخول وتباينت قواعد intent/routing.
-- **ما النتيجة؟** ردود تعليمية عامة بدل قياسات تشغيلية دقيقة.
+- النظام "ذكي" لغويًا لكنه فشل في "الحتمية التشغيلية" لهذا النوع من الأسئلة.
+- الاعتمادية perceived انخفضت لأن الإجابة تبدو مهذبة لكنها غير تنفيذية.
+- الثقة الإدارية تتأثر لأن السؤال الرقمي يجب أن يعود دائمًا برقم أو بخطأ تنفيذي صريح، لا بشرح عام.
 
-> التشخيص القاطع: **Regression in Admin Intent Routing Policy under multi-path microservice architecture.**
+---
+
+## 10) ملخص من سطر واحد
+
+**الخلل هو Regression في طبقة Intent Contract داخل مسار `app` legacy، سبّب انحراف سؤال عدّ ملفات بايثون من قناة الأدوات الحتمية إلى Smart Tutor؛ بينما مسار microservices يحتوي القاعدة الصحيحة بالفعل.**
