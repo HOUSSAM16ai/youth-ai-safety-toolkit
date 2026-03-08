@@ -48,6 +48,8 @@ async def websocket_proxy(client_ws: WebSocket, target_url: str):
             )
 
         async with target_ws_context as target_ws:
+            logger.info(f"API_GATEWAY received query (websocket: {client_ws.url})")
+            logger.info(f"API_GATEWAY routed to → {target_url}")
             logger.info(f"WebSocket connected to {target_url}")
 
             async def client_to_target():

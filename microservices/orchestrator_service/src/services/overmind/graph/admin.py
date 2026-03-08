@@ -101,6 +101,9 @@ class ExecuteToolNode:
         start_time = time.time()
         tool_name = state.get("resolved_tool")
         tool_fn = get_registry().get(tool_name)
+        import logging
+        logger = logging.getLogger("admin_graph")
+        logger.info(f"TOOL_REGISTRY.get('{tool_name}') → {'found' if tool_fn else 'None'}")
 
         if not tool_fn:
             emit_telemetry(
@@ -125,7 +128,9 @@ class ExecuteToolNode:
                 result = tool_fn.invoke({})
             else:
                 result = tool_fn()
+                logger.info(f"TOOL EXECUTED → {tool_name} → {str(result)[:50]}")
         except Exception as e:
+            logger.error("Exception in tool execution", exc_info=True)
             emit_telemetry(
                 node_name="ExecuteToolNode", start_time=start_time, state=state, error=str(e)
             )
@@ -135,6 +140,7 @@ class ExecuteToolNode:
                 "tool_result": str(e),
             }
 
+        logger.info(f"TOOL EXECUTED → {tool_name} → {str(result)[:50]}")
         trust = self.tlm.get_trustworthiness_score(
             prompt=state.get("query", ""), response=str(result)
         )
@@ -192,16 +198,19 @@ admin_graph.add_edge("execute", "render")
 admin_graph.add_edge("render", END)
 admin_graph.set_entry_point("detect")
 
-admin_app = admin_graph.compile(checkpointer=MemorySaver(), interrupt_before=[])
-
 
 class AdminAgentNode:
+    def __init__(self, admin_app=None):
+        self.admin_app = admin_app
+
     async def __call__(self, state: AgentState) -> dict[str, Any]:
+        if not self.admin_app:
+            raise RuntimeError("AdminAgentNode missing compiled admin_app")
         config = {"configurable": {"thread_id": "admin_run"}}
 
         # Merge state into dict for admin_app
         inputs = dict(state)
-        res = await admin_app.ainvoke(inputs, config=config)
+        res = await self.admin_app.ainvoke(inputs, config=config)
 
         # We need to make sure the state structure expected by caller is returned
         return {"final_response": res.get("final_response"), "tools_executed": True}
