@@ -22,7 +22,8 @@ async def lifespan(app: FastAPI):
     await init_db()
 
     # ═══ PHASE 1: TOOLS FIRST ══════════════════════════════════
-    from microservices.orchestrator_service.src.services.tools.registry import register_all_tools, get_registry
+    from microservices.orchestrator_service.src.services.tools.registry import get_registry
+
     register_all_tools()
 
     tool_registry = get_registry()
@@ -38,19 +39,20 @@ async def lifespan(app: FastAPI):
         raise RuntimeError(f"STARTUP BLOCKED — missing tools: {missing}")
 
     # ═══ PHASE 2: GRAPHS AFTER TOOLS ═══════════════════════════
-    from microservices.orchestrator_service.src.services.overmind.graph.admin import admin_graph
-    from microservices.orchestrator_service.src.services.overmind.graph.main import create_unified_graph
     from langgraph.checkpoint.memory import MemorySaver
 
-    app.state.admin_app = admin_graph.compile(
-        checkpointer=MemorySaver(), interrupt_before=[]
+    from microservices.orchestrator_service.src.services.overmind.graph.admin import admin_graph
+    from microservices.orchestrator_service.src.services.overmind.graph.main import (
+        create_unified_graph,
     )
+
+    app.state.admin_app = admin_graph.compile(checkpointer=MemorySaver(), interrupt_before=[])
     app.state.app_graph = create_unified_graph(admin_app=app.state.admin_app)
 
     # ═══ PHASE 3: WARMUP — PROVE IT WORKS ══════════════════════
     result = await app.state.admin_app.ainvoke(
         {"query": "كم عدد ملفات بايثون", "is_admin_user": True},
-        config={"configurable": {"thread_id": "warmup"}}
+        config={"configurable": {"thread_id": "warmup"}},
     )
 
     final_res = result.get("final_response", {})
@@ -68,7 +70,6 @@ async def lifespan(app: FastAPI):
     tool_registry.clear()
     del app.state.admin_app
     del app.state.app_graph
-
 
 
 app = FastAPI(title=settings.PROJECT_NAME, lifespan=lifespan)

@@ -1,8 +1,13 @@
 from langgraph.checkpoint.memory import MemorySaver
+
 from microservices.orchestrator_service.src.core.logging import get_logger
-from microservices.orchestrator_service.src.services.tools.registry import register_tool, get_registry
+from microservices.orchestrator_service.src.services.tools.registry import (
+    get_registry,
+    register_tool,
+)
 
 logger = get_logger("bootstrap")
+
 
 class AgentBootstrap:
     """
@@ -12,12 +17,14 @@ class AgentBootstrap:
     """
 
     # THE SACRED ORDER — violating this = the bug you just fixed
-    BOOT_ORDER = [
-        "1. register_tools()",      # tools exist
-        "2. validate_registry()",   # tools verified
-        "3. compile_graph()",       # graph built with tools
-        "4. warmup_invoke()",       # graph proven working
-        "5. accept_traffic()",      # only now open to requests
+    import typing
+
+    BOOT_ORDER: typing.ClassVar[list[str]] = [
+        "1. register_tools()",  # tools exist
+        "2. validate_registry()",  # tools verified
+        "3. compile_graph()",  # graph built with tools
+        "4. warmup_invoke()",  # graph proven working
+        "5. accept_traffic()",  # only now open to requests
     ]
 
     @classmethod
@@ -30,8 +37,7 @@ class AgentBootstrap:
         registry = get_registry()
         for tool in tools:
             assert registry.get(tool.name), (
-                f"[{agent_name}] Tool '{tool.name}' "
-                f"registered but not retrievable."
+                f"[{agent_name}] Tool '{tool.name}' registered but not retrievable."
             )
 
         # Step 3
@@ -40,7 +46,7 @@ class AgentBootstrap:
         # Step 4
         probe = await compiled.ainvoke(
             {"query": "warmup", "is_admin_user": True},
-            config={"configurable": {"thread_id": f"{agent_name}_warmup"}}
+            config={"configurable": {"thread_id": f"{agent_name}_warmup"}},
         )
         assert probe is not None, f"[{agent_name}] Warmup returned None"
 
