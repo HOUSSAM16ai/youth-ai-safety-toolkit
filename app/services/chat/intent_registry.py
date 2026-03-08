@@ -97,6 +97,9 @@ def register_default_patterns() -> None:
         r"(database|schema|tables|db map|database map|قاعدة بيانات|قاعدة البيانات|جداول|مخطط|بنية البيانات|خريطة قاعدة البيانات|العلاقات)",
         r"(route|endpoint|api path|مسار api|نقطة نهاية|services|microservices|خدمات|مصغرة)",
         r"(structure|project info|هيكل المشروع|معلومات المشروع|بنية النظام)",
+        r"(python|بايثون|\.py)",
+        r"(files|ملفات|ملف|عدد\s*ملفات)",
+        r"(كم|count|احسب)\s*(عدد)?\s*(ملف|بايثون|python)",
     ]
     for pattern in admin_patterns:
         IntentPatternRegistry.register(pattern, ChatIntent.ADMIN_QUERY, priority=90)
