@@ -53,6 +53,7 @@ from microservices.orchestrator_service.src.services.overmind.utils.tools import
 
 logger = get_logger("orchestrator-agent")
 
+
 class RoutingError(Exception):
     pass
 
@@ -478,10 +479,11 @@ class OrchestratorAgent:
     async def _handle_chat_fallback(
         self, question: str, context: dict
     ) -> AsyncGenerator[str, None]:
-
         # NEW GUARD: Admin metrics must NEVER reach Smart Tutor
         intent_val = context.get("intent")
-        if intent_val == ChatIntent.ADMIN_QUERY or (isinstance(intent_val, str) and intent_val == "ADMIN_QUERY"):
+        if intent_val == ChatIntent.ADMIN_QUERY or (
+            isinstance(intent_val, str) and intent_val == "ADMIN_QUERY"
+        ):
             raise RoutingError(
                 f"[ROUTING LEAK] Admin query reached educational fallback.\n"
                 f"Query: '{question}'\n"

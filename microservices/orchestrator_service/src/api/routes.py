@@ -629,12 +629,17 @@ async def chat_with_agent_endpoint(
         }
     )
 
-    is_admin = context.get("chat_scope") == "admin" or getattr(request, "chat_scope", "") == "admin" or request.context.get("chat_scope") == "admin"
+    is_admin = (
+        context.get("chat_scope") == "admin"
+        or getattr(request, "chat_scope", "") == "admin"
+        or request.context.get("chat_scope") == "admin"
+    )
 
     if is_admin:
         import json
 
         from microservices.orchestrator_service.src.services.overmind.graph.admin import admin_app
+
         async def _admin_stream():
             try:
                 res = await admin_app.ainvoke({"query": request.question, "is_admin_user": True})
@@ -649,6 +654,7 @@ async def chat_with_agent_endpoint(
             except Exception as e:
                 logger.error(f"Admin Chat Error: {e}", exc_info=True)
                 yield f"Error: {e}"
+
         return StreamingResponse(_admin_stream(), media_type="text/plain")
 
     ai_client = get_ai_client()

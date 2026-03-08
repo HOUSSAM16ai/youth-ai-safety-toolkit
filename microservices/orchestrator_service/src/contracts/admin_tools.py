@@ -17,11 +17,11 @@ class ToolExecutionError(Exception):
 
 
 ADMIN_TOOL_CONTRACT: dict[str, str] = {
-    "admin.count_python_files":    "Count all .py files recursively",
+    "admin.count_python_files": "Count all .py files recursively",
     "admin.count_database_tables": "Count tables via SQL information_schema",
-    "admin.get_user_count":        "Get total registered users from user_client",
-    "admin.list_microservices":    "List all running Docker containers",
-    "admin.calculate_full_stats":  "Aggregate all system metrics in one call",
+    "admin.get_user_count": "Get total registered users from user_client",
+    "admin.list_microservices": "List all running Docker containers",
+    "admin.calculate_full_stats": "Aggregate all system metrics in one call",
 }
 
 REQUIRED_AT_STARTUP = list(ADMIN_TOOL_CONTRACT.keys())
@@ -32,8 +32,7 @@ def validate_tool_name(name: str) -> None:
         raise ContractViolationError(
             f"[CONTRACT VIOLATION] Tool '{name}' is not in "
             f"AdminToolContract.\n"
-            f"Valid canonical names:\n"
-            + "\n".join(f"  • {k}" for k in ADMIN_TOOL_CONTRACT)
+            f"Valid canonical names:\n" + "\n".join(f"  • {k}" for k in ADMIN_TOOL_CONTRACT)
         )
 
 
@@ -90,6 +89,7 @@ def list_microservices() -> str:
     validate_tool_name("admin.list_microservices")
     try:
         import docker
+
         client = docker.from_env()
         containers = client.containers.list()
         names = [c.name for c in containers]

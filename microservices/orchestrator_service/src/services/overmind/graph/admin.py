@@ -72,6 +72,7 @@ QUERY_TO_TOOL_MAP = [
     (r"إحصائيات|stats|كل|full", "admin.calculate_full_stats"),
 ]
 
+
 def resolve_tool_deterministic(query: str) -> str:
     """Rule-first. Zero LLM involvement. Always returns a tool."""
     query_lower = query.lower()
@@ -80,6 +81,7 @@ def resolve_tool_deterministic(query: str) -> str:
             validate_tool_name(tool_name)  # contract check
             return tool_name
     return "admin.calculate_full_stats"  # safe default
+
 
 class ResolveToolNode:
     def __call__(self, state):
