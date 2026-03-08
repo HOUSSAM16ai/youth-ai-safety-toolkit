@@ -430,12 +430,15 @@ async def chat_messages_endpoint(payload: dict[str, object], request: Request) -
                 continue
             context[key] = value
 
-    return await _run_chat_langgraph(objective, context, app_graph=getattr(request.app.state, "app_graph", None))
+    return await _run_chat_langgraph(
+        objective, context, app_graph=getattr(request.app.state, "app_graph", None)
+    )
 
 
 @router.websocket("/api/chat/ws")
 async def chat_ws_stategraph(websocket: WebSocket) -> None:
     from microservices.orchestrator_service.src.core.logging import get_logger
+
     logger = get_logger("routes")
     """يشغّل WebSocket chat فوق LangGraph لضمان توحيد مسار التنفيذ مع mission."""
     token, selected_protocol = extract_websocket_auth(websocket)
@@ -511,7 +514,7 @@ async def chat_ws_stategraph(websocket: WebSocket) -> None:
                 context=context,
                 chat_scope="customer",
                 conversation_id=conversation_id,
-                app_graph=getattr(websocket.app.state, "app_graph", None)
+                app_graph=getattr(websocket.app.state, "app_graph", None),
             )
 
     except WebSocketDisconnect:
@@ -594,7 +597,7 @@ async def admin_chat_ws_stategraph(websocket: WebSocket) -> None:
                 context=context,
                 chat_scope="admin",
                 conversation_id=conversation_id,
-                app_graph=getattr(websocket.app.state, "app_graph", None)
+                app_graph=getattr(websocket.app.state, "app_graph", None),
             )
 
     except WebSocketDisconnect:
@@ -622,10 +625,7 @@ def _serialize_mission(mission: Mission) -> MissionResponse:
 
 
 @router.post("/agent/chat", summary="Chat with Orchestrator Agent")
-async def chat_with_agent_endpoint(
-    request: ChatRequest,
-    fastapi_req: Request
-) -> StreamingResponse:
+async def chat_with_agent_endpoint(request: ChatRequest, fastapi_req: Request) -> StreamingResponse:
     """
     Direct chat endpoint for the Orchestrator Agent (Microservice).
     Streams the response chunk by chunk.
@@ -650,8 +650,6 @@ async def chat_with_agent_endpoint(
 
     if is_admin:
         import json
-
-
 
         async def _admin_stream():
             try:

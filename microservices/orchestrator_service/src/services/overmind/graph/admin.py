@@ -2,7 +2,6 @@ import re
 from datetime import datetime
 from typing import Any
 
-from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 
 from microservices.orchestrator_service.src.contracts.admin_tools import (
@@ -102,6 +101,7 @@ class ExecuteToolNode:
         tool_name = state.get("resolved_tool")
         tool_fn = get_registry().get(tool_name)
         import logging
+
         logger = logging.getLogger("admin_graph")
         logger.info(f"TOOL_REGISTRY.get('{tool_name}') → {'found' if tool_fn else 'None'}")
 
