@@ -64,10 +64,15 @@ class IntentDetector:
     ) -> list[tuple[str, ChatIntent, Callable[[re.Match[str]], dict[str, str]]]]:
         """Defines pattern specifications."""
         admin_queries = [
-            r"(user|users|مستخدم|مستخدمين|count users|list users|profile|stats|أعضاء)",
+            r"(user|users|مستخدم|مستخدمين|count users|list users|profile|stats|أعضاء|إحصائيات)",
             r"(database|schema|tables|db map|database map|قاعدة بيانات|قاعدة البيانات|جداول|مخطط|بنية البيانات|خريطة قاعدة البيانات|العلاقات)",
             r"(route|endpoint|api path|مسار api|نقطة نهاية|services|microservices|خدمات|مصغرة)",
             r"(structure|project info|هيكل المشروع|معلومات المشروع|بنية النظام)",
+            r"(python|بايثون|\.py)",
+            r"(files|ملفات|ملف|file\s*count|عدد\s*ملفات)",
+            r"(count|احسب|حساب|كمية|عدّ)\s*(python|files|ملفات|بايثون|المشروع)",
+            r"(كم)\s*(عدد)?\s*(ملف|ملفات|بايثون|python|\.py)",
+            r"(count_python|count_files|python_files)",
         ]
         analytics_keywords = (
             r"(مستواي|أدائي|نقاط ضعفي|نقاط الضعف|تقييم|level|performance|weakness|report"

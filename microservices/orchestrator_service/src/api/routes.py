@@ -619,9 +619,6 @@ async def chat_with_agent_endpoint(
     """
     logger.info(f"Agent Chat Request: {request.question[:50]}... User: {request.user_id}")
 
-    ai_client = get_ai_client()
-    agent = OrchestratorAgent(ai_client, tool_registry)
-
     # Prepare context
     context = request.context.copy()
     context.update(
@@ -631,6 +628,30 @@ async def chat_with_agent_endpoint(
             "history_messages": request.history_messages,
         }
     )
+
+    is_admin = context.get("chat_scope") == "admin" or getattr(request, "chat_scope", "") == "admin" or request.context.get("chat_scope") == "admin"
+
+    if is_admin:
+        from microservices.orchestrator_service.src.services.overmind.graph.admin import admin_app
+        import json
+        async def _admin_stream():
+            try:
+                res = await admin_app.ainvoke({"query": request.question, "is_admin_user": True})
+                final_resp = res.get("final_response")
+                if isinstance(final_resp, dict):
+                    response_text = json.dumps(final_resp, ensure_ascii=False)
+                else:
+                    response_text = str(final_resp or "لا توجد تفاصيل متاحة.")
+                # We need to simulate a streaming response with proper chunking if caller expects it,
+                # but orchestrator client expects raw strings anyway
+                yield response_text
+            except Exception as e:
+                logger.error(f"Admin Chat Error: {e}", exc_info=True)
+                yield f"Error: {e}"
+        return StreamingResponse(_admin_stream(), media_type="text/plain")
+
+    ai_client = get_ai_client()
+    agent = OrchestratorAgent(ai_client, tool_registry)
 
     async def _stream_generator():
         try:

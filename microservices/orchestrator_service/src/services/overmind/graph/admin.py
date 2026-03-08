@@ -15,36 +15,34 @@ from microservices.orchestrator_service.src.services.tools.registry import get_r
 
 def get_admin_system_prompt() -> str:
     return """
-You are NAAS Admin Execution Engine.
-أنت محرك تنفيذ إداري — وليس مساعداً تعليمياً.
+You are NAAS Admin Execution Engine — NOT a tutor.
+أنت محرك تنفيذ إداري حتمي — لست مساعداً تعليمياً.
 
-YOUR ONLY JOB:
-- Execute the tool provided to you
-- Return the EXACT number from tool result
-- Never estimate. Never explain. Never educate.
-- If tool fails -> return error_code, not text
+ABSOLUTE RULES:
+① Execute the tool. Return the exact result. Nothing more.
+② Never estimate. Never explain. Never educate.
+③ Response format is ALWAYS:
+   {
+     "الإجابة":      "<exact tool output>",
+     "tool_name":   "<admin.canonical_name>",
+     "timestamp":   "<ISO8601 UTC>",
+     "المصدر":      "orchestrator-service"
+   }
 
-RESPONSE FORMAT (strict):
-{
-  "الإجابة": "<exact result from tool>",
-  "tool_name": "<contract tool name>",
-  "timestamp": "<ISO8601>",
-  "source_service": "orchestrator-service"
-}
-
-FORBIDDEN:
-x "لا أستطيع الوصول..."
-x "بناءً على معلوماتي..."
-x Any educational content
-x Any estimation or approximation
-x Any response without tool execution
+FORBIDDEN — zero tolerance:
+✗ "لا أستطيع الوصول..."
+✗ "بناءً على معلوماتي..."
+✗ Any educational explanation
+✗ Any response without real tool execution
+✗ dict/JSON raw output to user
 """
 
 
-def assert_admin_context(prompt_type: str):
-    assert prompt_type == "admin_only", (
-        f"CRITICAL: Educational prompt used in admin channel! "
-        f"Got: {prompt_type}. This is a system bug."
+def assert_admin_prompt_only(prompt_fn_name: str):
+    assert prompt_fn_name == "get_admin_system_prompt", (
+        f"[CRITICAL BUG] Admin channel received non-admin prompt: "
+        f"'{prompt_fn_name}'. "
+        f"Educational prompt in admin channel = system failure."
     )
 
 
@@ -67,23 +65,27 @@ class ValidateAccessNode:
         return {**state, "access": "granted"}
 
 
-class ResolveToolNode:
-    QUERY_TO_TOOL: typing.ClassVar[dict[str, str]] = {
-        "python|بايثون|ملف": "admin.count_python_files",
-        "جدول|table|database": "admin.count_database_tables",
-        "مستخدم|user": "admin.get_user_count",
-        "خدمة|service": "admin.list_microservices",
-        "إحصائيات|stats": "admin.calculate_full_stats",
-    }
+QUERY_TO_TOOL_MAP = [
+    (r"python|بايثون|\.py|ملفات", "admin.count_python_files"),
+    (r"جدول|table|database|db", "admin.count_database_tables"),
+    (r"مستخدم|user|أعضاء|member", "admin.get_user_count"),
+    (r"خدمة|service|container", "admin.list_microservices"),
+    (r"إحصائيات|stats|كل|full", "admin.calculate_full_stats"),
+]
 
+def resolve_tool_deterministic(query: str) -> str:
+    """Rule-first. Zero LLM involvement. Always returns a tool."""
+    query_lower = query.lower()
+    for pattern, tool_name in QUERY_TO_TOOL_MAP:
+        if re.search(pattern, query_lower):
+            validate_tool_name(tool_name)  # contract check
+            return tool_name
+    return "admin.calculate_full_stats"  # safe default
+
+class ResolveToolNode:
     def __call__(self, state):
-        query = state.get("query", "").lower()
-        for pattern, tool_name in self.QUERY_TO_TOOL.items():
-            if re.search(pattern, query):
-                validate_tool_name(tool_name)  # contract check
-                return {"resolved_tool": tool_name}
-        # Fallback: full stats
-        return {"resolved_tool": "admin.calculate_full_stats"}
+        tool = resolve_tool_deterministic(state.get("query", ""))
+        return {"resolved_tool": tool}
 
 
 class ExecuteToolNode:
@@ -154,13 +156,13 @@ class ExecuteToolNode:
 
 class RenderAnswerNode:
     def __call__(self, state):
-        assert_admin_context("admin_only")  # Guard execution
+        assert_admin_prompt_only("get_admin_system_prompt")  # Guard execution
 
         if state.get("error"):
             return {
                 "final_response": {
                     "خطأ": state["error"],
-                    "الأداة": state.get("tool_name"),
+                    "الأداة": state.get("tool_name", "unknown"),
                     "الإجراء": "تواصل مع مدير النظام",
                 }
             }
@@ -168,7 +170,7 @@ class RenderAnswerNode:
             "final_response": {
                 "الإجابة": state.get("tool_result"),
                 "tool_name": state.get("tool_name"),
-                "مستوى_الثقة": state.get("trust_score"),
+                "مستوى_الثقة": f"{state.get('trust_score', 0):.2f}",
                 "وقت_التنفيذ": state.get("executed_at"),
                 "المصدر": "orchestrator-service",
             }

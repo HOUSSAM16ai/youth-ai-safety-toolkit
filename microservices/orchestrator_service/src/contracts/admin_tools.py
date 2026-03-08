@@ -16,20 +16,24 @@ class ToolExecutionError(Exception):
     pass
 
 
-ADMIN_TOOL_CONTRACT = {
-    "admin.count_python_files": "Count all .py files in project",
-    "admin.count_database_tables": "Count all DB tables via SQL",
-    "admin.get_user_count": "Get registered user count",
-    "admin.list_microservices": "List all running services",
-    "admin.calculate_full_stats": "Full system statistics",
+ADMIN_TOOL_CONTRACT: dict[str, str] = {
+    "admin.count_python_files":    "Count all .py files recursively",
+    "admin.count_database_tables": "Count tables via SQL information_schema",
+    "admin.get_user_count":        "Get total registered users from user_client",
+    "admin.list_microservices":    "List all running Docker containers",
+    "admin.calculate_full_stats":  "Aggregate all system metrics in one call",
 }
+
+REQUIRED_AT_STARTUP = list(ADMIN_TOOL_CONTRACT.keys())
 
 
 def validate_tool_name(name: str) -> None:
     if name not in ADMIN_TOOL_CONTRACT:
         raise ContractViolationError(
-            f"Tool '{name}' not in AdminToolContract. "
-            f"Valid tools: {list(ADMIN_TOOL_CONTRACT.keys())}"
+            f"[CONTRACT VIOLATION] Tool '{name}' is not in "
+            f"AdminToolContract.\n"
+            f"Valid canonical names:\n"
+            + "\n".join(f"  • {k}" for k in ADMIN_TOOL_CONTRACT)
         )
 
 
@@ -85,17 +89,12 @@ def list_microservices() -> str:
     """List all running services"""
     validate_tool_name("admin.list_microservices")
     try:
-        result = subprocess.run(
-            ["docker", "ps", "--format", "{{.Names}}"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if result.returncode != 0:
-            raise ToolExecutionError(result.stderr.strip() or "Docker command failed")
-
-        names = [line for line in result.stdout.splitlines() if line.strip()]
-        return f"الخدمات المصغرة النشطة: {len(names)} خدمة\n" + "\n".join(f"• {n}" for n in names)
+        import docker
+        client = docker.from_env()
+        containers = client.containers.list()
+        names = [c.name for c in containers]
+        lines = "\n".join(f"  • {n}" for n in names)
+        return f"الخدمات المصغرة النشطة: {len(names)} خدمة\n{lines}"
     except Exception as e:
         raise ToolExecutionError(f"ADMIN_TOOL_UNAVAILABLE: {e}") from e
 
@@ -121,14 +120,13 @@ async def calculate_full_stats() -> str:
     except Exception:
         services = "الخدمات المصغرة النشطة: خطأ في الوصول"
 
-    return f"""
-📊 إحصائيات النظام الكاملة:
-{files}
-{tables}
-{users}
-{services}
-🕐 وقت الحساب: {datetime.utcnow().isoformat()}
-""".strip()
+    return (
+        f"📊 إحصائيات النظام الكاملة\n"
+        f"{'─' * 35}\n"
+        f"{files}\n{tables}\n{users}\n{services}\n"
+        f"{'─' * 35}\n"
+        f"🕐 {datetime.utcnow().isoformat()} UTC"
+    )
 
 
 ADMIN_TOOLS = [

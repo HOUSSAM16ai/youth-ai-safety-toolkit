@@ -32,25 +32,23 @@ def startup_registry_check(registry: dict[str, Callable]) -> None:
     Service REFUSES to start if admin tools missing.
     No silent failures. Ever.
     """
-    from microservices.orchestrator_service.src.contracts.admin_tools import ADMIN_TOOL_CONTRACT
+    from microservices.orchestrator_service.src.contracts.admin_tools import REQUIRED_AT_STARTUP
 
-    required_admin_tools = list(ADMIN_TOOL_CONTRACT.keys())
     registered = list(registry.keys())
-    missing = [t for t in required_admin_tools if t not in registered]
+    missing = [t for t in REQUIRED_AT_STARTUP if t not in registered]
 
     if missing:
         raise CriticalStartupError(
-            f"REGISTRY STARVATION DETECTED.\n"
+            f"[REGISTRY STARVATION] Service cannot start.\n"
             f"Missing admin tools: {missing}\n"
-            f"Service cannot start. Fix registry first."
+            f"Fix: add them to register_all_tools()"
         )
 
     logger.info(
-        "✅ Admin tool registry healthy",
+        "✅ Admin tool registry — ALL CLEAR",
         extra={
-            "registered_tools": registered,
-            "required_tools": required_admin_tools,
-            "status": "ALL_PRESENT",
+            "tools": registered,
+            "required": REQUIRED_AT_STARTUP,
         },
     )
 
