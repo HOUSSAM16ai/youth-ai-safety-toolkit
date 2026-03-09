@@ -1,3 +1,4 @@
+import os
 import subprocess
 from datetime import datetime
 
@@ -44,7 +45,10 @@ def count_python_files() -> str:
     """Count all .py files in project excluding virtual environments and caches"""
     validate_tool_name("admin.count_python_files")
 
-    cmd = 'find /workspace/ -type f -name "*.py" -not -path "*/.venv/*" -not -path "*/__pycache__/*" -not -path "*/node_modules/*" -not -path "*/site-packages/*" -not -path "*/.git/*" | wc -l'
+    # Resolve dynamic project root to work in both Docker (/workspace) and Native (uvicorn)
+    project_root = os.path.dirname(os.path.abspath(__file__)).replace("/microservices/orchestrator_service/src/contracts", "")
+
+    cmd = f'find {project_root} -type f -name "*.py" -not -path "*/.venv/*" -not -path "*/__pycache__/*" -not -path "*/node_modules/*" -not -path "*/site-packages/*" -not -path "*/.git/*" | wc -l'
 
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=False)
     count = int(result.stdout.strip() or 0)
