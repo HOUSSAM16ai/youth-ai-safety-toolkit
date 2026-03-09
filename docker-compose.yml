@@ -339,6 +339,8 @@ services:
       dockerfile: Dockerfile
     container_name: cogniforge-orchestrator
     restart: always
+    volumes:
+      - .:/workspace:ro
     ports:
       - "8006:8006"
     environment:
