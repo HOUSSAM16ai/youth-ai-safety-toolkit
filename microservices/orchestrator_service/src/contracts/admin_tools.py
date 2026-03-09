@@ -46,9 +46,9 @@ def count_python_files() -> str:
     validate_tool_name("admin.count_python_files")
 
     # Resolve dynamic project root to work in both Docker (/workspace) and Native (uvicorn)
-    project_root = os.path.dirname(os.path.abspath(__file__)).replace("/microservices/orchestrator_service/src/contracts", "")
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../.."))
 
-    cmd = f'find {project_root} -type f -name "*.py" -not -path "*/.venv/*" -not -path "*/__pycache__/*" -not -path "*/node_modules/*" -not -path "*/site-packages/*" -not -path "*/.git/*" | wc -l'
+    cmd = f'find {project_root} -type f -name "*.py" -not -path "*/.venv/*" -not -path "*/__pycache__/*" -not -path "*/site-packages/*" | wc -l'
 
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=False)
     count = int(result.stdout.strip() or 0)
