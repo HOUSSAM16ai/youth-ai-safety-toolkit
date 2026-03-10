@@ -1,6 +1,5 @@
 import asyncio
 import os
-import subprocess
 from datetime import datetime
 
 from sqlalchemy import text
