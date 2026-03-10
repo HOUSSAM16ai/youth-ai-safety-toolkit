@@ -13,11 +13,11 @@ def test_default_service_url_resolution_codespaces() -> None:
     )
     assert (
         AppSettings._resolve_service_url("RESEARCH_AGENT_URL", is_codespaces=True)
-        == "http://localhost:8006"
+        == "http://localhost:8007"
     )
     assert (
         AppSettings._resolve_service_url("REASONING_AGENT_URL", is_codespaces=True)
-        == "http://localhost:8007"
+        == "http://localhost:8008"
     )
 
 
@@ -33,11 +33,11 @@ def test_default_service_url_resolution_docker() -> None:
     )
     assert (
         AppSettings._resolve_service_url("RESEARCH_AGENT_URL", is_codespaces=False)
-        == "http://research-agent:8000"
+        == "http://research-agent:8007"
     )
     assert (
         AppSettings._resolve_service_url("REASONING_AGENT_URL", is_codespaces=False)
-        == "http://reasoning-agent:8000"
+        == "http://reasoning-agent:8008"
     )
 
 
