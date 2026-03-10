@@ -249,25 +249,28 @@ class ChatOrchestrator:
                             if content and isinstance(content, str):
                                 full_response_buffer.append(content)
                     elif isinstance(chunk, str):
-                        if chunk.startswith("{") and chunk.endswith("}"):
+                        final_chunk = chunk
+                        if final_chunk.startswith("{") and final_chunk.endswith("}"):
                             try:
-                                parsed_chunk = json.loads(chunk)
+                                parsed_chunk = json.loads(final_chunk)
                                 if isinstance(parsed_chunk, dict):
                                     if "type" in parsed_chunk:
                                         # It's a structured fallback error from the microservice client
                                         yield parsed_chunk
                                         continue
-                                    elif "الإجابة" in parsed_chunk:
-                                        chunk = str(parsed_chunk["الإجابة"])
+                                    if "الإجابة" in parsed_chunk:
+                                        final_chunk = str(parsed_chunk["الإجابة"])
                                     elif "final_response" in parsed_chunk:
                                         f_resp = parsed_chunk["final_response"]
                                         if isinstance(f_resp, dict) and "الإجابة" in f_resp:
-                                            chunk = str(f_resp["الإجابة"])
+                                            final_chunk = str(f_resp["الإجابة"])
                                         else:
-                                            chunk = str(f_resp)
+                                            final_chunk = str(f_resp)
                             except json.JSONDecodeError:
                                 pass
-                        full_response_buffer.append(chunk)
+                        full_response_buffer.append(final_chunk)
+                        yield final_chunk
+                        continue
                     yield chunk
 
                 # تخزين في الكاش

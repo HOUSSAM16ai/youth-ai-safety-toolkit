@@ -169,33 +169,34 @@ class AdminChatStreamer:
                 yield content_part
             elif isinstance(content_part, str):
                 # Check if it's a JSON string disguised as a text chunk (e.g. from orchestrator fallback)
-                if content_part.startswith("{") and content_part.endswith("}"):
+                final_content = content_part
+                if final_content.startswith("{") and final_content.endswith("}"):
                     try:
-                        parsed_part = json.loads(content_part)
+                        parsed_part = json.loads(final_content)
                         if isinstance(parsed_part, dict):
                             if "type" in parsed_part:
                                 # Found structured event (e.g. assistant_error fallback from microservice client)
                                 yield parsed_part
                                 continue
-                            elif "الإجابة" in parsed_part:
+                            if "الإجابة" in parsed_part:
                                 # Found admin tool execution response
-                                content_part = str(parsed_part["الإجابة"])
+                                final_content = str(parsed_part["الإجابة"])
                             elif "final_response" in parsed_part:
                                 f_resp = parsed_part["final_response"]
                                 if isinstance(f_resp, dict) and "الإجابة" in f_resp:
-                                    content_part = str(f_resp["الإجابة"])
+                                    final_content = str(f_resp["الإجابة"])
                                 else:
-                                    content_part = str(f_resp)
+                                    final_content = str(f_resp)
                     except json.JSONDecodeError:
                         pass
 
-                full_response.append(content_part)
+                full_response.append(final_content)
 
                 if self._exceeds_safety_limit(full_response):
                     yield self._create_size_limit_error()
                     break
 
-                yield self._create_chunk_event(content_part)
+                yield self._create_chunk_event(final_content)
 
     def _exceeds_safety_limit(self, response_parts: list[str]) -> bool:
         """
