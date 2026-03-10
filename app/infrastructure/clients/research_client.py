@@ -15,7 +15,7 @@ from app.core.settings.base import get_settings
 
 logger = get_logger("research-client")
 
-DEFAULT_RESEARCH_AGENT_URL: Final[str] = "http://research-agent:8000"
+DEFAULT_RESEARCH_AGENT_URL: Final[str] = "http://research-agent:8007"
 
 
 class ResearchClient:

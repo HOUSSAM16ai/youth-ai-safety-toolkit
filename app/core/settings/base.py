@@ -202,7 +202,7 @@ class AppSettings(BaseServiceSettings):
         # Map field names to (localhost_port, docker_host, docker_port)
         service_map = {
             "USER_SERVICE_URL": ("8003", "user-service", "8000"),
-            "RESEARCH_AGENT_URL": ("8006", "research-agent", "8000"),
+            "RESEARCH_AGENT_URL": ("8007", "research-agent", "8007"),
             "PLANNING_AGENT_URL": ("8001", "planning-agent", "8000"),
             "REASONING_AGENT_URL": ("8007", "reasoning-agent", "8000"),
             "ORCHESTRATOR_SERVICE_URL": ("8006", "localhost", "8006"),

@@ -90,7 +90,7 @@ class Settings(BaseSettings):
         # Map: Field -> (Local Port, Docker Host, Docker Port)
         service_map = {
             "USER_SERVICE_URL": ("8003", "user-service", "8000"),
-            "RESEARCH_AGENT_URL": ("8007", "research-agent", "8000"),
+            "RESEARCH_AGENT_URL": ("8007", "research-agent", "8007"),
             "PLANNING_AGENT_URL": ("8001", "planning-agent", "8000"),
             "REASONING_AGENT_URL": ("8008", "reasoning-agent", "8000"),
             "MEMORY_AGENT_URL": ("8002", "memory-agent", "8000"),

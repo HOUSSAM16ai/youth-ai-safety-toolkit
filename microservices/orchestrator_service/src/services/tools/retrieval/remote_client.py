@@ -41,7 +41,7 @@ async def fetch_from_memory_agent(query: str, tags: list[str]) -> list[dict[str,
     base_url = (
         os.getenv("RESEARCH_AGENT_URL")
         or os.getenv("MEMORY_AGENT_URL")
-        or "http://research-agent:8000"
+        or "http://research-agent:8007"
     )
 
     # Unified Protocol Endpoint

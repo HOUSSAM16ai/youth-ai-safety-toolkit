@@ -18,7 +18,7 @@ from microservices.orchestrator_service.src.core.logging import get_logger
 
 logger = get_logger("research-client")
 
-DEFAULT_RESEARCH_AGENT_URL: Final[str] = "http://research-agent:8000"
+DEFAULT_RESEARCH_AGENT_URL: Final[str] = "http://research-agent:8007"
 
 
 class ResearchClient:

@@ -173,10 +173,10 @@ class OrchestratorClient:
 
         except Exception as e:
             logger.error(f"Failed to chat with agent: {e}", exc_info=True)
-            yield {
+            yield json.dumps({
                 "type": "assistant_error",
                 "payload": {"content": f"Error connecting to agent: {e}"},
-            }
+            })
 
 
 # Singleton
