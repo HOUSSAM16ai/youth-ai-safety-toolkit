@@ -60,20 +60,26 @@ class OrchestratorClient:
         base_candidates: list[str] = [self.base_url]
 
         fallback_urls_raw = os.getenv("ORCHESTRATOR_SERVICE_FALLBACK_URLS", "")
-        fallback_bases = [url.strip().rstrip("/") for url in fallback_urls_raw.split(",") if url.strip()]
+        fallback_bases = [
+            url.strip().rstrip("/") for url in fallback_urls_raw.split(",") if url.strip()
+        ]
         base_candidates.extend(fallback_bases)
 
         parsed = urlparse(self.base_url)
         if parsed.hostname in {"localhost", "127.0.0.1"}:
-            base_candidates.extend([
-                "http://orchestrator-service:8006",
-                "http://host.docker.internal:8006",
-            ])
+            base_candidates.extend(
+                [
+                    "http://orchestrator-service:8006",
+                    "http://host.docker.internal:8006",
+                ]
+            )
         else:
-            base_candidates.extend([
-                "http://localhost:8006",
-                "http://127.0.0.1:8006",
-            ])
+            base_candidates.extend(
+                [
+                    "http://localhost:8006",
+                    "http://127.0.0.1:8006",
+                ]
+            )
 
         unique_bases: list[str] = []
         for candidate in base_candidates:
@@ -242,7 +248,9 @@ class OrchestratorClient:
                 logger.error("Orchestrator chat endpoint failed", exc_info=True)
 
         diagnostic = " | ".join(connection_errors) if connection_errors else "No endpoint attempted"
-        logger.error("Failed to chat with agent across all endpoints", extra={"diagnostic": diagnostic})
+        logger.error(
+            "Failed to chat with agent across all endpoints", extra={"diagnostic": diagnostic}
+        )
 
         if self._is_python_file_count_question(question):
             files_count = self._count_python_files_in_project()

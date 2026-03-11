@@ -178,7 +178,11 @@ class AdminChatStreamer:
                         final_content = str(f_resp["الإجابة"])
                     else:
                         final_content = str(f_resp)
-                elif "payload" in content_part and isinstance(content_part["payload"], dict) and "content" in content_part["payload"]:
+                elif (
+                    "payload" in content_part
+                    and isinstance(content_part["payload"], dict)
+                    and "content" in content_part["payload"]
+                ):
                     final_content = str(content_part["payload"]["content"])
                 else:
                     yield content_part
