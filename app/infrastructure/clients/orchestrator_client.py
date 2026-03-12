@@ -86,11 +86,6 @@ class OrchestratorClient:
         decision = detect_exercise_retrieval(ExerciseRetrievalRequest(question=question))
         return decision.recognized
 
-
-
-
-
-
     async def _execute_shell_tool(
         self,
         command: str,
@@ -134,7 +129,6 @@ class OrchestratorClient:
         files_count = await self._count_files_in_project(extension=extension)
         result = make_file_result(extension=extension, count=files_count)
         return result.message
-
 
     async def _build_local_retrieval_response(self, question: str) -> str | None:
         """ينفذ استرجاعاً محلياً للمعرفة التعليمية عند تعطل service control plane."""
@@ -185,9 +179,15 @@ class OrchestratorClient:
             "details": self._sanitize_text_for_user(str(payload.get("details", "")))
             if payload.get("details") is not None
             else None,
-            "status_code": payload.get("status_code") if isinstance(payload.get("status_code"), int) else None,
-            "request_id": str(payload.get("request_id")) if payload.get("request_id") is not None else None,
-            "retry_hint": str(payload.get("retry_hint")) if payload.get("retry_hint") is not None else None,
+            "status_code": payload.get("status_code")
+            if isinstance(payload.get("status_code"), int)
+            else None,
+            "request_id": str(payload.get("request_id"))
+            if payload.get("request_id") is not None
+            else None,
+            "retry_hint": str(payload.get("retry_hint"))
+            if payload.get("retry_hint") is not None
+            else None,
         }
 
         event_type_map = {

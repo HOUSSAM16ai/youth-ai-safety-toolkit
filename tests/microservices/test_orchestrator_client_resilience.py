@@ -157,7 +157,9 @@ async def test_local_fallback_can_be_disabled_with_flag(monkeypatch: pytest.Monk
 
 
 @pytest.mark.asyncio
-async def test_local_fallback_supports_csv_and_json_file_count(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_local_fallback_supports_csv_and_json_file_count(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """يتحقق من دعم CSV/JSON كصيغ مطلوبة ضمن ذكاء الملفات الإداري."""
     monkeypatch.setenv("ORCHESTRATOR_SERVICE_URL", "http://orchestrator-service:8006")
     client = OrchestratorClient(base_url="http://orchestrator-service:8006")
@@ -247,7 +249,9 @@ def test_multi_target_candidates_disabled_by_default(monkeypatch: pytest.MonkeyP
     assert candidates == ["http://orchestrator-service:8006/agent/chat"]
 
 
-def test_multi_target_candidates_enabled_only_in_breakglass(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_multi_target_candidates_enabled_only_in_breakglass(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """يسمح بتعدد المرشحات فقط عند تفعيل breakglass صراحة."""
     monkeypatch.setenv("ORCHESTRATOR_ALLOW_MULTI_TARGET_CHAT", "1")
     monkeypatch.setenv(
@@ -265,7 +269,9 @@ def test_multi_target_candidates_enabled_only_in_breakglass(monkeypatch: pytest.
 
 
 @pytest.mark.asyncio
-async def test_file_intelligence_fallback_concurrency_smoke(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_file_intelligence_fallback_concurrency_smoke(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """اختبار smoke للتوازي: يحافظ fallback على الاستجابة المتوقعة تحت طلبات متزامنة."""
     import asyncio
 
@@ -293,7 +299,9 @@ async def test_file_intelligence_fallback_concurrency_smoke(monkeypatch: pytest.
 
 
 @pytest.mark.asyncio
-async def test_exercise_retrieval_fallback_concurrency_smoke(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_exercise_retrieval_fallback_concurrency_smoke(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """اختبار smoke للتوازي: degraded retrieval يبقى متسقًا عبر الطلبات المتزامنة."""
     import asyncio
 
