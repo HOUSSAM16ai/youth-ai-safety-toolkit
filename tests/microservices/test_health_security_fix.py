@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 
 # Set environment variables to avoid validation errors or side effects
-os.environ["SECRET_KEY"] = "test_secret_key"
+os.environ["SECRET_KEY"] = "test-secret-key-that-is-very-long-and-secure-enough-for-tests-v4"
 os.environ["PLANNING_DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
 os.environ["MEMORY_DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
 os.environ["USER_DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"

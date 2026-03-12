@@ -24,6 +24,8 @@ def test_http_and_ws_share_same_conversation_decision(monkeypatch) -> None:
     monkeypatch.setattr(settings, "ROUTE_CHAT_HTTP_CONVERSATION_ROLLOUT_PERCENT", 100)
     monkeypatch.setattr(settings, "ROUTE_CHAT_WS_CONVERSATION_ROLLOUT_PERCENT", 100)
     monkeypatch.setattr(settings, "CONVERSATION_SERVICE_URL", "http://conversation-service:8010")
+    monkeypatch.setattr(settings, "CONVERSATION_PARITY_VERIFIED", True)
+    monkeypatch.setattr(settings, "CONVERSATION_CAPABILITY_LEVEL", "parity_ready")
 
     http_target = main._resolve_chat_target_base("chat_http", "id-123", 100)
     ws_target = main._resolve_chat_ws_target("chat_ws_customer", "api/chat/ws")

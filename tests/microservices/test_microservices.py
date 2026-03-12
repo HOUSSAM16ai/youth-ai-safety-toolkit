@@ -12,7 +12,7 @@ import jwt
 from fastapi.testclient import TestClient
 
 # Explicitly override the secret key for testing to ensure consistency
-TEST_SECRET_KEY = "test-secret-key-for-ci-pipeline"
+TEST_SECRET_KEY = "test-secret-key-for-ci-pipeline-secure-length"
 os.environ["SECRET_KEY"] = TEST_SECRET_KEY
 
 

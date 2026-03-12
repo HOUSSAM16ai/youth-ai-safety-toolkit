@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, patch
 import jwt
 
 # Set required environment variable before importing settings
-os.environ["SECRET_KEY"] = "test_secret_key"
+os.environ["SECRET_KEY"] = "test-secret-key-that-is-very-long-and-secure-enough-for-tests-v4"
 
 from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
