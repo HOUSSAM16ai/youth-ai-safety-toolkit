@@ -20,7 +20,7 @@ ruff check .
 ruff format --check .
 python scripts/ci_guardrails.py
 python scripts/fitness/check_no_app_imports_in_microservices.py --strict
-python scripts/fitness/check_routes_registry_parity.py
+python scripts/fitness/check_route_registry_parity.py
 python scripts/fitness/check_tracing_gate.py
 pytest -v --cov=app --cov-report=term-missing --tb=short
 ```
