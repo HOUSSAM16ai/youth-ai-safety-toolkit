@@ -113,6 +113,28 @@ def _is_admin_payload(payload: dict[str, object]) -> bool:
     return has_admin_role or has_admin_flag or has_admin_scope
 
 
+def _coerce_admin_state(payload: dict[str, object] | None = None) -> dict[str, object]:
+    """يبني حالة إدارة ضيقة ومتوافقة لعقدة التحكم دون توسيع الواجهة العامة."""
+
+    safe_payload = payload or {}
+    role = str(safe_payload.get("role", "")).strip().lower()
+    scope = str(safe_payload.get("scope", "")).strip().lower()
+    is_admin = _is_admin_payload(safe_payload)
+    return {
+        "is_admin": is_admin,
+        "user_role": role,
+        "scope": scope,
+    }
+
+
+def _merge_admin_inputs(base_inputs: dict[str, object], admin_payload: dict[str, object] | None) -> dict[str, object]:
+    """يحقن غلاف الإدارة الموحد فقط عند الحاجة، مع إبقاء المسارات الأخرى دون تغيير."""
+
+    if admin_payload is None:
+        return base_inputs
+    return {**base_inputs, **_coerce_admin_state(admin_payload)}
+
+
 async def require_internal_admin_access(
     authorization: str | None = Header(default=None),
     x_internal_admin_key: str | None = Header(default=None),
@@ -382,6 +404,7 @@ async def _stream_chat_langgraph(
     chat_scope: str,
     conversation_id: int,
     app_graph: object = None,
+    admin_payload: dict[str, object] | None = None,
 ) -> None:
     """يشغّل LangGraph الموحد لمسارات البحث والإدارة ويبث الأحداث."""
     queue: asyncio.Queue[dict[str, object]] = asyncio.Queue(maxsize=64)
@@ -392,7 +415,8 @@ async def _stream_chat_langgraph(
             if not app_graph:
                 app_graph = create_unified_graph()
             config = {"configurable": {"thread_id": str(conversation_id)}}
-            inputs = {"query": objective, "messages": [HumanMessage(content=objective)]}
+            inputs: dict[str, object] = {"query": objective, "messages": [HumanMessage(content=objective)]}
+            inputs = _merge_admin_inputs(inputs, admin_payload if chat_scope == "admin" else None)
 
             res = await app_graph.ainvoke(inputs, config=config)
 
@@ -456,7 +480,13 @@ async def _stream_chat_langgraph(
             )
             break
         if evt["type"] == "__ERROR__":
-            final_content = f"❌ خطأ أثناء التنفيذ: {evt['error']}"
+            request_id = str(uuid.uuid4())
+            logger.error(
+                "LangGraph streaming failure",
+                exc_info=True,
+                extra={"request_id": request_id, "chat_scope": chat_scope},
+            )
+            final_content = _safe_assistant_error(request_id)
             await websocket.send_json(
                 {"type": "assistant_error", "payload": {"content": final_content}}
             )
@@ -536,12 +566,14 @@ async def _run_chat_langgraph(
     objective: str,
     context: ChatRunContext,
     app_graph: object = None,
+    admin_payload: dict[str, object] | None = None,
 ) -> dict[str, object]:
     """يشغّل LangGraph كعمود فقري لرحلة chat ويعيد حمولة موحدة قابلة للبث (HTTP legacy fallback)."""
     if not app_graph:
         app_graph = create_unified_graph()
     config = {"configurable": {"thread_id": "http_run"}}
-    inputs = {"query": objective, "messages": [HumanMessage(content=objective)]}
+    inputs: dict[str, object] = {"query": objective, "messages": [HumanMessage(content=objective)]}
+    inputs = _merge_admin_inputs(inputs, admin_payload)
 
     res = await app_graph.ainvoke(inputs, config=config)
     final_resp = res.get("final_response")
@@ -580,7 +612,7 @@ async def chat_messages_endpoint(payload: dict[str, object], request: Request) -
         raise HTTPException(status_code=422, detail="question/objective is required")
 
     context_payload = payload.get("context")
-    context: dict[str, Any] = {}
+    context: ChatRunContext = {}
     if isinstance(context_payload, dict):
         for key, value in context_payload.items():
             if not isinstance(key, str):
@@ -649,7 +681,7 @@ async def chat_ws_stategraph(websocket: WebSocket) -> None:
             )
 
             context_payload = incoming.get("context")
-            context: dict[str, Any] = {}
+            context: ChatRunContext = {}
             if isinstance(context_payload, dict):
                 for key, value in context_payload.items():
                     if not isinstance(key, str):
@@ -687,9 +719,14 @@ async def admin_chat_ws_stategraph(websocket: WebSocket) -> None:
         return
 
     try:
+        auth_payload = jwt.decode(token, get_settings().SECRET_KEY, algorithms=["HS256"])
         user_id = decode_user_id(token, get_settings().SECRET_KEY)
-    except HTTPException:
+    except (HTTPException, jwt.PyJWTError):
         await websocket.close(code=4401)
+        return
+
+    if not _is_admin_payload(auth_payload):
+        await websocket.close(code=4403)
         return
 
     await websocket.accept(subprotocol=selected_protocol)
@@ -732,7 +769,7 @@ async def admin_chat_ws_stategraph(websocket: WebSocket) -> None:
             )
 
             context_payload = incoming.get("context")
-            context: dict[str, Any] = {}
+            context: ChatRunContext = {}
             if isinstance(context_payload, dict):
                 for key, value in context_payload.items():
                     if not isinstance(key, str):
@@ -755,6 +792,7 @@ async def admin_chat_ws_stategraph(websocket: WebSocket) -> None:
                 chat_scope="admin",
                 conversation_id=conversation_id,
                 app_graph=getattr(websocket.app.state, "app_graph", None),
+                admin_payload=auth_payload,
             )
 
     except WebSocketDisconnect:
@@ -811,7 +849,9 @@ async def chat_with_agent_endpoint(request: ChatRequest, fastapi_req: Request) -
         async def _admin_stream():
             try:
                 admin_app = getattr(fastapi_req.app.state, "admin_app", None)
-                res = await admin_app.ainvoke({"query": request.question, "is_admin_user": True})
+                admin_payload = request.context if isinstance(request.context, dict) else {}
+                admin_inputs = _merge_admin_inputs({"query": request.question}, admin_payload)
+                res = await admin_app.ainvoke(admin_inputs)
                 final_resp = res.get("final_response")
                 if isinstance(final_resp, dict):
                     response_text = json.dumps(final_resp, ensure_ascii=False)

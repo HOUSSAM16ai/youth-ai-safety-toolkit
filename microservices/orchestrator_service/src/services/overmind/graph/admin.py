@@ -58,7 +58,9 @@ def _is_admin_state(state: AdminExecutionState) -> bool:
 
     role = str(state.get("user_role", "")).strip().lower()
     scope = str(state.get("scope", "")).strip().lower()
-    return bool(state.get("is_admin") is True or role in {"admin", "super_admin", "superadmin"} or ("admin" in scope and "tool" in scope))
+    has_admin_role = role in {"admin", "super_admin", "superadmin"}
+    has_admin_scope = "admin" in scope and "tool" in scope
+    return bool(state.get("is_admin") is True or has_admin_role or has_admin_scope)
 
 
 # Deterministic Graph Nodes
@@ -148,7 +150,6 @@ class ExecuteToolNode:
             return {
                 "error": "ADMIN_TOOL_EXECUTION_FAILED",
                 "tool_name": tool_name,
-                "tool_result": str(e),
             }
 
         logger.info(f"TOOL EXECUTED → {tool_name} → {str(result)[:50]}")

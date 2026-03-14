@@ -47,3 +47,68 @@ def test_agent_chat_mission_complex_stream_is_text_encodable(monkeypatch) -> Non
     assert parsed[0]["type"] == "assistant_delta"
     assert parsed[-1]["type"] == "assistant_final"
     assert parsed[-1]["payload"]["content"] == "done"
+
+
+def test_agent_chat_admin_path_forwards_aligned_admin_state(monkeypatch) -> None:
+    """يتأكد أن مسار /agent/chat الإداري يمرر حقول العقد المتوافقة مع بوابة الإدارة."""
+
+    class FakeAdminApp:
+        def __init__(self) -> None:
+            self.last_inputs: dict[str, object] | None = None
+
+        async def ainvoke(self, inputs: dict[str, object]):
+            self.last_inputs = inputs
+            return {"final_response": {"ok": True}}
+
+    fake_admin = FakeAdminApp()
+    app.state.admin_app = fake_admin
+
+    client = TestClient(app)
+    with client.stream(
+        "POST",
+        "/agent/chat",
+        json={
+            "question": "count python files",
+            "user_id": 11,
+            "context": {"chat_scope": "admin", "is_admin": True, "role": "admin", "scope": "admin:tool"},
+        },
+    ) as response:
+        assert response.status_code == 200
+        chunks = [line for line in response.iter_lines() if line]
+
+    assert chunks
+    assert fake_admin.last_inputs is not None
+    assert fake_admin.last_inputs["query"] == "count python files"
+    assert fake_admin.last_inputs["is_admin"] is True
+    assert fake_admin.last_inputs["user_role"] == "admin"
+
+
+def test_agent_chat_admin_path_is_fail_closed_without_admin_identity(monkeypatch) -> None:
+    """يتأكد أن مسار /agent/chat الإداري لا يمرر وصولاً إدارياً ضمنياً دون إثبات."""
+
+    class FakeAdminApp:
+        def __init__(self) -> None:
+            self.last_inputs: dict[str, object] | None = None
+
+        async def ainvoke(self, inputs: dict[str, object]):
+            self.last_inputs = inputs
+            return {"final_response": {"ok": True}}
+
+    fake_admin = FakeAdminApp()
+    app.state.admin_app = fake_admin
+
+    client = TestClient(app)
+    with client.stream(
+        "POST",
+        "/agent/chat",
+        json={
+            "question": "count python files",
+            "user_id": 12,
+            "context": {"chat_scope": "admin"},
+        },
+    ) as response:
+        assert response.status_code == 200
+        _ = [line for line in response.iter_lines() if line]
+
+    assert fake_admin.last_inputs is not None
+    assert fake_admin.last_inputs["is_admin"] is False

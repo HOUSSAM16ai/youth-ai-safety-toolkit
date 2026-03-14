@@ -144,7 +144,11 @@ def test_chat_ws_admin_uses_stategraph(monkeypatch) -> None:
 
     monkeypatch.setattr(routes, "_persist_assistant_message", fake_persist_assistant_message)
 
-    token = jwt.encode({"sub": "1", "user_id": 1}, get_settings().SECRET_KEY, algorithm="HS256")
+    token = jwt.encode(
+        {"sub": "1", "user_id": 1, "role": "admin", "is_admin": True},
+        get_settings().SECRET_KEY,
+        algorithm="HS256",
+    )
     with TestClient(app).websocket_connect(f"/admin/api/chat/ws?token={token}") as ws:
         ws.send_json({"question": "hello"})
         init_event = ws.receive_json()
@@ -157,4 +161,52 @@ def test_chat_ws_admin_uses_stategraph(monkeypatch) -> None:
                 assert evt["payload"]["content"] == "Fake Graph Admin WS Result"
                 assert evt["payload"]["route_id"] == "chat_ws_admin"
                 assert evt["payload"]["graph_mode"] == "unified_stategraph"
+                break
+
+
+def test_chat_ws_admin_rejects_non_admin_token() -> None:
+    """يتأكد أن مسار WS الإداري يرفض الرموز غير الإدارية بشكل fail-closed."""
+
+    token = jwt.encode({"sub": "2", "user_id": 2, "role": "user"}, get_settings().SECRET_KEY, algorithm="HS256")
+
+    try:
+        with TestClient(app).websocket_connect(f"/admin/api/chat/ws?token={token}"):
+            raise AssertionError("Expected admin websocket rejection for non-admin token")
+    except Exception as exc:
+        assert "4403" in str(exc)
+
+
+def test_chat_ws_admin_sanitizes_streaming_errors(monkeypatch) -> None:
+    """يتأكد أن أخطاء التنفيذ في WS الإداري تُرسل برسالة آمنة دون تسريب داخلي."""
+
+    class ExplodingGraph:
+        async def ainvoke(self, *args, **kwargs):
+            raise RuntimeError("sensitive-internal-stack")
+
+    monkeypatch.setattr(routes, "create_unified_graph", lambda: ExplodingGraph())
+
+    async def fake_ensure_conversation(**kwargs):
+        return 999
+
+    async def fake_persist_assistant_message(**kwargs):
+        return None
+
+    monkeypatch.setattr(routes, "_ensure_conversation", fake_ensure_conversation)
+    monkeypatch.setattr(routes, "_persist_assistant_message", fake_persist_assistant_message)
+
+    token = jwt.encode(
+        {"sub": "1", "user_id": 1, "role": "admin", "is_admin": True},
+        get_settings().SECRET_KEY,
+        algorithm="HS256",
+    )
+
+    with TestClient(app).websocket_connect(f"/admin/api/chat/ws?token={token}") as ws:
+        ws.send_json({"question": "hello"})
+        _ = ws.receive_json()  # conversation_init
+        while True:
+            evt = ws.receive_json()
+            if evt.get("type") == "assistant_error":
+                content = evt["payload"]["content"]
+                assert "sensitive-internal-stack" not in content
+                assert "رقم المتابعة" in content
                 break
