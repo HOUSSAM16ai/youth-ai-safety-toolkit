@@ -45,7 +45,7 @@ def test_trigger_outbox_relay_requires_admin_access(monkeypatch) -> None:
     )
 
     app = _build_test_app()
-    app.dependency_overrides[get_db] = lambda: object()
+    app.dependency_overrides[get_db] = object
     client = TestClient(app)
 
     response = client.post("/api/v1/system/outbox/relay")
@@ -69,7 +69,7 @@ def test_trigger_outbox_relay_normalizes_limits_and_returns_summary(monkeypatch)
     monkeypatch.setattr(routes, "MissionStateManager", _manager_factory)
 
     app = _build_test_app()
-    app.dependency_overrides[get_db] = lambda: object()
+    app.dependency_overrides[get_db] = object
     client = TestClient(app)
 
     response = client.post(
@@ -99,7 +99,7 @@ def test_trigger_outbox_relay_normalizes_processing_timeout(monkeypatch) -> None
     monkeypatch.setattr(routes, "MissionStateManager", _manager_factory)
 
     app = _build_test_app()
-    app.dependency_overrides[get_db] = lambda: object()
+    app.dependency_overrides[get_db] = object
     client = TestClient(app)
 
     response = client.post(
@@ -121,7 +121,7 @@ def test_outbox_status_requires_admin_access(monkeypatch) -> None:
     )
 
     app = _build_test_app()
-    app.dependency_overrides[get_db] = lambda: object()
+    app.dependency_overrides[get_db] = object
     client = TestClient(app)
 
     response = client.get("/api/v1/system/outbox/status")
@@ -153,7 +153,7 @@ def test_outbox_status_returns_operational_snapshot(monkeypatch) -> None:
     monkeypatch.setattr(routes, "MissionStateManager", _StatusManager)
 
     app = _build_test_app()
-    app.dependency_overrides[get_db] = lambda: object()
+    app.dependency_overrides[get_db] = object
     client = TestClient(app)
 
     response = client.get(
